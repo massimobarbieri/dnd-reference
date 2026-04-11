@@ -1,5 +1,12 @@
+=========================================================================
+# TUTTO QUELLO CHE DEVI SAPERE SULLE LICENZE DI QUESTO PROGETTO
+=========================================================================
+
+
+=========================================================================
 INDICE:
-1. Licenza dell'applicazione
+0. Licenza dell'applicazione
+1. Uso delle immagini
 2. Licenza dei dati tipizzati
 3. Licenza del System Reference Document 5.2.1 di Dungens and Dragons
 =========================================================================
@@ -7,7 +14,7 @@ INDICE:
 
 
 -------------------------------------------------------------------------
-#1. Licenza dell'applicazione
+#0. Licenza dell'applicazione
 -------------------------------------------------------------------------
 
                     GNU GENERAL PUBLIC LICENSE
@@ -686,7 +693,21 @@ Public License instead of this License.  But first, please read
 <https://www.gnu.org/licenses/why-not-lgpl.html>.
 
 
+-------------------------------------------------------------------------
+#1. Uso delle immagini
+-------------------------------------------------------------------------
 
+Questa applicazione fa uso di immagine che sono linkate dai siti web che
+le pubblicano.
+
+Ordine di tentativo di recupero immagini:
+1. token 5e.tools
+2. mirror 5etools.jinocenc.io
+3. mirror GitHub raw
+4. placeholder esterno se nessuna immagine risponde
+
+Un link all'immagine originale è sempre presente. A questo si rimanda per
+la licenza specifica.
 
 
 -------------------------------------------------------------------------
