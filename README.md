@@ -30,4 +30,8 @@ All’interno dell’app puoi:
 - salvare i tuoi elementi preferiti per averli sempre a portata di mano
 
 L’app non richiede registrazione e salva i preferiti direttamente nel browser, così ogni giocatore può personalizzare la propria esperienza.
+
+### Schermate
 ![Menu principale](screenshots/1.png "Menu principale")
+![Incantesimi](screenshots/2.png "Incantesimi")
+![Preferiti](screenshots/3.png "Preferiti")
