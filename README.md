@@ -12,13 +12,15 @@ L'app fa uso del System Reference Document 5.2.1 rilasciato gratuitamente da Wiz
 
 ## Come usarla
 
-Puoi avviare dnd-reference su un pc della tua rete locale con
+Scarica tutto il progetto. Puoi clonarlo con git oppure scaricalo a mano.
+**dnd-reference** è una webapp quindi ti serve un webserver qualunque (nginx o apache sono i più comuni) oppure puoi usare python3 durante le tue sessioni di gioco.
+Se usi python, accedi alla cartella del progetto con il terminale e digita il seguente comando:
 
 ``python3 -m http.server 8080``
 
-I tuoi utenti potranno collegarsi al portale http://ip-del-tuo-server:8080 per accedere alla webapp.
+Il tuo pc diventerà un server web all'interno della tua rete locale. I tuoi utenti potranno collegarsi al tuo server locale all'indirizzo http://ip-del-tuo-server:8080
 
-Una volta avviata sulla tua rete locale, puoi accedere all’app da qualsiasi dispositivo (PC, tablet o smartphone) tramite browser.
+Una volta avviata sulla tua rete locale, puoi accedere all’app da qualsiasi dispositivo collegato alla tua rete (PC, tablet o smartphone) tramite browser.
 
 All’interno dell’app puoi:
 
