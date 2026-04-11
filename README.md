@@ -13,9 +13,10 @@ L'app fa uso del System Reference Document 5.2.1 rilasciato gratuitamente da Wiz
 ## Come usarla
 
 Puoi avviare dnd-reference su un pc della tua rete locale con
- python3 -m http.server 8080
 
-I tuoi utenti potranno collegarsi al portale http://<ip-del-tuo-server>:8080 per accedere alla webapp.
+``python3 -m http.server 8080``
+
+I tuoi utenti potranno collegarsi al portale http://ip-del-tuo-server:8080 per accedere alla webapp.
 
 Una volta avviata sulla tua rete locale, puoi accedere all’app da qualsiasi dispositivo (PC, tablet o smartphone) tramite browser.
 
