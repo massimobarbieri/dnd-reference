@@ -1,5 +1,5 @@
 # DND-Reference
-**dnd-reference** è una web app pensata per supportare le sessioni di *Dungeons & Dragons* (il gioco più bello del Mondo di Wizards of the Coast), permettendo a Dungeon Master e giocatori di consultare rapidamente tutte le informazioni principali del gioco.
+**dnd-reference** è una web app pensata per supportare le sessioni di *Dungeons & Dragons* (il gioco più bello del Mondo di [Wizards of the Coast](https://company.wizards.com/it)), permettendo a Dungeon Master e giocatori di consultare rapidamente tutte le informazioni principali del gioco.
 
 L’app raccoglie in un’unica interfaccia:
 - incantesimi
