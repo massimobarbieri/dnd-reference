@@ -1,5 +1,5 @@
 
-const APP_VERSION = '2.3.7.0';
+const APP_VERSION = '2.3.7.1';
 const BUILD_DATE = '2026-04-11';
 const FAVORITES_KEY = 'dnd-reference-favorites';
 
@@ -889,7 +889,7 @@ function paragraphs(value) {
   if (!text) return '<p>-</p>';
   return String(text)
     .split(/\n{2,}/)
-    .map(part => `<p>${escapeHtml(part).replace(/\n/g, '<br>')}</p>`)
+    .map(part => `<p>${renderRichText(part)}</p>`)
     .join('');
 }
 
@@ -925,7 +925,7 @@ function renderEquipmentDescription(item) {
       .split(/\n{2,}/)
       .map(part => part.trim())
       .filter(Boolean)
-      .map(part => `<p>${escapeHtml(part).replace(/\n/g, '<br>')}</p>`));
+      .map(part => `<p>${renderRichText(part)}</p>`));
   }
 
   return blocks.length ? blocks.join('') : '<p>-</p>';
@@ -959,7 +959,7 @@ function namedEntries(entries) {
     const name = entry.name ? `<strong>${escapeHtml(entry.name)}.</strong> ` : '';
     const desc = entry.desc || entry.description || entry.entries || formatComplex(entry);
     const text = formatValue(desc);
-    return `<p>${name}${escapeHtml(text)}</p>`;
+    return `<p>${name}${renderRichText(text)}</p>`;
   }).join('');
 }
 
@@ -1058,17 +1058,56 @@ function formatComplex(value) {
 
 function formatValue(value) {
   if (!hasValue(value)) return '';
-  if (typeof value === 'string') return value.replace(/\*\*/g, '').trim();
+  if (typeof value === 'string') return value.replace(/\*\*/g, '**');
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-  if (Array.isArray(value)) return value.map(formatValue).filter(Boolean).join('');
+  if (Array.isArray(value)) return normalizeTextSpacing(smartJoinFragments(value.map(formatValue).filter(Boolean)));
   if (typeof value === 'object') {
     if (hasValue(value.text)) return formatValue(value.text);
     if (hasValue(value.description)) return formatValue(value.description);
     if (hasValue(value.desc)) return formatValue(value.desc);
     if (hasValue(value.entries)) return formatValue(value.entries);
-    return Object.values(value).map(formatValue).filter(Boolean).join(', ');
+    return normalizeTextSpacing(Object.values(value).map(formatValue).filter(Boolean).join(', '));
   }
   return String(value);
+}
+
+function smartJoinFragments(parts) {
+  if (!parts?.length) return '';
+  let out = '';
+  for (const rawPart of parts) {
+    if (!hasValue(rawPart)) continue;
+    const part = String(rawPart);
+    if (!out) {
+      out = part;
+      continue;
+    }
+    const prev = out[out.length - 1] || '';
+    const next = part[0] || '';
+    const needsSpace = /[\p{L}\p{N}”»)]/u.test(prev) && /[\p{L}\p{N}“«(]/u.test(next);
+    out += (needsSpace ? ' ' : '') + part;
+  }
+  return out;
+}
+
+function normalizeTextSpacing(text) {
+  if (!hasValue(text)) return '';
+  return String(text)
+    .replace(/[ 	]+/g, ' ')
+    .replace(/ *\n */g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\s+([,.;:!?])/g, '$1')
+    .replace(/([¿¡(«“])\s+/g, '$1')
+    .replace(/\s+([)»”])/g, '$1')
+    .trim();
+}
+
+function renderRichText(text) {
+  const safe = escapeHtml(normalizeTextSpacing(text));
+  return safe
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/_([^_]+)_/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>');
 }
 
 function hasValue(value) {
