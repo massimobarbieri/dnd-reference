@@ -1,7 +1,8 @@
 
-const APP_VERSION = '2.3.7.1';
-const BUILD_DATE = '2026-04-11';
+const APP_VERSION = '2.3.7.2';
+const BUILD_DATE = '2026-04-12';
 const FAVORITES_KEY = 'dnd-reference-favorites';
+const APP_VERSION_KEY = 'dnd-reference-app-version';
 
 const DATA_FILES = {
   equipment: 'data/equipment.json',
@@ -9,6 +10,10 @@ const DATA_FILES = {
   magicItems: 'data/magic_items.json',
   spells: 'data/spells.json',
 };
+
+function withVersion(url) {
+  return `${url}?v=${encodeURIComponent(APP_VERSION)}`;
+}
 
 const CATEGORY_META = {
   equipment: { label: 'Equipaggiamento', route: 'equipment' },
@@ -277,10 +282,29 @@ window.addEventListener('hashchange', renderRoute);
 window.addEventListener('DOMContentLoaded', init);
 document.addEventListener('click', handleGlobalClick);
 
+function enforceVersionRefresh() {
+  try {
+    const previousVersion = localStorage.getItem(APP_VERSION_KEY);
+    if (previousVersion !== APP_VERSION) {
+      localStorage.setItem(APP_VERSION_KEY, APP_VERSION);
+      if (previousVersion !== null) {
+        location.replace(`${location.pathname}${location.search}${location.hash}`);
+        return true;
+      }
+    }
+  } catch (error) {
+    console.warn('Impossibile aggiornare il marker di versione locale.', error);
+  }
+
+  return false;
+}
+
 async function init() {
+  if (enforceVersionRefresh()) return;
+
   const entries = await Promise.all(
     Object.entries(DATA_FILES).map(async ([key, file]) => {
-      const res = await fetch(file);
+      const res = await fetch(withVersion(file), { cache: 'no-store' });
       const data = await res.json();
       return [key, normalizeDataset(key, data)];
     })
