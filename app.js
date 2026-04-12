@@ -1,5 +1,5 @@
 
-const APP_VERSION = '2.3.7.2';
+const APP_VERSION = '2.3.8';
 const BUILD_DATE = '2026-04-12';
 const FAVORITES_KEY = 'dnd-reference-favorites';
 const APP_VERSION_KEY = 'dnd-reference-app-version';
@@ -475,13 +475,13 @@ function renderListPage(kind) {
 
 function getAvailableFilters(kind, items) {
   if (kind === 'equipment') {
-    return { oneLabel: 'Filtro 1', twoLabel: 'Filtro 2', one: uniqueValues(items.map(i => i.category)), two: uniqueValues(items.map(i => i.subcategory)) };
+    return { oneLabel: 'Tag', twoLabel: 'Tipo', one: uniqueValues(items.map(i => i.category)), two: uniqueValues(items.map(i => i.subcategory)) };
   }
   if (kind === 'monsters') {
-    return { oneLabel: 'Filtro 1', twoLabel: 'Filtro 2', one: uniqueValues(items.map(i => i.type)), two: uniqueValues(items.map(i => String(i.cr ?? ''))) };
+    return { oneLabel: 'Tipo', twoLabel: 'Sfida', one: uniqueValues(items.map(i => i.type)), two: uniqueValues(items.map(i => String(i.cr ?? ''))) };
   }
   if (kind === 'magicItems') {
-    return { oneLabel: 'Filtro 1', twoLabel: 'Filtro 2', one: uniqueValues(items.map(i => i.rarity)), two: uniqueValues(items.map(i => i.type)) };
+    return { oneLabel: 'Rarità', twoLabel: 'Tipo', one: uniqueValues(items.map(i => i.rarity)), two: uniqueValues(items.map(i => i.type)) };
   }
   if (kind === 'spells') {
     return {
