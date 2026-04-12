@@ -478,9 +478,15 @@ function getAvailableFilters(kind, items) {
     return { oneLabel: 'Tag', twoLabel: 'Tipo', one: uniqueValues(items.map(i => i.category)), two: uniqueValues(items.map(i => i.subcategory)) };
   }
   if (kind === 'monsters') {
-    return { oneLabel: 'Tipo', twoLabel: 'Sfida', one: uniqueValues(items.map(i => i.type)), two: uniqueValues(items.map(i => String(i.cr ?? ''))) };
-  }
-  if (kind === 'magicItems') {
+  return {
+    oneLabel: 'Tipo',
+    twoLabel: 'Sfida',
+    one: uniqueValues(items.map(i => i.type)),
+    two: uniqueValues(items.map(i => String(i.cr ?? '')), 'cr')
+  };
+}
+	
+	if (kind === 'magicItems') {
     return { oneLabel: 'Rarità', twoLabel: 'Tipo', one: uniqueValues(items.map(i => i.rarity)), two: uniqueValues(items.map(i => i.type)) };
   }
   if (kind === 'spells') {
@@ -1044,9 +1050,38 @@ function spellLevelLabel(level) {
   return n === 0 ? 'Trucchetto' : `${n}° livello`;
 }
 
-function uniqueValues(values) {
-  return [...new Set(values.filter(v => hasValue(v)).map(v => String(v)))].sort((a, b) => a.localeCompare(b, 'it', { sensitivity: 'base' }));
+
+
+
+function parseChallengeRating(value) {
+  const s = String(value ?? '').trim();
+  if (!s) return Number.POSITIVE_INFINITY;
+
+  if (s.includes('/')) {
+    const [num, den] = s.split('/').map(Number);
+    if (!Number.isNaN(num) && !Number.isNaN(den) && den !== 0) {
+      return num / den;
+    }
+  }
+
+  const n = Number(s);
+  return Number.isNaN(n) ? Number.POSITIVE_INFINITY : n;
 }
+
+function uniqueValues(values, mode = 'alpha') {
+  const result = [...new Set(values.filter(v => hasValue(v)).map(v => String(v)))];
+
+  if (mode === 'cr') {
+    return result.sort((a, b) => parseChallengeRating(a) - parseChallengeRating(b));
+  }
+
+  return result.sort((a, b) => a.localeCompare(b, 'it', { sensitivity: 'base' }));
+}
+
+
+
+
+
 
 function joinList(value) {
   if (!value || (Array.isArray(value) && !value.length)) return '';
