@@ -48,7 +48,7 @@
 
       appState.data.monsters = normalizeArray(monsters);
       appState.data.spells = normalizeArray(spells);
-      appState.data.magic_items = normalizeArray(magicItems);
+      appState.data.magic_items = normalizeArray(magicItems).map(normalizeMagicItem);
       appState.monsterImages = parseMonsterImages(monsterImageYaml);
       renderRoute();
     } catch (error) {
@@ -71,6 +71,27 @@
 
   function normalizeArray(value) {
     return Array.isArray(value) ? value : [];
+  }
+
+  function normalizeMagicItem(item) {
+    return { ...item, rarita: normalizeMagicItemRarity(item.rarita) };
+  }
+
+  function normalizeMagicItemRarity(rarity) {
+    const text = String(rarity || '').trim().toLowerCase();
+    if (!text) return '';
+    if (text.includes(',') || text.includes(' o ') || text.includes('variabile')) return 'rarità variabile';
+
+    const canonicalRarities = {
+      raro: 'rara',
+      rara: 'rara',
+      'molto raro': 'molto rara',
+      'molto rara': 'molto rara',
+      leggendario: 'leggendaria',
+      leggendaria: 'leggendaria',
+    };
+
+    return canonicalRarities[text] || text;
   }
 
   /* Parser YAML minimale per config.yml: supporta blocchi a due livelli con valori scalari. */
