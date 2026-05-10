@@ -114,17 +114,17 @@ Criteri di accettazione:
 
 Scopo: offrire uno strumento sempre disponibile per tiri liberi.
 
-- [ ] Aggiungere input libero per formule.
-- [ ] Validare formula prima del tiro.
-- [ ] Supportare storico sessione.
-- [ ] Supportare scorciatoie rapide: d4, d6, d8, d10, d12, d20, d100.
+- [x] Aggiungere input libero per formule.
+- [x] Validare formula prima del tiro.
+- [x] Supportare storico sessione.
+- [x] Supportare scorciatoie rapide: d4, d6, d8, d10, d12, d20, d100.
 - [ ] Valutare sintassi avanzata: `2d20kh1`, `2d20kl1`, `4d6dl1`.
 
 Criteri di accettazione:
 
-- [ ] L'utente puo tirare una formula anche fuori dalle schede.
-- [ ] Gli errori di sintassi sono chiari e non tecnici.
-- [ ] Il tray non copre contenuto essenziale su mobile.
+- [x] L'utente puo tirare una formula anche fuori dalle schede.
+- [x] Gli errori di sintassi sono chiari e non tecnici.
+- [x] Il tray non copre contenuto essenziale su mobile.
 
 ### Fase 5 - Dati Strutturati
 

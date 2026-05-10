@@ -49,8 +49,11 @@
     // Se true mostra solo gli elementi preferiti.
     showOnlyFavorites: false,
 
-    // Storico breve dei tiri effettuati nella scheda corrente.
+    // Storico breve dei tiri effettuati durante la sessione.
     rollHistory: [],
+
+    // Messaggio di validazione per il dice tray globale.
+    rollError: '',
   };
 
   /*
@@ -109,6 +112,9 @@
    */
   async function init() {
     showLoading();
+    renderRollTray();
+    document.addEventListener('click', handleRollCommand);
+    document.addEventListener('submit', handleRollSubmit);
 
     try {
       // Carica config.yml.
@@ -706,7 +712,6 @@
     }
 
     setView('detail');
-    appState.rollHistory = [];
 
     const previousNext = getSiblingLinks(section, id);
 
@@ -723,8 +728,6 @@
       <article class="detail-card detail-card--flat">
         ${renderDetailContent(section, item)}
       </article>
-
-      ${renderRollTray()}
     `;
 
     /*
@@ -736,14 +739,12 @@
       renderDetail(section, id);
     });
 
-    views.detail.removeEventListener('click', handleDetailClick);
-    views.detail.addEventListener('click', handleDetailClick);
   }
 
   /*
-   * Gestisce i comandi interattivi della scheda di dettaglio.
+   * Gestisce tutti i comandi del dice roller, inclusi quelli inline.
    */
-  function handleDetailClick(event) {
+  function handleRollCommand(event) {
     const attackButton = event.target.closest('[data-attack-roll]');
 
     if (attackButton) {
@@ -786,8 +787,45 @@
 
     if (event.target.closest('[data-roll-clear]')) {
       appState.rollHistory = [];
+      appState.rollError = '';
+      renderRollTray();
+      return;
+    }
+
+    const quickButton = event.target.closest('[data-quick-roll]');
+
+    if (quickButton) {
+      const parsed = parseDiceFormula(quickButton.getAttribute('data-quick-roll'));
+
+      if (!parsed) return;
+
+      appState.rollError = '';
+      addRollResult(rollDice(parsed));
       renderRollTray();
     }
+  }
+
+  /*
+   * Gestisce l'input libero del dice tray globale.
+   */
+  function handleRollSubmit(event) {
+    const form = event.target.closest('#roll-tray-form');
+    if (!form) return;
+
+    event.preventDefault();
+
+    const input = form.querySelector('#roll-tray-input');
+    const parsed = parseDiceFormula(input?.value || '');
+
+    if (!parsed) {
+      appState.rollError = 'Formula non valida. Usa esempi come 1d20 + 5 o 2d6.';
+      renderRollTray();
+      return;
+    }
+
+    appState.rollError = '';
+    addRollResult(rollDice(parsed));
+    renderRollTray();
   }
 
   /*
@@ -1198,14 +1236,15 @@
    */
   function renderRollTray() {
     const markup = rollTrayMarkup();
-    const existing = views.detail.querySelector('#roll-tray');
+    const existing = document.querySelector('#roll-tray');
 
     if (existing) {
       existing.outerHTML = markup;
       return '';
     }
 
-    return markup;
+    document.body.insertAdjacentHTML('beforeend', markup);
+    return '';
   }
 
   /*
@@ -1223,6 +1262,30 @@
             : ''
           }
         </div>
+
+        <form id="roll-tray-form" class="roll-form">
+          <label class="visually-hidden" for="roll-tray-input">Formula di dado</label>
+          <input
+            id="roll-tray-input"
+            class="roll-input"
+            type="text"
+            inputmode="text"
+            autocomplete="off"
+            placeholder="1d20 + 5"
+            aria-describedby="roll-tray-help"
+          >
+          <button class="button button--primary roll-submit" type="submit">Tira</button>
+        </form>
+
+        <div class="quick-dice" aria-label="Dadi rapidi">
+          ${[4, 6, 8, 10, 12, 20, 100].map((faces) => `
+            <button type="button" data-quick-roll="1d${faces}">d${faces}</button>
+          `).join('')}
+        </div>
+
+        <p id="roll-tray-help" class="${appState.rollError ? 'roll-error' : 'roll-help'}">
+          ${escapeHtml(appState.rollError || 'Formula libera: d20, 2d6 + 3, 4d10-2.')}
+        </p>
 
         ${lastRoll
           ? `

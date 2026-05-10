@@ -21,10 +21,23 @@ body {
   margin: 0;
   color: var(--ink);
   background: radial-gradient(circle at top, #fff8ef 0, var(--bg) 48rem);
+  padding-bottom: 13.5rem;
 }
 
 a { color: inherit; }
 button, input { font: inherit; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 /* Link per saltare direttamente al contenuto, utile per accessibilità */
 .skip-link {
@@ -528,13 +541,17 @@ h1 {
 
 /* Pannello del dice roller */
 .roll-tray {
-  position: sticky;
+  position: fixed;
+  left: 50%;
+  right: auto;
   bottom: .75rem;
-  z-index: 4;
-  margin-top: 1rem;
+  transform: translateX(-50%);
+  z-index: 8;
+  width: min(42rem, calc(100vw - 1.4rem));
   border: 1px solid rgba(217,199,179,.9);
   border-radius: 14px;
   background: rgba(255,250,242,.95);
+  backdrop-filter: blur(10px);
   box-shadow: var(--shadow);
   padding: .65rem;
 }
@@ -556,10 +573,71 @@ h1 {
   font-size: .82rem;
 }
 
+.roll-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .35rem;
+  margin-top: .45rem;
+}
+
+.roll-input {
+  min-width: 0;
+  min-height: 2.2rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fffaf2;
+  color: var(--ink);
+  padding: 0 .7rem;
+}
+
+.roll-submit {
+  min-height: 2.2rem;
+}
+
+.quick-dice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem;
+  margin-top: .4rem;
+}
+
+.quick-dice button {
+  border: 1px solid rgba(138,63,35,.36);
+  background: rgba(255,255,255,.45);
+  color: var(--accent);
+  border-radius: 999px;
+  min-height: 1.65rem;
+  padding: 0 .48rem;
+  font-size: .82rem;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.quick-dice button:hover,
+.quick-dice button:focus-visible {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
 .roll-empty {
   margin: .35rem 0 0;
   color: var(--muted);
   font-size: .88rem;
+}
+
+.roll-help,
+.roll-error {
+  margin: .32rem 0 0;
+  font-size: .8rem;
+}
+
+.roll-help {
+  color: var(--muted);
+}
+
+.roll-error {
+  color: #a53728;
+  font-weight: 760;
 }
 
 .roll-result {
@@ -651,6 +729,10 @@ code {
 @media (max-width: 720px) {
   .site-header { padding-top: .9rem; }
 
+  body {
+    padding-bottom: 15.5rem;
+  }
+
   .app-shell {
     padding-left: .7rem;
     padding-right: .7rem;
@@ -727,8 +809,17 @@ code {
   }
 
   .roll-tray {
+    width: calc(100vw - .9rem);
     bottom: .45rem;
     padding: .55rem;
+  }
+
+  .roll-form {
+    grid-template-columns: 1fr;
+  }
+
+  .roll-submit {
+    width: 100%;
   }
 
   .roll-result {
