@@ -4,12 +4,12 @@ Obiettivo: introdurre un dice roller leggero, affidabile e progressivo per mostr
 
 ## Principi Architetturali
 
-- [ ] Mantenere il parser piccolo, puro e testabile: input stringa, output token strutturati.
-- [ ] Non mescolare parsing, rendering e generazione casuale.
-- [ ] Evitare dipendenze finche la sintassi resta gestibile con codice locale.
-- [ ] Rendere i roll cliccabili dove gia appaiono nel testo, senza cambiare il contenuto SRD.
-- [ ] Conservare sempre il testo originale, anche quando viene arricchito con bottoni.
-- [ ] Gestire errori e casi ambigui senza bloccare la scheda.
+- [x] Mantenere il parser piccolo, puro e testabile: input stringa, output token strutturati.
+- [x] Non mescolare parsing, rendering e generazione casuale.
+- [x] Evitare dipendenze finche la sintassi resta gestibile con codice locale.
+- [x] Rendere i roll cliccabili dove gia appaiono nel testo, senza cambiare il contenuto SRD.
+- [x] Conservare sempre il testo originale, anche quando viene arricchito con bottoni.
+- [x] Gestire errori e casi ambigui senza bloccare la scheda.
 - [ ] Preparare estensioni future per vantaggio, svantaggio, critici, scaling e storico.
 
 ## Componenti
@@ -18,45 +18,45 @@ Obiettivo: introdurre un dice roller leggero, affidabile e progressivo per mostr
 
 Responsabilita: trovare formule di dado nel testo e restituire token.
 
-- [ ] Riconoscere formule base: `d20`, `1d8`, `2d6 + 3`, `4d10-2`.
-- [ ] Supportare spazi opzionali attorno agli operatori.
-- [ ] Supportare piu formule nella stessa descrizione.
-- [ ] Ignorare falsi positivi comuni come intervalli `01-20` e date/pagine.
-- [ ] Restituire posizione nel testo: `start`, `end`, `raw`.
-- [ ] Restituire parti normalizzate: `count`, `faces`, `modifier`.
-- [ ] Definire un limite ragionevole: massimo dadi, massimo facce, massimo modifier.
+- [x] Riconoscere formule base: `d20`, `1d8`, `2d6 + 3`, `4d10-2`.
+- [x] Supportare spazi opzionali attorno agli operatori.
+- [x] Supportare piu formule nella stessa descrizione.
+- [x] Ignorare falsi positivi comuni come intervalli `01-20` e date/pagine.
+- [x] Restituire posizione nel testo: `start`, `end`, `raw`.
+- [x] Restituire parti normalizzate: `count`, `faces`, `modifier`.
+- [x] Definire un limite ragionevole: massimo dadi, massimo facce, massimo modifier.
 
 ### Roller
 
 Responsabilita: eseguire una formula gia parsata.
 
-- [ ] Usare `crypto.getRandomValues` quando disponibile.
-- [ ] Avere fallback a `Math.random` solo se necessario.
-- [ ] Restituire breakdown completo dei singoli dadi.
-- [ ] Restituire totale, modifier e formula normalizzata.
-- [ ] Non toccare DOM o stato globale.
+- [x] Usare `crypto.getRandomValues` quando disponibile.
+- [x] Avere fallback a `Math.random` solo se necessario.
+- [x] Restituire breakdown completo dei singoli dadi.
+- [x] Restituire totale, modifier e formula normalizzata.
+- [x] Non toccare DOM o stato globale.
 
 ### Renderer Inline
 
 Responsabilita: trasformare testo formattato in HTML sicuro con roll cliccabili.
 
-- [ ] Integrare il parser dentro `formatInline` o in un nuovo wrapper dedicato.
-- [ ] Continuare a fare escape HTML prima di inserire markup.
-- [ ] Evitare di rompere grassetto e corsivo esistenti.
-- [ ] Rendere i dadi come button inline accessibili.
-- [ ] Aggiungere `aria-label` con formula e azione.
-- [ ] Non rendere cliccabili formule dentro tabelle percentuali tipo `1d100` se usate come intestazioni, almeno nel primo passaggio.
+- [x] Integrare il parser dentro `formatInline` o in un nuovo wrapper dedicato.
+- [x] Continuare a fare escape HTML prima di inserire markup.
+- [x] Evitare di rompere grassetto e corsivo esistenti.
+- [x] Rendere i dadi come button inline accessibili.
+- [x] Aggiungere `aria-label` con formula e azione.
+- [x] Non rendere cliccabili formule dentro tabelle percentuali tipo `1d100` se usate come intestazioni, almeno nel primo passaggio.
 
 ### UI Risultati
 
 Responsabilita: mostrare il risultato del tiro.
 
-- [ ] Creare un pannello compatto in dettaglio scheda o globale.
-- [ ] Mostrare formula, totale e breakdown.
+- [x] Creare un pannello compatto in dettaglio scheda o globale.
+- [x] Mostrare formula, totale e breakdown.
 - [ ] Evidenziare d20 naturale, critico e fallimento critico dove applicabile.
-- [ ] Permettere chiusura del pannello.
-- [ ] Tenere uno storico breve in memoria durante la sessione.
-- [ ] Non usare localStorage per lo storico nella prima versione.
+- [x] Permettere chiusura del pannello.
+- [x] Tenere uno storico breve in memoria durante la sessione.
+- [x] Non usare localStorage per lo storico nella prima versione.
 
 ## Fasi
 
@@ -64,19 +64,19 @@ Responsabilita: mostrare il risultato del tiro.
 
 Scopo: cliccare una formula di dado nelle descrizioni e ottenere un risultato leggibile.
 
-- [ ] Creare funzioni pure: `parseDiceFormula`, `findDiceFormulas`, `rollDice`.
-- [ ] Aggiungere bottoni inline per formule nelle descrizioni di mostri, incantesimi e oggetti.
-- [ ] Aggiungere pannello risultato minimale.
+- [x] Creare funzioni pure: `parseDiceFormula`, `findDiceFormulas`, `rollDice`.
+- [x] Aggiungere bottoni inline per formule nelle descrizioni di mostri, incantesimi e oggetti.
+- [x] Aggiungere pannello risultato minimale.
 - [ ] Coprire i casi base con test manuali da console o fixture locali.
 - [ ] Verificare su mobile che i bottoni inline non rompano il layout.
 
 Criteri di accettazione:
 
-- [ ] `2d6 + 3` viene riconosciuto e tirato.
-- [ ] `1d20 + 7` viene riconosciuto e tirato.
-- [ ] Le descrizioni senza dadi restano identiche.
+- [x] `2d6 + 3` viene riconosciuto e tirato.
+- [x] `1d20 + 7` viene riconosciuto e tirato.
+- [x] Le descrizioni senza dadi restano identiche.
 - [ ] Le tabelle SRD restano leggibili.
-- [ ] Nessun HTML non sicuro viene introdotto dal testo sorgente.
+- [x] Nessun HTML non sicuro viene introdotto dal testo sorgente.
 
 ### Fase 2 - Attacchi Mostri
 
@@ -152,9 +152,9 @@ Criteri di accettazione:
 
 ## Primo Task Raccomandato
 
-- [ ] Implementare parser e roller puri in `assets/js/app.js`, dietro funzioni isolate.
-- [ ] Aggiungere renderer inline dei dadi solo per descrizioni, tratti e azioni.
-- [ ] Aggiungere pannello risultato minimale nella scheda dettaglio.
+- [x] Implementare parser e roller puri in `assets/js/app.js`, dietro funzioni isolate.
+- [x] Aggiungere renderer inline dei dadi solo per descrizioni, tratti e azioni.
+- [x] Aggiungere pannello risultato minimale nella scheda dettaglio.
 - [ ] Verificare manualmente con:
   - [ ] un mostro con attacco e danni
   - [ ] un incantesimo con danno

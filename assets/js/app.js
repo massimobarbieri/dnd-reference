@@ -48,6 +48,20 @@
 
     // Se true mostra solo gli elementi preferiti.
     showOnlyFavorites: false,
+
+    // Storico breve dei tiri effettuati nella scheda corrente.
+    rollHistory: [],
+  };
+
+  /*
+   * Limiti del dice roller leggero.
+   * Evitano input accidentali o troppo grandi per un uso al tavolo.
+   */
+  const DICE_LIMITS = {
+    maxDice: 100,
+    maxFaces: 1000,
+    maxModifier: 10000,
+    historySize: 6,
   };
 
   /*
@@ -692,6 +706,7 @@
     }
 
     setView('detail');
+    appState.rollHistory = [];
 
     const previousNext = getSiblingLinks(section, id);
 
@@ -708,6 +723,8 @@
       <article class="detail-card detail-card--flat">
         ${renderDetailContent(section, item)}
       </article>
+
+      ${renderRollTray()}
     `;
 
     /*
@@ -718,6 +735,32 @@
       toggleFavorite(section, item.id);
       renderDetail(section, id);
     });
+
+    views.detail.removeEventListener('click', handleDetailClick);
+    views.detail.addEventListener('click', handleDetailClick);
+  }
+
+  /*
+   * Gestisce i comandi interattivi della scheda di dettaglio.
+   */
+  function handleDetailClick(event) {
+    const rollButton = event.target.closest('[data-dice-roll]');
+
+    if (rollButton) {
+      const formula = rollButton.getAttribute('data-dice-roll');
+      const parsed = parseDiceFormula(formula);
+
+      if (!parsed) return;
+
+      addRollResult(rollDice(parsed));
+      renderRollTray();
+      return;
+    }
+
+    if (event.target.closest('[data-roll-clear]')) {
+      appState.rollHistory = [];
+      renderRollTray();
+    }
   }
 
   /*
@@ -1065,7 +1108,7 @@
             ${visibleRows
               .map((row) => `
                 <tr>
-                  <th scope="row">${formatInline(row.chiave || '')}</th>
+                  <th scope="row">${formatInline(row.chiave || '', { dice: false })}</th>
                   <td>${formatInline(row.valore || '')}</td>
                 </tr>
               `)
@@ -1074,6 +1117,87 @@
         </table>
       </div>
     `;
+  }
+
+  /*
+   * Renderizza o aggiorna il pannello dei risultati dei tiri.
+   */
+  function renderRollTray() {
+    const markup = rollTrayMarkup();
+    const existing = views.detail.querySelector('#roll-tray');
+
+    if (existing) {
+      existing.outerHTML = markup;
+      return '';
+    }
+
+    return markup;
+  }
+
+  /*
+   * Crea il markup del pannello dice roller.
+   */
+  function rollTrayMarkup() {
+    const lastRoll = appState.rollHistory[0];
+
+    return `
+      <aside id="roll-tray" class="roll-tray" aria-live="polite">
+        <div class="roll-tray-header">
+          <strong>Dice roller</strong>
+          ${appState.rollHistory.length
+            ? '<button class="button button--ghost roll-clear" type="button" data-roll-clear>Svuota</button>'
+            : ''
+          }
+        </div>
+
+        ${lastRoll
+          ? `
+            <div class="roll-result">
+              <span class="roll-formula">${escapeHtml(lastRoll.formula)}</span>
+              <strong class="roll-total">${escapeHtml(String(lastRoll.total))}</strong>
+              <span class="roll-breakdown">${escapeHtml(formatRollBreakdown(lastRoll))}</span>
+            </div>
+
+            ${appState.rollHistory.length > 1
+              ? `
+                <ol class="roll-history">
+                  ${appState.rollHistory.slice(1).map((roll) => `
+                    <li>
+                      <span>${escapeHtml(roll.formula)}</span>
+                      <strong>${escapeHtml(String(roll.total))}</strong>
+                    </li>
+                  `).join('')}
+                </ol>
+              `
+              : ''
+            }
+          `
+          : '<p class="roll-empty">Clicca una formula di dado nella scheda.</p>'
+        }
+      </aside>
+    `;
+  }
+
+  /*
+   * Aggiunge un tiro allo storico breve.
+   */
+  function addRollResult(result) {
+    appState.rollHistory = [
+      result,
+      ...appState.rollHistory,
+    ].slice(0, DICE_LIMITS.historySize);
+  }
+
+  /*
+   * Formatta il dettaglio dei dadi tirati.
+   */
+  function formatRollBreakdown(result) {
+    const dice = result.rolls.join(' + ');
+    const modifier = result.modifier
+      ? ` ${result.modifier > 0 ? '+' : '-'} ${Math.abs(result.modifier)}`
+      : '';
+
+    return `${dice}${modifier}`;
   }
 
   /*
@@ -1115,6 +1239,123 @@
     if (spell.livello === 0) return 'Trucchetto';
     if (spell.livello === null || spell.livello === undefined) return '';
     return `${spell.livello}° livello`;
+  }
+
+  /*
+   * Converte una formula testuale in parti strutturate.
+   * Sintassi supportata: d20, 1d8, 2d6 + 3, 4d10-2.
+   */
+  function parseDiceFormula(formula) {
+    const text = String(formula || '').trim();
+    const match = text.match(/^(\d*)d(\d+)(?:\s*([+-])\s*(\d+))?$/i);
+
+    if (!match) return null;
+
+    const count = match[1] ? Number(match[1]) : 1;
+    const faces = Number(match[2]);
+    const modifierValue = match[4] ? Number(match[4]) : 0;
+    const modifier = match[3] === '-' ? -modifierValue : modifierValue;
+
+    if (
+      count < 1 ||
+      faces < 2 ||
+      count > DICE_LIMITS.maxDice ||
+      faces > DICE_LIMITS.maxFaces ||
+      Math.abs(modifier) > DICE_LIMITS.maxModifier
+    ) {
+      return null;
+    }
+
+    return {
+      raw: text,
+      count,
+      faces,
+      modifier,
+      formula: formatDiceFormula(count, faces, modifier),
+    };
+  }
+
+  /*
+   * Trova formule dado all'interno di un testo.
+   */
+  function findDiceFormulas(text) {
+    const value = String(text || '');
+    const pattern = /\b(\d*d\d+(?:\s*[+-]\s*\d+)?)\b/gi;
+    const tokens = [];
+    let match;
+
+    while ((match = pattern.exec(value)) !== null) {
+      const parsed = parseDiceFormula(match[1]);
+
+      if (!parsed || isLikelyTableDie(value, match.index, match[1])) continue;
+
+      tokens.push({
+        ...parsed,
+        start: match.index,
+        end: match.index + match[1].length,
+      });
+    }
+
+    return tokens;
+  }
+
+  /*
+   * Evita di rendere cliccabili intestazioni come "1d100" a inizio riga.
+   */
+  function isLikelyTableDie(text, index, raw) {
+    const before = text.slice(0, index);
+    const lineStart = Math.max(before.lastIndexOf('\n') + 1, 0);
+    const prefix = text.slice(lineStart, index).trim();
+    const suffix = text.slice(index + raw.length, index + raw.length + 24).trim();
+
+    return !prefix && /^1d100$/i.test(raw.trim()) && /^[A-ZÀ-Ü]/.test(suffix);
+  }
+
+  /*
+   * Esegue un tiro a partire da una formula gia parsata.
+   */
+  function rollDice(parsed) {
+    const rolls = Array.from({ length: parsed.count }, () => randomInt(1, parsed.faces));
+    const subtotal = rolls.reduce((sum, value) => sum + value, 0);
+
+    return {
+      formula: parsed.formula,
+      rolls,
+      modifier: parsed.modifier,
+      total: subtotal + parsed.modifier,
+    };
+  }
+
+  /*
+   * Genera un intero casuale inclusivo.
+   */
+  function randomInt(min, max) {
+    const range = max - min + 1;
+
+    if (window.crypto?.getRandomValues) {
+      const maxUint = 0xffffffff;
+      const limit = maxUint - (maxUint % range);
+      const buffer = new Uint32Array(1);
+
+      do {
+        window.crypto.getRandomValues(buffer);
+      } while (buffer[0] >= limit);
+
+      return min + (buffer[0] % range);
+    }
+
+    return min + Math.floor(Math.random() * range);
+  }
+
+  /*
+   * Normalizza la formula per mostrarla in modo coerente.
+   */
+  function formatDiceFormula(count, faces, modifier) {
+    const dice = `${count}d${faces}`;
+
+    if (!modifier) return dice;
+
+    return `${dice} ${modifier > 0 ? '+' : '-'} ${Math.abs(modifier)}`;
   }
 
   /*
@@ -1172,7 +1413,8 @@
   }
 
   /*
-   * Formatta testo inline semplice.
+   * Formatta testo inline semplice e, quando richiesto, rende cliccabili
+   * le formule di dado riconosciute dal parser leggero.
    *
    * Supporta:
    * **grassetto**
@@ -1180,10 +1422,56 @@
    *
    * Prima esegue escapeHtml per evitare inserimento di HTML non sicuro.
    */
-  function formatInline(text) {
+  function formatInline(text, options = {}) {
+    const withDice = options.dice !== false;
+    const value = String(text);
+    const formatted = formatMarkdownInline(value);
+
+    return withDice ? enrichDiceFormulas(formatted) : formatted;
+  }
+
+  /*
+   * Applica il piccolo sottoinsieme Markdown supportato.
+   */
+  function formatMarkdownInline(text) {
     return escapeHtml(String(text))
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>');
+  }
+
+  /*
+   * Crea un bottone inline per una formula di dado.
+   */
+  function diceButton(token) {
+    return `<button class="dice-inline" type="button" data-dice-roll="${escapeAttr(token.formula)}" aria-label="Tira ${escapeAttr(token.formula)}">${escapeHtml(token.raw)}</button>`;
+  }
+
+  /*
+   * Inserisce bottoni dado nel testo gia escapato/formattato.
+   * In questa fase l'HTML contiene solo tag generati localmente.
+   */
+  function enrichDiceFormulas(html) {
+    const pattern = /\b(\d*d\d+(?:\s*[+-]\s*\d+)?)\b/gi;
+
+    return String(html).replace(pattern, (raw, formula, offset, fullText) => {
+      const parsed = parseDiceFormula(formula);
+
+      if (!parsed || isLikelyTableDie(fullText, offset, raw) || isInsideHtmlTag(fullText, offset)) {
+        return raw;
+      }
+
+      return diceButton({ ...parsed, raw });
+    });
+  }
+
+  /*
+   * Evita sostituzioni accidentali dentro tag HTML generati.
+   */
+  function isInsideHtmlTag(text, index) {
+    const lastOpen = text.lastIndexOf('<', index);
+    const lastClose = text.lastIndexOf('>', index);
+
+    return lastOpen > lastClose;
   }
 
   /*

@@ -389,6 +389,26 @@ h1 {
   font-weight: 760;
 }
 
+/* Formula di dado cliccabile dentro il testo */
+.dice-inline {
+  border: 1px solid rgba(138,63,35,.42);
+  background: rgba(234,208,189,.52);
+  color: var(--accent);
+  border-radius: .35rem;
+  padding: .02rem .24rem;
+  margin: 0 .04rem;
+  font: inherit;
+  font-weight: 760;
+  line-height: 1.15;
+  cursor: pointer;
+}
+
+.dice-inline:hover,
+.dice-inline:focus-visible {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
 /* Tabelle generate dalle sezioni JSON */
 .table-wrap {
   overflow-x: auto;
@@ -431,6 +451,87 @@ h1 {
   line-height: 1.38;
   font-size: .94rem;
   margin: .45rem 0;
+}
+
+/* Pannello del dice roller */
+.roll-tray {
+  position: sticky;
+  bottom: .75rem;
+  z-index: 4;
+  margin-top: 1rem;
+  border: 1px solid rgba(217,199,179,.9);
+  border-radius: 14px;
+  background: rgba(255,250,242,.95);
+  box-shadow: var(--shadow);
+  padding: .65rem;
+}
+
+.roll-tray-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+}
+
+.roll-tray-header strong {
+  color: var(--accent);
+}
+
+.roll-clear {
+  min-height: 2rem;
+  padding: 0 .55rem;
+  font-size: .82rem;
+}
+
+.roll-empty {
+  margin: .35rem 0 0;
+  color: var(--muted);
+  font-size: .88rem;
+}
+
+.roll-result {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: .45rem;
+  align-items: baseline;
+  margin-top: .45rem;
+}
+
+.roll-formula {
+  font-weight: 760;
+}
+
+.roll-total {
+  color: var(--accent);
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.roll-breakdown {
+  color: var(--muted);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: .88rem;
+}
+
+.roll-history {
+  list-style: none;
+  padding: .45rem 0 0;
+  margin: .45rem 0 0;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: .2rem;
+  font-size: .86rem;
+}
+
+.roll-history li {
+  display: flex;
+  justify-content: space-between;
+  gap: .6rem;
+}
+
+.roll-history span {
+  color: var(--muted);
 }
 
 /* Box per stati vuoti o messaggi */
@@ -531,6 +632,19 @@ code {
 
   .content-section {
     margin-top: .62rem;
+  }
+
+  .roll-tray {
+    bottom: .45rem;
+    padding: .55rem;
+  }
+
+  .roll-result {
+    grid-template-columns: auto auto;
+  }
+
+  .roll-breakdown {
+    grid-column: 1 / -1;
   }
 
   .data-table {
