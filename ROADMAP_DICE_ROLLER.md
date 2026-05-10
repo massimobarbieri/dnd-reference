@@ -10,7 +10,7 @@ Obiettivo: introdurre un dice roller leggero, affidabile e progressivo per mostr
 - [x] Rendere i roll cliccabili dove gia appaiono nel testo, senza cambiare il contenuto SRD.
 - [x] Conservare sempre il testo originale, anche quando viene arricchito con bottoni.
 - [x] Gestire errori e casi ambigui senza bloccare la scheda.
-- [ ] Preparare estensioni future per vantaggio, svantaggio, critici, scaling e storico.
+- [x] Preparare estensioni future per vantaggio, svantaggio, critici, scaling e storico.
 
 ## Componenti
 
@@ -118,7 +118,7 @@ Scopo: offrire uno strumento sempre disponibile per tiri liberi.
 - [x] Validare formula prima del tiro.
 - [x] Supportare storico sessione.
 - [x] Supportare scorciatoie rapide: d4, d6, d8, d10, d12, d20, d100.
-- [ ] Valutare sintassi avanzata: `2d20kh1`, `2d20kl1`, `4d6dl1`.
+- [x] Valutare sintassi avanzata: `2d20kh1`, `2d20kl1`, `4d6dl1`.
 
 Criteri di accettazione:
 

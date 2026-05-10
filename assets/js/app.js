@@ -1317,7 +1317,7 @@
           </div>
 
           <p id="roll-tray-help" class="${appState.rollError ? 'roll-error' : 'roll-help'}">
-            ${escapeHtml(appState.rollError || 'Formula libera: d20, 2d6 + 3, 4d10-2.')}
+            ${escapeHtml(appState.rollError || 'Formula libera: d20, 2d6 + 3, 2d20kh1, 4d6dl1.')}
           </p>
 
           ${lastRoll
@@ -1378,11 +1378,14 @@
     }
 
     const dice = result.rolls.join(' + ');
+    const kept = result.keepMode
+      ? `; usati ${result.keptRolls.join(' + ')}`
+      : '';
     const modifier = result.modifier
       ? ` ${result.modifier > 0 ? '+' : '-'} ${Math.abs(result.modifier)}`
       : '';
 
-    return `${dice}${modifier}`;
+    return `${dice}${kept}${modifier}`;
   }
 
   /*
@@ -1409,7 +1412,7 @@
    * Riconosce i risultati basati su d20.
    */
   function isD20Roll(result) {
-    return result.kind === 'attack' || (result.rolls?.length === 1 && result.formula?.startsWith('1d20'));
+    return result.kind === 'attack' || result.faces === 20 || (result.rolls?.length === 1 && result.formula?.startsWith('1d20'));
   }
 
   /*
@@ -1455,18 +1458,20 @@
 
   /*
    * Converte una formula testuale in parti strutturate.
-   * Sintassi supportata: d20, 1d8, 2d6 + 3, 4d10-2.
+   * Sintassi supportata: d20, 1d8, 2d6 + 3, 4d10-2, 2d20kh1, 2d20kl1, 4d6dl1.
    */
   function parseDiceFormula(formula) {
     const text = String(formula || '').trim();
-    const match = text.match(/^(\d*)d(\d+)(?:\s*([+-])\s*(\d+))?$/i);
+    const match = text.match(/^(\d*)d(\d+)(?:(kh|kl|dl)(1))?(?:\s*([+-])\s*(\d+))?$/i);
 
     if (!match) return null;
 
     const count = match[1] ? Number(match[1]) : 1;
     const faces = Number(match[2]);
-    const modifierValue = match[4] ? Number(match[4]) : 0;
-    const modifier = match[3] === '-' ? -modifierValue : modifierValue;
+    const keepMode = match[3] ? match[3].toLowerCase() : null;
+    const keepCount = match[4] ? Number(match[4]) : null;
+    const modifierValue = match[6] ? Number(match[6]) : 0;
+    const modifier = match[5] === '-' ? -modifierValue : modifierValue;
 
     if (
       count < 1 ||
@@ -1478,12 +1483,16 @@
       return null;
     }
 
+    if (keepMode && !isValidKeepMode(count, keepMode, keepCount)) return null;
+
     return {
       raw: text,
       count,
       faces,
       modifier,
-      formula: formatDiceFormula(count, faces, modifier),
+      keepMode,
+      keepCount,
+      formula: formatDiceFormula(count, faces, modifier, keepMode, keepCount),
     };
   }
 
@@ -1492,7 +1501,7 @@
    */
   function findDiceFormulas(text) {
     const value = String(text || '');
-    const pattern = /\b(\d*d\d+(?:\s*[+-]\s*\d+)?)\b/gi;
+    const pattern = /\b(\d*d\d+(?:(?:kh|kl|dl)1)?(?:\s*[+-]\s*\d+)?)\b/gi;
     const tokens = [];
     let match;
 
@@ -1528,11 +1537,17 @@
    */
   function rollDice(parsed) {
     const rolls = Array.from({ length: parsed.count }, () => randomInt(1, parsed.faces));
-    const subtotal = rolls.reduce((sum, value) => sum + value, 0);
+    const keptRolls = selectKeptRolls(rolls, parsed.keepMode, parsed.keepCount);
+    const subtotal = keptRolls.reduce((sum, value) => sum + value, 0);
 
     return {
       formula: parsed.formula,
+      faces: parsed.faces,
       rolls,
+      keptRolls,
+      kept: keptRolls.length === 1 ? keptRolls[0] : null,
+      keepMode: parsed.keepMode,
+      keepCount: parsed.keepCount,
       modifier: parsed.modifier,
       total: subtotal + parsed.modifier,
     };
@@ -1586,12 +1601,47 @@
   /*
    * Normalizza la formula per mostrarla in modo coerente.
    */
-  function formatDiceFormula(count, faces, modifier) {
-    const dice = `${count}d${faces}`;
+  function formatDiceFormula(count, faces, modifier, keepMode = null, keepCount = null) {
+    const dice = `${count}d${faces}${keepMode ? `${keepMode}${keepCount}` : ''}`;
 
     if (!modifier) return dice;
 
     return `${dice} ${modifier > 0 ? '+' : '-'} ${Math.abs(modifier)}`;
+  }
+
+  /*
+   * Verifica che gli operatori avanzati restino nel perimetro supportato.
+   */
+  function isValidKeepMode(count, keepMode, keepCount) {
+    if (!['kh', 'kl', 'dl'].includes(keepMode)) return false;
+    if (keepCount !== 1) return false;
+    if (count < 2) return false;
+    if (keepMode === 'dl' && count < 2) return false;
+
+    return true;
+  }
+
+  /*
+   * Seleziona i dadi da sommare dopo keep/drop.
+   */
+  function selectKeptRolls(rolls, keepMode, keepCount) {
+    if (!keepMode) return rolls;
+
+    const sorted = [...rolls].sort((a, b) => a - b);
+
+    if (keepMode === 'kh') {
+      return sorted.slice(-keepCount);
+    }
+
+    if (keepMode === 'kl') {
+      return sorted.slice(0, keepCount);
+    }
+
+    if (keepMode === 'dl') {
+      return sorted.slice(keepCount);
+    }
+
+    return rolls;
   }
 
   /*
