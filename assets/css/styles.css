@@ -449,6 +449,39 @@ h1 {
   border-color: var(--accent);
 }
 
+/* Controlli per scaling degli incantesimi */
+.scaling-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .25rem;
+  margin: .35rem 0 .55rem;
+  color: var(--muted);
+  font-size: .86rem;
+}
+
+.scaling-controls span {
+  font-weight: 700;
+}
+
+.scaling-controls button {
+  border: 1px solid rgba(138,63,35,.42);
+  background: rgba(255,250,242,.88);
+  color: var(--accent);
+  border-radius: 999px;
+  min-height: 1.7rem;
+  padding: 0 .5rem;
+  font: inherit;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.scaling-controls button:hover,
+.scaling-controls button:focus-visible {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
 /* Tabelle generate dalle sezioni JSON */
 .table-wrap {
   overflow-x: auto;

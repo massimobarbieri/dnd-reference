@@ -757,6 +757,20 @@
       return;
     }
 
+    const scalingButton = event.target.closest('[data-scaling-roll]');
+
+    if (scalingButton) {
+      const formula = scalingButton.getAttribute('data-scaling-roll');
+      const multiplier = Number(scalingButton.getAttribute('data-scaling-multiplier') || '1');
+      const parsed = parseDiceFormula(formula);
+
+      if (!parsed || !Number.isFinite(multiplier) || multiplier < 1) return;
+
+      addRollResult(rollScalingDice(parsed, multiplier));
+      renderRollTray();
+      return;
+    }
+
     const rollButton = event.target.closest('[data-dice-roll]');
 
     if (rollButton) {
@@ -922,7 +936,7 @@
 
       <div class="description">${formatInline(spell.descrizione || '')}</div>
 
-      ${renderEntries('Slot superiori', spell.scaling)}
+      ${renderScalingEntries('Slot superiori', spell.scaling)}
       ${renderSections('Sezioni', spell.sezioni)}
     `;
   }
@@ -1041,6 +1055,53 @@
 
         ${content}
       </section>
+    `;
+  }
+
+  /*
+   * Renderizza gli scaling degli incantesimi con controlli extra-slot
+   * solo quando il testo descrive un incremento lineare chiaro.
+   */
+  function renderScalingEntries(title, entries) {
+    if (!Array.isArray(entries) || entries.length === 0) return '';
+
+    const content = entries.map((entry) => {
+      const scaling = parsePerSlotScaling(entry.descrizione || '');
+
+      return `
+        ${renderEntry(entry)}
+        ${scaling ? renderScalingControls(scaling) : ''}
+      `;
+    }).filter(Boolean).join('');
+
+    if (!content) return '';
+
+    return `
+      <section class="content-section">
+        <h3>${escapeHtml(title)}</h3>
+        ${content}
+      </section>
+    `;
+  }
+
+  /*
+   * Crea i bottoni rapidi per gli incrementi da slot superiori.
+   */
+  function renderScalingControls(scaling) {
+    const options = [1, 2, 3, 4];
+
+    return `
+      <div class="scaling-controls" aria-label="Tira incremento da slot superiore">
+        <span>Extra slot</span>
+        ${options.map((multiplier) => `
+          <button
+            type="button"
+            data-scaling-roll="${escapeAttr(scaling.formula)}"
+            data-scaling-multiplier="${multiplier}"
+            aria-label="Tira ${escapeAttr(scaling.formula)} per ${multiplier} slot superiori"
+          >+${multiplier}</button>
+        `).join('')}
+      </div>
     `;
   }
 
@@ -1381,6 +1442,23 @@
   }
 
   /*
+   * Tira un incremento lineare da slot superiore.
+   */
+  function rollScalingDice(parsed, multiplier) {
+    const scaled = {
+      ...parsed,
+      count: parsed.count * multiplier,
+      modifier: parsed.modifier * multiplier,
+    };
+
+    return {
+      ...rollDice(scaled),
+      kind: 'scaling',
+      formula: `${formatDiceFormula(parsed.count, parsed.faces, parsed.modifier)} × ${multiplier}`,
+    };
+  }
+
+  /*
    * Esegue un tiro per colpire con eventuale vantaggio o svantaggio.
    */
   function rollAttack(modifier, mode = 'normal') {
@@ -1434,6 +1512,23 @@
     if (!modifier) return dice;
 
     return `${dice} ${modifier > 0 ? '+' : '-'} ${Math.abs(modifier)}`;
+  }
+
+  /*
+   * Riconosce scaling lineari del tipo "1d8 per ogni slot".
+   */
+  function parsePerSlotScaling(text) {
+    const value = String(text || '');
+
+    if (!/per ogni slot/i.test(value)) return null;
+
+    const dice = findDiceFormulas(value);
+
+    if (dice.length !== 1) return null;
+
+    return {
+      formula: dice[0].formula,
+    };
   }
 
   /*

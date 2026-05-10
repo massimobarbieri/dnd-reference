@@ -98,17 +98,17 @@ Criteri di accettazione:
 
 Scopo: gestire formule in descrizioni complesse e slot superiori.
 
-- [ ] Identificare formule nelle descrizioni degli incantesimi.
-- [ ] Analizzare sezioni `scaling` per testi come `1d6 per ogni slot`.
-- [ ] Progettare UI per scegliere il livello dello slot quando applicabile.
+- [x] Identificare formule nelle descrizioni degli incantesimi.
+- [x] Analizzare sezioni `scaling` per testi come `1d6 per ogni slot`.
+- [x] Progettare UI per scegliere il livello dello slot quando applicabile.
 - [ ] Supportare danni ripetuti o multi-bersaglio senza automatismi invasivi.
 - [ ] Documentare i casi non automatizzabili.
 
 Criteri di accettazione:
 
-- [ ] Incantesimi semplici con danno diretto sono cliccabili.
-- [ ] Scaling non chiaro resta testo normale o richiede conferma utente.
-- [ ] Il parser non inventa formule non presenti.
+- [x] Incantesimi semplici con danno diretto sono cliccabili.
+- [x] Scaling non chiaro resta testo normale o richiede conferma utente.
+- [x] Il parser non inventa formule non presenti.
 
 ### Fase 4 - Dice Tray Globale
 
@@ -149,6 +149,13 @@ Criteri di accettazione:
 - [ ] Scaling incantesimi: spesso dipende da livello, turno o bersagli.
 - [ ] Accessibilita: i bottoni inline devono essere navigabili ma non invadenti.
 - [ ] Mobile: il risultato deve essere leggibile senza occupare tutta la scheda.
+
+## Casi Non Automatizzati
+
+- [x] Scaling con piu formule nella stessa frase, per esempio effetti separati su danni iniziali e successivi.
+- [x] Scaling che aumenta bersagli, durata, raggio, numero di raggi o creature evocate.
+- [x] Incantesimi che richiedono scelta del livello personaggio invece del livello slot.
+- [x] Danni ripetuti su piu turni o piu bersagli, dove il numero effettivo dipende dal tavolo.
 
 ## Primo Task Raccomandato
 
