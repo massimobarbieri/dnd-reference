@@ -762,12 +762,14 @@
 
     if (scalingButton) {
       const formula = scalingButton.getAttribute('data-scaling-roll');
-      const multiplier = Number(scalingButton.getAttribute('data-scaling-multiplier') || '1');
       const parsed = parseDiceFormula(formula);
 
-      if (!parsed || !Number.isFinite(multiplier) || multiplier < 1) return;
+      if (!parsed) return;
 
-      addRollResult(rollScalingDice(parsed, multiplier));
+      addRollResult({
+        ...rollDice(parsed),
+        kind: 'scaling',
+      });
       renderRollTray();
       return;
     }
@@ -974,7 +976,7 @@
 
       <div class="description">${formatInline(spell.descrizione || '')}</div>
 
-      ${renderScalingEntries('Slot superiori', spell.scaling)}
+      ${renderScalingEntries('Slot superiori', spell.scaling, spell)}
       ${renderSections('Sezioni', spell.sezioni)}
     `;
   }
@@ -1100,11 +1102,11 @@
    * Renderizza gli scaling degli incantesimi con controlli extra-slot
    * solo quando il testo descrive un incremento lineare chiaro.
    */
-  function renderScalingEntries(title, entries) {
+  function renderScalingEntries(title, entries, spell) {
     if (!Array.isArray(entries) || entries.length === 0) return '';
 
     const content = entries.map((entry) => {
-      const scaling = parsePerSlotScaling(entry.descrizione || '');
+      const scaling = parsePerSlotScaling(entry.descrizione || '', spell);
 
       return `
         ${renderEntry(entry)}
@@ -1129,14 +1131,13 @@
     const options = [1, 2, 3, 4];
 
     return `
-      <div class="scaling-controls" aria-label="Tira incremento da slot superiore">
-        <span>Extra slot</span>
+      <div class="scaling-controls" aria-label="Tira danni a slot superiore">
+        <span>Slot superiore</span>
         ${options.map((multiplier) => `
           <button
             type="button"
-            data-scaling-roll="${escapeAttr(scaling.formula)}"
-            data-scaling-multiplier="${multiplier}"
-            aria-label="Tira ${escapeAttr(scaling.formula)} per ${multiplier} slot superiori"
+            data-scaling-roll="${escapeAttr(scalingFormulaForMultiplier(scaling, multiplier))}"
+            aria-label="Tira ${escapeAttr(scalingFormulaForMultiplier(scaling, multiplier))} con slot +${multiplier}"
           >+${multiplier}</button>
         `).join('')}
       </div>
@@ -1505,23 +1506,6 @@
   }
 
   /*
-   * Tira un incremento lineare da slot superiore.
-   */
-  function rollScalingDice(parsed, multiplier) {
-    const scaled = {
-      ...parsed,
-      count: parsed.count * multiplier,
-      modifier: parsed.modifier * multiplier,
-    };
-
-    return {
-      ...rollDice(scaled),
-      kind: 'scaling',
-      formula: `${formatDiceFormula(parsed.count, parsed.faces, parsed.modifier)} × ${multiplier}`,
-    };
-  }
-
-  /*
    * Esegue un tiro per colpire con eventuale vantaggio o svantaggio.
    */
   function rollAttack(modifier, mode = 'normal') {
@@ -1579,8 +1563,9 @@
 
   /*
    * Riconosce scaling lineari del tipo "1d8 per ogni slot".
+   * Se trova un dado base compatibile nella descrizione, prepara il totale.
    */
-  function parsePerSlotScaling(text) {
+  function parsePerSlotScaling(text, spell) {
     const value = String(text || '');
 
     if (!/per ogni slot/i.test(value)) return null;
@@ -1589,9 +1574,29 @@
 
     if (dice.length !== 1) return null;
 
+    const increment = dice[0];
+    const baseDice = findDiceFormulas(spell?.descrizione || '')
+      .filter((token) => token.faces === increment.faces && token.modifier === 0);
+
+    if (baseDice.length !== 1) return null;
+
     return {
-      formula: dice[0].formula,
+      baseCount: baseDice[0].count,
+      incrementCount: increment.count,
+      faces: increment.faces,
+      modifier: 0,
     };
+  }
+
+  /*
+   * Formula totale per uno slot lanciato N livelli sopra quello base.
+   */
+  function scalingFormulaForMultiplier(scaling, multiplier) {
+    return formatDiceFormula(
+      scaling.baseCount + (scaling.incrementCount * multiplier),
+      scaling.faces,
+      scaling.modifier
+    );
   }
 
   /*
