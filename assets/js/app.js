@@ -13,6 +13,7 @@
     favorites: loadFavorites(),
     currentSection: null,
     searchTerm: '',
+    filters: { monsters: '', spells: '', magic_items: '' },
     showOnlyFavorites: false,
   };
 
@@ -194,6 +195,7 @@
         <div class="toolbar-row">
           <a class="button button--ghost" href="#/">Home</a>
           <input id="search-input" class="search" type="search" value="${escapeAttr(appState.searchTerm)}" placeholder="${escapeAttr(labels.search_placeholder)}" aria-label="Cerca">
+          ${filterControl(section)}
           <button id="favorites-toggle" class="button" type="button" aria-pressed="${appState.showOnlyFavorites}">${labels.favorites}</button>
         </div>
       </div>
@@ -206,6 +208,11 @@
 
     views.list.querySelector('#search-input').addEventListener('input', (event) => {
       appState.searchTerm = event.target.value;
+      renderListResults(section);
+    });
+
+    views.list.querySelector('#section-filter')?.addEventListener('change', (event) => {
+      appState.filters[section] = event.target.value;
       renderListResults(section);
     });
 
@@ -233,10 +240,74 @@
 
   function getFilteredItems(section) {
     const term = normalizeText(appState.searchTerm);
+    const filter = appState.filters[section];
     return appState.data[section]
       .filter((item) => !appState.showOnlyFavorites || isFavorite(section, item.id))
+      .filter((item) => matchesSectionFilter(section, item, filter))
       .filter((item) => !term || normalizeText(searchableText(section, item)).includes(term))
       .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'it'));
+  }
+
+  function filterControl(section) {
+    const options = filterOptions(section);
+    if (!options.length) return '';
+
+    const labels = {
+      monsters: 'Tutti i GS',
+      spells: 'Tutti i livelli',
+      magic_items: 'Tutte le rarità',
+    };
+
+    return `
+      <select id="section-filter" class="filter-select" aria-label="${escapeAttr(labels[section])}">
+        <option value="">${escapeHtml(labels[section])}</option>
+        ${options.map((option) => `<option value="${escapeAttr(option.value)}"${option.value === appState.filters[section] ? ' selected' : ''}>${escapeHtml(option.label)}</option>`).join('')}
+      </select>
+    `;
+  }
+
+  function filterOptions(section) {
+    if (section === 'monsters') {
+      return uniqueValues(appState.data.monsters, 'grado_sfida')
+        .sort((a, b) => challengeRatingValue(a) - challengeRatingValue(b))
+        .map((value) => ({ value, label: `GS ${value}` }));
+    }
+
+    if (section === 'spells') {
+      return uniqueValues(appState.data.spells, 'livello')
+        .sort((a, b) => Number(a) - Number(b))
+        .map((value) => ({ value: String(value), label: spellLevel({ livello: Number(value) }) }));
+    }
+
+    return uniqueValues(appState.data.magic_items, 'rarita')
+      .sort((a, b) => a.localeCompare(b, 'it'))
+      .map((value) => ({ value, label: capitalizeFirst(value) }));
+  }
+
+  function matchesSectionFilter(section, item, filter) {
+    if (!filter) return true;
+    if (section === 'monsters') return String(item.grado_sfida || '') === filter;
+    if (section === 'spells') return String(item.livello ?? '') === filter;
+    return String(item.rarita || '') === filter;
+  }
+
+  function uniqueValues(items, key) {
+    return Array.from(new Set(items.map((item) => item[key]).filter((value) => value !== null && value !== undefined && value !== '')))
+      .map(String);
+  }
+
+  function challengeRatingValue(value) {
+    const text = String(value);
+    if (text.includes('/')) {
+      const [numerator, denominator] = text.split('/').map(Number);
+      return numerator / denominator;
+    }
+    return Number(text);
+  }
+
+  function capitalizeFirst(value) {
+    const text = String(value);
+    return text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
   }
 
   function searchableText(section, item) {
