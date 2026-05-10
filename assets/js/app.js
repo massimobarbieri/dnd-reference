@@ -60,6 +60,7 @@
   };
 
   const {
+    analyzeRollContext,
     DICE_LIMITS,
     findDiceFormulas,
     formatDiceFormula,
@@ -992,10 +993,54 @@
       ])}
 
       <div class="description">${formatInline(spell.descrizione || '')}</div>
+      ${renderRollContextNote(spell)}
 
       ${renderScalingEntries('Slot superiori', spell.scaling, spell)}
       ${renderSections('Sezioni', spell.sezioni)}
     `;
+  }
+
+  /*
+   * Segnala incantesimi con danni ripetuti o multi-bersaglio senza automatizzare.
+   */
+  function renderRollContextNote(spell) {
+    const context = analyzeRollContext(spellRollText(spell));
+
+    if (!context.notes.length) return '';
+
+    return `
+      <p class="roll-context">
+        <strong>Tiri situazionali.</strong>
+        Ripeti il tiro ${escapeHtml(context.notes.join(' e '))}, secondo il testo dell'incantesimo.
+      </p>
+    `;
+  }
+
+  /*
+   * Raccoglie il testo rilevante di un incantesimo per analisi non invasiva.
+   */
+  function spellRollText(spell) {
+    const sections = Array.isArray(spell?.sezioni) ? spell.sezioni : [];
+    const scaling = Array.isArray(spell?.scaling) ? spell.scaling : [];
+    const parts = [
+      spell?.descrizione || '',
+      ...scaling.map((entry) => `${entry?.nome || ''} ${entry?.descrizione || ''}`),
+      ...sections.flatMap((section) => [
+        section?.titolo || '',
+        section?.descrizione || '',
+        ...(Array.isArray(section?.righe)
+          ? section.righe.map((row) => `${row?.chiave || ''} ${row?.valore || ''}`)
+          : []),
+        ...(Array.isArray(section?.blocchi)
+          ? section.blocchi.map((entry) => `${entry?.nome || ''} ${entry?.descrizione || ''}`)
+          : []),
+        ...(Array.isArray(section?.voci)
+          ? section.voci.map((entry) => `${entry?.nome || ''} ${entry?.descrizione || ''}`)
+          : []),
+      ]),
+    ];
+
+    return parts.filter(Boolean).join('\n');
   }
 
   /*

@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const {
+  analyzeRollContext,
   findDiceFormulas,
   parseDiceFormula,
   rollDice,
@@ -55,6 +56,26 @@ assert.deepEqual(
 assert.deepEqual(
   findDiceFormulas('Strato rosso: 12d6 danni da fuoco.').map((token) => token.formula),
   ['12d6']
+);
+
+assert.deepEqual(
+  analyzeRollContext("Ogni creatura nell'area subisce 3d6 danni.").notes,
+  ['per ciascun bersaglio coinvolto']
+);
+
+assert.deepEqual(
+  analyzeRollContext('Alla fine di ogni suo turno, il bersaglio subisce nuovamente 4d10 danni.').notes,
+  ["quando l'effetto si ripete"]
+);
+
+assert.deepEqual(
+  analyzeRollContext("Ogni creatura subisce 2d6 danni all'inizio di ogni turno.").notes,
+  ['per ciascun bersaglio coinvolto', "quando l'effetto si ripete"]
+);
+
+assert.deepEqual(
+  analyzeRollContext('Ogni creatura vede una luce intensa.').notes,
+  []
 );
 
 const advantage = rollDice(parseDiceFormula('2d20kh1 + 3'), sequence([7, 19]));

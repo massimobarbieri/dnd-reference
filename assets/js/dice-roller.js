@@ -124,6 +124,42 @@
   }
 
   /*
+   * Rileva quando i dadi sono legati a piu bersagli o a effetti ripetuti.
+   * Non automatizza il moltiplicatore: restituisce solo contesto UI.
+   */
+  function analyzeRollContext(text) {
+    const value = String(text || '');
+
+    if (!findDiceFormulas(value).length) {
+      return {
+        hasDice: false,
+        repeated: false,
+        multipleTargets: false,
+        notes: [],
+      };
+    }
+
+    const repeated = /(?:ogni|ciascun)\s+(?:suo\s+|proprio\s+)?turno|all['’]inizio|alla fine|turni successivi|nuovamente|ripete|quando .{0,80}(?:entra|termina)/i.test(value);
+    const multipleTargets = /(?:ogni|ciascuna?|tutte le|fino a [a-zà-ù0-9]+)\s+creatur|(?:ogni|ciascun)\s+bersaglio|\bbersagli\b|creature nell['’]area/i.test(value);
+    const notes = [];
+
+    if (multipleTargets) {
+      notes.push('per ciascun bersaglio coinvolto');
+    }
+
+    if (repeated) {
+      notes.push("quando l'effetto si ripete");
+    }
+
+    return {
+      hasDice: true,
+      repeated,
+      multipleTargets,
+      notes,
+    };
+  }
+
+  /*
    * Genera un intero casuale inclusivo.
    */
   function randomInt(min, max) {
@@ -194,6 +230,7 @@
     parseDiceFormula,
     findDiceFormulas,
     rollDice,
+    analyzeRollContext,
     randomInt,
     formatDiceFormula,
     isLikelyTableDie,

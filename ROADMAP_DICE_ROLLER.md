@@ -101,7 +101,7 @@ Scopo: gestire formule in descrizioni complesse e slot superiori.
 - [x] Identificare formule nelle descrizioni degli incantesimi.
 - [x] Analizzare sezioni `scaling` per testi come `1d6 per ogni slot`.
 - [x] Progettare UI per scegliere il livello dello slot quando applicabile.
-- [ ] Supportare danni ripetuti o multi-bersaglio senza automatismi invasivi.
+- [x] Supportare danni ripetuti o multi-bersaglio senza automatismi invasivi.
 - [ ] Documentare i casi non automatizzabili.
 
 Criteri di accettazione:
