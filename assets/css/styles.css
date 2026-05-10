@@ -527,6 +527,7 @@ h1 {
   border-bottom: 1px solid rgba(217,199,179,.75);
   vertical-align: top;
   text-align: left;
+  overflow-wrap: anywhere;
 }
 
 .data-table tr:last-child th,
@@ -538,7 +539,7 @@ h1 {
   width: 9.5rem;
   color: var(--accent);
   font-weight: 760;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 /* Descrizione lunga */

@@ -196,6 +196,7 @@
     rollDice,
     randomInt,
     formatDiceFormula,
+    isLikelyTableDie,
     selectKeptRolls,
   };
 }));

@@ -75,7 +75,7 @@ Criteri di accettazione:
 - [x] `2d6 + 3` viene riconosciuto e tirato.
 - [x] `1d20 + 7` viene riconosciuto e tirato.
 - [x] Le descrizioni senza dadi restano identiche.
-- [ ] Le tabelle SRD restano leggibili.
+- [x] Le tabelle SRD restano leggibili.
 - [x] Nessun HTML non sicuro viene introdotto dal testo sorgente.
 
 ### Fase 2 - Attacchi Mostri

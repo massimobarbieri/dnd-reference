@@ -42,6 +42,21 @@ assert.deepEqual(
   ['2d6']
 );
 
+assert.deepEqual(
+  findDiceFormulas('1d100 Destinazione\n01-60 Piano nominato\n61-70 Piano Interno').map((token) => token.formula),
+  []
+);
+
+assert.deepEqual(
+  findDiceFormulas('61-70 Luogo casuale determinato dal tiro di un 1d6.').map((token) => token.formula),
+  ['1d6']
+);
+
+assert.deepEqual(
+  findDiceFormulas('Strato rosso: 12d6 danni da fuoco.').map((token) => token.formula),
+  ['12d6']
+);
+
 const advantage = rollDice(parseDiceFormula('2d20kh1 + 3'), sequence([7, 19]));
 assert.deepEqual(advantage.rolls, [7, 19]);
 assert.deepEqual(advantage.keptRolls, [19]);

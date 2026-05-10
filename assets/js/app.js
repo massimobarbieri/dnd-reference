@@ -63,6 +63,7 @@
     DICE_LIMITS,
     findDiceFormulas,
     formatDiceFormula,
+    isLikelyTableDie,
     parseDiceFormula,
     randomInt,
     rollDice,
@@ -1646,7 +1647,7 @@
    * In questa fase l'HTML contiene solo tag generati localmente.
    */
   function enrichDiceFormulas(html) {
-    const pattern = /\b(\d*d\d+(?:\s*[+-]\s*\d+)?)\b/gi;
+    const pattern = /\b(\d*d\d+(?:(?:kh|kl|dl)1)?(?:\s*[+-]\s*\d+)?)\b/gi;
 
     return String(html).replace(pattern, (raw, formula, offset, fullText) => {
       const parsed = parseDiceFormula(formula);
