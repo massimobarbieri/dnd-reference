@@ -184,7 +184,7 @@
     `;
   }
 
-  function renderList(section) {
+  function renderList(section, options = {}) {
     setView('list');
     const labels = appState.config.labels;
     const title = labels[section] || section;
@@ -208,15 +208,30 @@
       </div>
     `;
 
-    document.querySelector('#search-input').addEventListener('input', (event) => {
-      appState.searchTerm = event.target.value;
-      renderList(section);
+    const searchInput = document.querySelector('#search-input');
+    const favoritesToggle = document.querySelector('#favorites-toggle');
+
+    searchInput.addEventListener('input', (event) => {
+      const { value, selectionStart, selectionEnd } = event.target;
+      appState.searchTerm = value;
+      renderList(section, {
+        focusSearch: true,
+        selectionStart,
+        selectionEnd,
+      });
     });
 
-    document.querySelector('#favorites-toggle').addEventListener('click', () => {
+    favoritesToggle.addEventListener('click', () => {
       appState.showOnlyFavorites = !appState.showOnlyFavorites;
       renderList(section);
     });
+
+    if (options.focusSearch) {
+      searchInput.focus({ preventScroll: true });
+      const start = options.selectionStart ?? searchInput.value.length;
+      const end = options.selectionEnd ?? start;
+      searchInput.setSelectionRange(start, end);
+    }
   }
 
   function getFilteredItems(section) {
