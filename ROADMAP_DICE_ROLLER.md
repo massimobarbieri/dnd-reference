@@ -67,7 +67,7 @@ Scopo: cliccare una formula di dado nelle descrizioni e ottenere un risultato le
 - [x] Creare funzioni pure: `parseDiceFormula`, `findDiceFormulas`, `rollDice`.
 - [x] Aggiungere bottoni inline per formule nelle descrizioni di mostri, incantesimi e oggetti.
 - [x] Aggiungere pannello risultato minimale.
-- [ ] Coprire i casi base con test manuali da console o fixture locali.
+- [x] Coprire i casi base con test manuali da console o fixture locali.
 - [ ] Verificare su mobile che i bottoni inline non rompano il layout.
 
 Criteri di accettazione:

@@ -26,6 +26,12 @@ Il tuo pc diventerà un server web all'interno della tua rete locale. I tuoi ute
 
 Una volta avviata sulla tua rete locale, puoi accedere all’app da qualsiasi dispositivo collegato alla tua rete (PC, tablet o smartphone) tramite browser.
 
+## Sviluppo
+
+Per verificare le fixture del dice roller:
+
+``node tests/dice-roller.test.js``
+
 All’interno dell’app puoi:
 
 - navigare tra le categorie (incantesimi, mostri, ecc.)
