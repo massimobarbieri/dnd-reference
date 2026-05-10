@@ -54,6 +54,9 @@
 
     // Messaggio di validazione per il dice tray globale.
     rollError: '',
+
+    // Stato espanso/collassato del dice roller, utile soprattutto su mobile.
+    rollTrayOpen: false,
   };
 
   /*
@@ -745,6 +748,14 @@
    * Gestisce tutti i comandi del dice roller, inclusi quelli inline.
    */
   function handleRollCommand(event) {
+    const toggleButton = event.target.closest('[data-roll-toggle]');
+
+    if (toggleButton) {
+      appState.rollTrayOpen = !appState.rollTrayOpen;
+      renderRollTray();
+      return;
+    }
+
     const attackButton = event.target.closest('[data-attack-roll]');
 
     if (attackButton) {
@@ -754,6 +765,7 @@
       if (!Number.isFinite(modifier)) return;
 
       addRollResult(rollAttack(modifier, mode));
+      appState.rollTrayOpen = true;
       renderRollTray();
       return;
     }
@@ -770,6 +782,7 @@
         ...rollDice(parsed),
         kind: 'scaling',
       });
+      appState.rollTrayOpen = true;
       renderRollTray();
       return;
     }
@@ -783,6 +796,7 @@
       if (!parsed) return;
 
       addRollResult(rollDice(parsed));
+      appState.rollTrayOpen = true;
       renderRollTray();
       return;
     }
@@ -790,6 +804,7 @@
     if (event.target.closest('[data-roll-clear]')) {
       appState.rollHistory = [];
       appState.rollError = '';
+      appState.rollTrayOpen = false;
       renderRollTray();
       return;
     }
@@ -803,6 +818,7 @@
 
       appState.rollError = '';
       addRollResult(rollDice(parsed));
+      appState.rollTrayOpen = true;
       renderRollTray();
     }
   }
@@ -821,12 +837,14 @@
 
     if (!parsed) {
       appState.rollError = 'Formula non valida. Usa esempi come 1d20 + 5 o 2d6.';
+      appState.rollTrayOpen = true;
       renderRollTray();
       return;
     }
 
     appState.rollError = '';
     addRollResult(rollDice(parsed));
+    appState.rollTrayOpen = true;
     renderRollTray();
   }
 
@@ -1253,69 +1271,84 @@
    */
   function rollTrayMarkup() {
     const lastRoll = appState.rollHistory[0];
+    const isOpen = appState.rollTrayOpen || Boolean(appState.rollError);
 
     return `
-      <aside id="roll-tray" class="roll-tray" aria-live="polite">
+      <aside id="roll-tray" class="roll-tray${isOpen ? ' is-open' : ''}" aria-live="polite">
         <div class="roll-tray-header">
-          <strong>Dice roller</strong>
-          ${appState.rollHistory.length
-            ? '<button class="button button--ghost roll-clear" type="button" data-roll-clear>Svuota</button>'
-            : ''
-          }
-        </div>
-
-        <form id="roll-tray-form" class="roll-form">
-          <label class="visually-hidden" for="roll-tray-input">Formula di dado</label>
-          <input
-            id="roll-tray-input"
-            class="roll-input"
-            type="text"
-            inputmode="text"
-            autocomplete="off"
-            placeholder="1d20 + 5"
-            aria-describedby="roll-tray-help"
+          <button
+            class="roll-toggle"
+            type="button"
+            data-roll-toggle
+            aria-expanded="${isOpen}"
+            aria-controls="roll-tray-body"
           >
-          <button class="button button--primary roll-submit" type="submit">Tira</button>
-        </form>
+            <span>Dice roller</span>
+            ${lastRoll ? `<strong>${escapeHtml(String(lastRoll.total))}</strong>` : ''}
+          </button>
 
-        <div class="quick-dice" aria-label="Dadi rapidi">
-          ${[4, 6, 8, 10, 12, 20, 100].map((faces) => `
-            <button type="button" data-quick-roll="1d${faces}">d${faces}</button>
-          `).join('')}
-        </div>
-
-        <p id="roll-tray-help" class="${appState.rollError ? 'roll-error' : 'roll-help'}">
-          ${escapeHtml(appState.rollError || 'Formula libera: d20, 2d6 + 3, 4d10-2.')}
-        </p>
-
-        ${lastRoll
-          ? `
-            <div class="roll-result ${escapeAttr(rollResultClass(lastRoll))}">
-              <span class="roll-formula">${escapeHtml(lastRoll.formula)}</span>
-              <strong class="roll-total">${escapeHtml(String(lastRoll.total))}</strong>
-              <span class="roll-breakdown">${escapeHtml(formatRollBreakdown(lastRoll))}</span>
-              ${rollResultNote(lastRoll)
-                ? `<span class="roll-note">${escapeHtml(rollResultNote(lastRoll))}</span>`
-                : ''
-              }
-            </div>
-
-            ${appState.rollHistory.length > 1
-              ? `
-                <ol class="roll-history">
-                  ${appState.rollHistory.slice(1).map((roll) => `
-                    <li>
-                      <span>${escapeHtml(roll.formula)}</span>
-                      <strong>${escapeHtml(String(roll.total))}</strong>
-                    </li>
-                  `).join('')}
-                </ol>
-              `
+          <div class="roll-header-actions">
+            ${appState.rollHistory.length
+              ? '<button class="button button--ghost roll-clear" type="button" data-roll-clear>Svuota</button>'
               : ''
             }
-          `
-          : '<p class="roll-empty">Clicca una formula di dado nella scheda.</p>'
-        }
+          </div>
+        </div>
+
+        <div id="roll-tray-body" class="roll-tray-body">
+          <form id="roll-tray-form" class="roll-form">
+            <label class="visually-hidden" for="roll-tray-input">Formula di dado</label>
+            <input
+              id="roll-tray-input"
+              class="roll-input"
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              placeholder="1d20 + 5"
+              aria-describedby="roll-tray-help"
+            >
+            <button class="button button--primary roll-submit" type="submit">Tira</button>
+          </form>
+
+          <div class="quick-dice" aria-label="Dadi rapidi">
+            ${[4, 6, 8, 10, 12, 20, 100].map((faces) => `
+              <button type="button" data-quick-roll="1d${faces}">d${faces}</button>
+            `).join('')}
+          </div>
+
+          <p id="roll-tray-help" class="${appState.rollError ? 'roll-error' : 'roll-help'}">
+            ${escapeHtml(appState.rollError || 'Formula libera: d20, 2d6 + 3, 4d10-2.')}
+          </p>
+
+          ${lastRoll
+            ? `
+              <div class="roll-result ${escapeAttr(rollResultClass(lastRoll))}">
+                <span class="roll-formula">${escapeHtml(lastRoll.formula)}</span>
+                <strong class="roll-total">${escapeHtml(String(lastRoll.total))}</strong>
+                <span class="roll-breakdown">${escapeHtml(formatRollBreakdown(lastRoll))}</span>
+                ${rollResultNote(lastRoll)
+                  ? `<span class="roll-note">${escapeHtml(rollResultNote(lastRoll))}</span>`
+                  : ''
+                }
+              </div>
+
+              ${appState.rollHistory.length > 1
+                ? `
+                  <ol class="roll-history">
+                    ${appState.rollHistory.slice(1).map((roll) => `
+                      <li>
+                        <span>${escapeHtml(roll.formula)}</span>
+                        <strong>${escapeHtml(String(roll.total))}</strong>
+                      </li>
+                    `).join('')}
+                  </ol>
+                `
+                : ''
+              }
+            `
+            : '<p class="roll-empty">Clicca una formula di dado nella scheda.</p>'
+          }
+        </div>
       </aside>
     `;
   }

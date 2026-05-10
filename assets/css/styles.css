@@ -21,7 +21,7 @@ body {
   margin: 0;
   color: var(--ink);
   background: radial-gradient(circle at top, #fff8ef 0, var(--bg) 48rem);
-  padding-bottom: 10.5rem;
+  padding-bottom: 4.8rem;
 }
 
 a { color: inherit; }
@@ -565,14 +565,54 @@ h1 {
   gap: .5rem;
 }
 
-.roll-tray-header strong {
+.roll-toggle {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
   color: var(--accent);
+  padding: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .6rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.roll-toggle span {
+  font-weight: 780;
+}
+
+.roll-toggle strong {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.roll-header-actions {
+  display: flex;
+  gap: .3rem;
 }
 
 .roll-clear {
   min-height: 2rem;
   padding: 0 .55rem;
   font-size: .82rem;
+}
+
+.roll-tray-body {
+  display: block;
+}
+
+.roll-tray:not(.is-open) {
+  padding: .45rem .55rem;
+  max-height: 3.4rem;
+  overflow: hidden;
+}
+
+.roll-tray:not(.is-open) .roll-tray-body,
+.roll-tray:not(.is-open) .roll-header-actions {
+  display: none;
 }
 
 .roll-form {
@@ -752,6 +792,10 @@ code {
     padding: .6rem;
   }
 
+  .roll-tray:not(.is-open) {
+    width: 12.5rem;
+  }
+
   .roll-form {
     grid-template-columns: 1fr;
   }
@@ -778,7 +822,7 @@ code {
   .site-header { padding-top: .9rem; }
 
   body {
-    padding-bottom: 12rem;
+    padding-bottom: 4.8rem;
   }
 
   .app-shell {
@@ -860,15 +904,7 @@ code {
     width: calc(100vw - .9rem);
     bottom: .45rem;
     padding: .55rem;
-    max-height: 11rem;
-  }
-
-  .roll-form {
-    grid-template-columns: 1fr;
-  }
-
-  .roll-submit {
-    width: 100%;
+    max-height: 14rem;
   }
 
   .roll-result {
@@ -879,8 +915,37 @@ code {
     grid-column: 1 / -1;
   }
 
+  .roll-tray-body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .roll-result {
+    order: -3;
+    margin-top: .38rem;
+  }
+
+  .roll-note {
+    order: -2;
+  }
+
+  .roll-form {
+    grid-template-columns: 1fr auto;
+    order: -1;
+    margin-top: .45rem;
+  }
+
+  .roll-submit {
+    min-height: 2.2rem;
+  }
+
+  .roll-history {
+    max-height: 3.4rem;
+  }
+
   .quick-dice {
     gap: .18rem;
+    margin-top: .35rem;
   }
 
   .quick-dice button {
