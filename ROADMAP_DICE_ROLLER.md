@@ -68,7 +68,7 @@ Scopo: cliccare una formula di dado nelle descrizioni e ottenere un risultato le
 - [x] Aggiungere bottoni inline per formule nelle descrizioni di mostri, incantesimi e oggetti.
 - [x] Aggiungere pannello risultato minimale.
 - [x] Coprire i casi base con test manuali da console o fixture locali.
-- [ ] Verificare su mobile che i bottoni inline non rompano il layout.
+- [x] Verificare su mobile che i bottoni inline non rompano il layout.
 
 Criteri di accettazione:
 
@@ -148,7 +148,7 @@ Criteri di accettazione:
 - [ ] Critici: raddoppiare i dadi e non i modifier richiede contesto di attacco.
 - [ ] Scaling incantesimi: spesso dipende da livello, turno o bersagli.
 - [ ] Accessibilita: i bottoni inline devono essere navigabili ma non invadenti.
-- [ ] Mobile: il risultato deve essere leggibile senza occupare tutta la scheda.
+- [x] Mobile: il risultato deve essere leggibile senza occupare tutta la scheda.
 
 ## Casi Non Automatizzati
 

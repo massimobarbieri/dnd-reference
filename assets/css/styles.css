@@ -404,6 +404,8 @@ h1 {
 
 /* Formula di dado cliccabile dentro il testo */
 .dice-inline {
+  display: inline-block;
+  max-width: 100%;
   border: 1px solid rgba(138,63,35,.42);
   background: rgba(234,208,189,.52);
   color: var(--accent);
@@ -413,7 +415,10 @@ h1 {
   font: inherit;
   font-weight: 760;
   line-height: 1.15;
+  white-space: nowrap;
   cursor: pointer;
+  touch-action: manipulation;
+  vertical-align: baseline;
 }
 
 .dice-inline:hover,
@@ -425,10 +430,12 @@ h1 {
 /* Controlli inline per i tiri per colpire */
 .attack-roll {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: .12rem;
+  max-width: 100%;
   margin: 0 .08rem;
-  vertical-align: baseline;
+  vertical-align: middle;
 }
 
 .attack-roll button {
@@ -438,12 +445,15 @@ h1 {
   font: inherit;
   line-height: 1.1;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .attack-roll-main {
+  max-width: 100%;
   border-radius: .35rem;
   padding: .03rem .28rem;
   font-weight: 780;
+  white-space: nowrap;
 }
 
 .attack-roll-mode {
@@ -544,7 +554,7 @@ h1 {
   position: fixed;
   left: 50%;
   right: auto;
-  bottom: .75rem;
+  bottom: calc(.75rem + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   z-index: 8;
   width: min(42rem, calc(100vw - 1.4rem));
@@ -554,8 +564,10 @@ h1 {
   backdrop-filter: blur(10px);
   box-shadow: var(--shadow);
   padding: .65rem;
-  max-height: min(18rem, calc(100vh - 1.5rem));
+  max-height: min(18rem, calc(100vh - 1.5rem - env(safe-area-inset-bottom)));
+  max-height: min(18rem, calc(100dvh - 1.5rem - env(safe-area-inset-bottom)));
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .roll-tray-header {
@@ -692,6 +704,8 @@ h1 {
 
 .roll-formula {
   font-weight: 760;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .roll-total {
@@ -822,7 +836,7 @@ code {
   .site-header { padding-top: .9rem; }
 
   body {
-    padding-bottom: 4.8rem;
+    padding-bottom: calc(4.8rem + env(safe-area-inset-bottom));
   }
 
   .app-shell {
@@ -896,15 +910,37 @@ code {
     line-height: 1.31;
   }
 
+  .dice-inline {
+    margin: 0 .02rem;
+    padding: .02rem .2rem;
+    line-height: 1.2;
+  }
+
+  .attack-roll {
+    gap: .08rem;
+    margin: .02rem .04rem;
+  }
+
+  .attack-roll-main {
+    padding: .04rem .24rem;
+  }
+
+  .attack-roll-mode {
+    width: 1.5rem;
+    min-width: 1.5rem;
+    height: 1.5rem;
+  }
+
   .content-section {
     margin-top: .62rem;
   }
 
   .roll-tray {
     width: calc(100vw - .9rem);
-    bottom: .45rem;
+    bottom: calc(.45rem + env(safe-area-inset-bottom));
     padding: .55rem;
-    max-height: 14rem;
+    max-height: min(14rem, calc(100vh - 1rem - env(safe-area-inset-bottom)));
+    max-height: min(14rem, calc(100dvh - 1rem - env(safe-area-inset-bottom)));
   }
 
   .roll-result {
