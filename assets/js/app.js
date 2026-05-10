@@ -867,7 +867,7 @@
       <div class="description">${formatInline(spell.descrizione || '')}</div>
 
       ${renderEntries('Slot superiori', spell.scaling)}
-      ${renderEntries('Sezioni', spell.sezioni)}
+      ${renderSections('Sezioni', spell.sezioni)}
     `;
   }
 
@@ -886,12 +886,12 @@
         ['Tipo', item.tipo],
         ['Rarità', item.rarita],
         ['Sintonia', item.richiede_sintonia ? 'Sì' : 'No'],
-        ['Proprietà', Array.isArray(item.proprieta) ? item.proprieta.join(', ') : item.proprieta],
       ])}
 
       <div class="description">${formatInline(item.descrizione || '')}</div>
 
-      ${renderEntries('Sezioni', item.sezioni)}
+      ${renderEntries('Proprietà', item.proprieta)}
+      ${renderSections('Tabelle e sezioni', item.sezioni)}
     `;
   }
 
@@ -976,19 +976,103 @@
   function renderEntries(title, entries) {
     if (!Array.isArray(entries) || entries.length === 0) return '';
 
+    const content = entries.map(renderEntry).filter(Boolean).join('');
+    if (!content) return '';
+
     return `
       <section class="content-section">
         <h3>${escapeHtml(title)}</h3>
 
-        ${entries
-          .map((entry) => `
-            <div class="entry">
-              <span class="entry-title">${escapeHtml(entry.nome || '')}</span>
-              ${entry.descrizione ? `<p>${formatInline(entry.descrizione)}</p>` : ''}
-            </div>
-          `)
-          .join('')}
+        ${content}
       </section>
+    `;
+  }
+
+  /*
+   * Renderizza una singola voce testuale.
+   */
+  function renderEntry(entry) {
+    if (!entry) return '';
+
+    const name = entry.nome || entry.chiave || '';
+    const description = entry.descrizione || entry.valore || '';
+
+    if (!name && !description) return '';
+
+    return `
+      <div class="entry">
+        ${name ? `<span class="entry-title">${escapeHtml(name)}</span>` : ''}
+        ${description ? `<p>${formatInline(description)}</p>` : ''}
+      </div>
+    `;
+  }
+
+  /*
+   * Renderizza sezioni strutturate provenienti dai JSON.
+   * Supporta sia blocchi nome/descrizione sia righe tabellari chiave/valore.
+   */
+  function renderSections(title, sections) {
+    if (!Array.isArray(sections) || sections.length === 0) return '';
+
+    const content = sections.map(renderSection).filter(Boolean).join('');
+    if (!content) return '';
+
+    return `
+      <section class="content-section">
+        <h3>${escapeHtml(title)}</h3>
+        ${content}
+      </section>
+    `;
+  }
+
+  /*
+   * Renderizza una sezione libera o tabellare.
+   */
+  function renderSection(section) {
+    if (!section) return '';
+
+    const rows = Array.isArray(section.righe) ? section.righe : [];
+    const blocks = Array.isArray(section.blocchi) ? section.blocchi : [];
+    const entries = Array.isArray(section.voci) ? section.voci : [];
+    const body = [
+      rows.length ? renderTableRows(rows) : '',
+      blocks.length ? blocks.map(renderEntry).filter(Boolean).join('') : '',
+      entries.length ? entries.map(renderEntry).filter(Boolean).join('') : '',
+      section.descrizione ? `<div class="description">${formatInline(section.descrizione)}</div>` : '',
+    ].filter(Boolean).join('');
+
+    if (!body) return '';
+
+    return `
+      <div class="subsection">
+        ${section.titolo ? `<h4>${escapeHtml(section.titolo)}</h4>` : ''}
+        ${body}
+      </div>
+    `;
+  }
+
+  /*
+   * Renderizza righe chiave/valore come tabella responsive.
+   */
+  function renderTableRows(rows) {
+    const visibleRows = rows.filter((row) => row && (row.chiave || row.valore));
+    if (!visibleRows.length) return '';
+
+    return `
+      <div class="table-wrap">
+        <table class="data-table">
+          <tbody>
+            ${visibleRows
+              .map((row) => `
+                <tr>
+                  <th scope="row">${formatInline(row.chiave || '')}</th>
+                  <td>${formatInline(row.valore || '')}</td>
+                </tr>
+              `)
+              .join('')}
+          </tbody>
+        </table>
+      </div>
     `;
   }
 

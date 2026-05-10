@@ -363,6 +363,17 @@ h1 {
   padding-bottom: .18rem;
 }
 
+/* Sottosezione dentro descrizioni strutturate */
+.subsection {
+  margin: .55rem 0 .75rem;
+}
+
+.subsection h4 {
+  margin: 0 0 .32rem;
+  font-size: .92rem;
+  line-height: 1.2;
+}
+
 /* Singola voce testuale */
 .entry {
   margin: .45rem 0;
@@ -376,6 +387,42 @@ h1 {
 
 .entry-title {
   font-weight: 760;
+}
+
+/* Tabelle generate dalle sezioni JSON */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255,255,255,.35);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 22rem;
+  font-size: .9rem;
+  line-height: 1.32;
+}
+
+.data-table th,
+.data-table td {
+  padding: .42rem .5rem;
+  border-bottom: 1px solid rgba(217,199,179,.75);
+  vertical-align: top;
+  text-align: left;
+}
+
+.data-table tr:last-child th,
+.data-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.data-table th {
+  width: 9.5rem;
+  color: var(--accent);
+  font-weight: 760;
+  white-space: nowrap;
 }
 
 /* Descrizione lunga */
@@ -484,5 +531,15 @@ code {
 
   .content-section {
     margin-top: .62rem;
+  }
+
+  .data-table {
+    min-width: 18rem;
+    font-size: .86rem;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: .36rem .42rem;
   }
 }
