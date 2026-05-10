@@ -10,31 +10,51 @@
 <body>
   <a class="skip-link" href="#app">Salta al contenuto</a>
 
+  <!-- Intestazione del sito -->
   <header class="site-header">
     <div>
+      <!-- Etichetta superiore con versione/riferimento dei dati -->
       <p class="eyebrow">SRD 5.2.1</p>
+
+      <!-- Titolo principale aggiornabile via JavaScript -->
       <h1 id="site-title">D&D Reference</h1>
+
+      <!-- Sottotitolo aggiornabile via JavaScript -->
       <p id="site-subtitle" class="subtitle">Mostri, incantesimi e oggetti magici</p>
     </div>
   </header>
 
+  <!-- Contenitore principale dell’applicazione -->
   <main id="app" class="app-shell" aria-live="polite">
+    <!-- Vista home -->
     <section id="home-view" class="view"></section>
+
+    <!-- Vista lista, inizialmente nascosta -->
     <section id="list-view" class="view" hidden></section>
+
+    <!-- Vista dettaglio, inizialmente nascosta -->
     <section id="detail-view" class="view" hidden></section>
   </main>
 
+  <!-- Template mostrato durante il caricamento dei dati -->
   <template id="loading-template">
     <div class="state-box">Caricamento dati...</div>
   </template>
 
+  <!-- Template mostrato in caso di errore nel caricamento -->
   <template id="error-template">
     <div class="state-box state-box--error">
       <strong>Impossibile caricare l'app.</strong>
-      <p>Avvia il sito con un server locale, ad esempio: <code>python3 -m http.server 8080</code>.</p>
+
+      <!-- Suggerimento per avviare correttamente il sito in locale -->
+      <p>
+        Avvia il sito con un server locale, ad esempio:
+        <code>python3 -m http.server 8080</code>.
+      </p>
     </div>
   </template>
 
+  <!-- Script principale dell’app, caricato dopo il parsing dell’HTML -->
   <script src="assets/js/app.js" defer></script>
 </body>
 </html>
