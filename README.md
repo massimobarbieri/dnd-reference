@@ -11,9 +11,9 @@ L'app fa uso del System Reference Document 5.2.1 rilasciato gratuitamente da Wiz
 
 ## Come usarla
 
-Scarica tutto il progetto. Puoi clonarlo con git oppure scaricalo a mano.
+Scarica tutto il progetto. Puoi clonarlo con git oppure scaricalo a mano. Per clonarlo con git usa il comando
 
-Scarica la sorgente dati con
+``git clone https://github.com/massimobarbieri/dnd-reference.git``
 
 ``git submodule update --init --recursive``
 

@@ -206,7 +206,7 @@
     `;
   }
 
-  function renderList(section) {
+  function renderList(section, options = {}) {
     setView('list');
     const labels = appState.config.labels;
     const title = labels[section] || section;
