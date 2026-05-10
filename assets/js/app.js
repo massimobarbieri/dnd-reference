@@ -744,6 +744,19 @@
    * Gestisce i comandi interattivi della scheda di dettaglio.
    */
   function handleDetailClick(event) {
+    const attackButton = event.target.closest('[data-attack-roll]');
+
+    if (attackButton) {
+      const modifier = Number(attackButton.getAttribute('data-attack-roll'));
+      const mode = attackButton.getAttribute('data-attack-mode') || 'normal';
+
+      if (!Number.isFinite(modifier)) return;
+
+      addRollResult(rollAttack(modifier, mode));
+      renderRollTray();
+      return;
+    }
+
     const rollButton = event.target.closest('[data-dice-roll]');
 
     if (rollButton) {
@@ -1152,10 +1165,14 @@
 
         ${lastRoll
           ? `
-            <div class="roll-result">
+            <div class="roll-result ${escapeAttr(rollResultClass(lastRoll))}">
               <span class="roll-formula">${escapeHtml(lastRoll.formula)}</span>
               <strong class="roll-total">${escapeHtml(String(lastRoll.total))}</strong>
               <span class="roll-breakdown">${escapeHtml(formatRollBreakdown(lastRoll))}</span>
+              ${rollResultNote(lastRoll)
+                ? `<span class="roll-note">${escapeHtml(rollResultNote(lastRoll))}</span>`
+                : ''
+              }
             </div>
 
             ${appState.rollHistory.length > 1
@@ -1192,12 +1209,49 @@
    * Formatta il dettaglio dei dadi tirati.
    */
   function formatRollBreakdown(result) {
+    if (result.kind === 'attack') {
+      const rolls = result.rolls.join(', ');
+      const kept = result.mode === 'normal' ? '' : `; tenuto ${result.kept}`;
+      const modifier = result.modifier
+        ? ` ${result.modifier > 0 ? '+' : '-'} ${Math.abs(result.modifier)}`
+        : '';
+
+      return `${rolls}${kept}${modifier}`;
+    }
+
     const dice = result.rolls.join(' + ');
     const modifier = result.modifier
       ? ` ${result.modifier > 0 ? '+' : '-'} ${Math.abs(result.modifier)}`
       : '';
 
     return `${dice}${modifier}`;
+  }
+
+  /*
+   * Evidenzia 20 e 1 naturali quando il tiro usa un d20.
+   */
+  function rollResultClass(result) {
+    if (!isD20Roll(result)) return '';
+    if (result.kept === 20) return 'roll-result--crit';
+    if (result.kept === 1) return 'roll-result--fumble';
+    return '';
+  }
+
+  /*
+   * Nota breve per critico/fallimento critico.
+   */
+  function rollResultNote(result) {
+    if (!isD20Roll(result)) return '';
+    if (result.kept === 20) return '20 naturale';
+    if (result.kept === 1) return '1 naturale';
+    return '';
+  }
+
+  /*
+   * Riconosce i risultati basati su d20.
+   */
+  function isD20Roll(result) {
+    return result.kind === 'attack' || (result.rolls?.length === 1 && result.formula?.startsWith('1d20'));
   }
 
   /*
@@ -1327,6 +1381,30 @@
   }
 
   /*
+   * Esegue un tiro per colpire con eventuale vantaggio o svantaggio.
+   */
+  function rollAttack(modifier, mode = 'normal') {
+    const normalizedMode = ['advantage', 'disadvantage'].includes(mode) ? mode : 'normal';
+    const rolls = normalizedMode === 'normal'
+      ? [randomInt(1, 20)]
+      : [randomInt(1, 20), randomInt(1, 20)];
+    const kept = normalizedMode === 'disadvantage'
+      ? Math.min(...rolls)
+      : Math.max(...rolls);
+    const total = kept + modifier;
+
+    return {
+      kind: 'attack',
+      mode: normalizedMode,
+      formula: attackFormulaLabel(modifier, normalizedMode),
+      rolls,
+      kept,
+      modifier,
+      total,
+    };
+  }
+
+  /*
    * Genera un intero casuale inclusivo.
    */
   function randomInt(min, max) {
@@ -1356,6 +1434,20 @@
     if (!modifier) return dice;
 
     return `${dice} ${modifier > 0 ? '+' : '-'} ${Math.abs(modifier)}`;
+  }
+
+  /*
+   * Etichetta leggibile per il pannello risultati.
+   */
+  function attackFormulaLabel(modifier, mode) {
+    const suffix = mode === 'advantage'
+      ? ' con vantaggio'
+      : mode === 'disadvantage'
+        ? ' con svantaggio'
+        : '';
+    const sign = modifier >= 0 ? '+' : '-';
+
+    return `Colpire ${sign}${Math.abs(modifier)}${suffix}`;
   }
 
   /*
@@ -1427,7 +1519,7 @@
     const value = String(text);
     const formatted = formatMarkdownInline(value);
 
-    return withDice ? enrichDiceFormulas(formatted) : formatted;
+    return withDice ? enrichDiceFormulas(enrichAttackRolls(formatted)) : formatted;
   }
 
   /*
@@ -1444,6 +1536,29 @@
    */
   function diceButton(token) {
     return `<button class="dice-inline" type="button" data-dice-roll="${escapeAttr(token.formula)}" aria-label="Tira ${escapeAttr(token.formula)}">${escapeHtml(token.raw)}</button>`;
+  }
+
+  /*
+   * Crea il gruppo inline per un tiro per colpire.
+   */
+  function attackRollControls(rawModifier) {
+    const modifier = Number(rawModifier);
+    const normalized = modifier >= 0 ? `+${modifier}` : String(modifier);
+
+    return `<span class="attack-roll" aria-label="Tiro per colpire ${escapeAttr(normalized)}"><button class="attack-roll-main" type="button" data-attack-roll="${escapeAttr(String(modifier))}" data-attack-mode="normal" aria-label="Tira per colpire ${escapeAttr(normalized)}">${escapeHtml(normalized)}</button><button class="attack-roll-mode" type="button" data-attack-roll="${escapeAttr(String(modifier))}" data-attack-mode="advantage" aria-label="Tira per colpire ${escapeAttr(normalized)} con vantaggio">V</button><button class="attack-roll-mode" type="button" data-attack-roll="${escapeAttr(String(modifier))}" data-attack-mode="disadvantage" aria-label="Tira per colpire ${escapeAttr(normalized)} con svantaggio">S</button></span>`;
+  }
+
+  /*
+   * Rende interattivi i bonus dopo "Tiro per colpire".
+   */
+  function enrichAttackRolls(html) {
+    const pattern = /((?:<em>)?Tiro per colpire[\s\S]{0,90}?:?(?:<\/em>)?\s*)([+-]\d+)/gi;
+
+    return String(html).replace(pattern, (match, prefix, modifier, offset, fullText) => {
+      if (isInsideHtmlTag(fullText, offset)) return match;
+
+      return `${prefix}${attackRollControls(modifier)}`;
+    });
   }
 
   /*

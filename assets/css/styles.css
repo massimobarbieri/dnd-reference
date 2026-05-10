@@ -409,6 +409,46 @@ h1 {
   border-color: var(--accent);
 }
 
+/* Controlli inline per i tiri per colpire */
+.attack-roll {
+  display: inline-flex;
+  align-items: center;
+  gap: .12rem;
+  margin: 0 .08rem;
+  vertical-align: baseline;
+}
+
+.attack-roll button {
+  border: 1px solid rgba(138,63,35,.42);
+  background: rgba(255,250,242,.88);
+  color: var(--accent);
+  font: inherit;
+  line-height: 1.1;
+  cursor: pointer;
+}
+
+.attack-roll-main {
+  border-radius: .35rem;
+  padding: .03rem .28rem;
+  font-weight: 780;
+}
+
+.attack-roll-mode {
+  width: 1.35rem;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  padding: 0;
+  font-size: .72rem;
+  font-weight: 780;
+}
+
+.attack-roll button:hover,
+.attack-roll button:focus-visible {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
 /* Tabelle generate dalle sezioni JSON */
 .table-wrap {
   overflow-x: auto;
@@ -512,6 +552,25 @@ h1 {
   min-width: 0;
   overflow-wrap: anywhere;
   font-size: .88rem;
+}
+
+.roll-note {
+  grid-column: 1 / -1;
+  width: fit-content;
+  border-radius: 999px;
+  padding: .12rem .45rem;
+  background: rgba(234,208,189,.65);
+  color: var(--accent);
+  font-size: .78rem;
+  font-weight: 780;
+}
+
+.roll-result--crit .roll-total {
+  color: #2f6f3e;
+}
+
+.roll-result--fumble .roll-total {
+  color: #a53728;
 }
 
 .roll-history {

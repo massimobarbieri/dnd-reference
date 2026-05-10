@@ -53,7 +53,7 @@ Responsabilita: mostrare il risultato del tiro.
 
 - [x] Creare un pannello compatto in dettaglio scheda o globale.
 - [x] Mostrare formula, totale e breakdown.
-- [ ] Evidenziare d20 naturale, critico e fallimento critico dove applicabile.
+- [x] Evidenziare d20 naturale, critico e fallimento critico dove applicabile.
 - [x] Permettere chiusura del pannello.
 - [x] Tenere uno storico breve in memoria durante la sessione.
 - [x] Non usare localStorage per lo storico nella prima versione.
@@ -82,17 +82,17 @@ Criteri di accettazione:
 
 Scopo: rendere ergonomici i blocchi di attacco dei mostri.
 
-- [ ] Riconoscere pattern `Tiro per colpire ... +N`.
-- [ ] Aggiungere bottone dedicato al tiro per colpire.
-- [ ] Aggiungere supporto vantaggio/svantaggio per d20.
-- [ ] Distinguere danno normale da danno extra quando sono nello stesso attacco.
-- [ ] Mostrare breakdown separato per colpire e danni.
+- [x] Riconoscere pattern `Tiro per colpire ... +N`.
+- [x] Aggiungere bottone dedicato al tiro per colpire.
+- [x] Aggiungere supporto vantaggio/svantaggio per d20.
+- [x] Distinguere danno normale da danno extra quando sono nello stesso attacco.
+- [x] Mostrare breakdown separato per colpire e danni.
 
 Criteri di accettazione:
 
-- [ ] Un attacco con `+7` tira `1d20 + 7`.
-- [ ] Un danno `2d8 + 4` tira solo i danni.
-- [ ] Vantaggio e svantaggio mostrano entrambi i d20 e quale viene tenuto.
+- [x] Un attacco con `+7` tira `1d20 + 7`.
+- [x] Un danno `2d8 + 4` tira solo i danni.
+- [x] Vantaggio e svantaggio mostrano entrambi i d20 e quale viene tenuto.
 
 ### Fase 3 - Incantesimi e Scaling
 
