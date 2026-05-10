@@ -38,8 +38,15 @@ All’interno dell’app puoi:
 - cercare rapidamente un elemento per nome
 - consultare le schede dettagliate durante la sessione
 - salvare i tuoi elementi preferiti per averli sempre a portata di mano
+- tirare formule di dado direttamente dalle schede o dal dice roller
 
 L’app non richiede registrazione e salva i preferiti direttamente nel browser, così ogni giocatore può personalizzare la propria esperienza.
+
+## Dice roller
+
+Il dice roller riconosce formule come `d20`, `2d6 + 3`, `2d20kh1` e `4d6dl1` nel testo delle schede.
+
+Per gli incantesimi con più bersagli, danni ripetuti o scaling non numerico, l’app non moltiplica automaticamente i risultati: mostra una nota situazionale e lascia al tavolo la scelta di quando ripetere il tiro.
 
 ### Schermate
 ![Menu principale](screenshots/1.png "Menu principale")

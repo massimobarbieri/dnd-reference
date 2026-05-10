@@ -102,7 +102,7 @@ Scopo: gestire formule in descrizioni complesse e slot superiori.
 - [x] Analizzare sezioni `scaling` per testi come `1d6 per ogni slot`.
 - [x] Progettare UI per scegliere il livello dello slot quando applicabile.
 - [x] Supportare danni ripetuti o multi-bersaglio senza automatismi invasivi.
-- [ ] Documentare i casi non automatizzabili.
+- [x] Documentare i casi non automatizzabili.
 
 Criteri di accettazione:
 
@@ -144,9 +144,9 @@ Criteri di accettazione:
 
 ## Rischi e Decisioni
 
-- [ ] Ambiguita del testo SRD: alcune formule non sono azioni di tiro ma intervalli, tabelle o spiegazioni.
-- [ ] Critici: raddoppiare i dadi e non i modifier richiede contesto di attacco.
-- [ ] Scaling incantesimi: spesso dipende da livello, turno o bersagli.
+- [x] Ambiguita del testo SRD: alcune formule non sono azioni di tiro ma intervalli, tabelle o spiegazioni.
+- [x] Critici: raddoppiare i dadi e non i modifier richiede contesto di attacco.
+- [x] Scaling incantesimi: spesso dipende da livello, turno o bersagli.
 - [ ] Accessibilita: i bottoni inline devono essere navigabili ma non invadenti.
 - [x] Mobile: il risultato deve essere leggibile senza occupare tutta la scheda.
 
@@ -156,6 +156,9 @@ Criteri di accettazione:
 - [x] Scaling che aumenta bersagli, durata, raggio, numero di raggi o creature evocate.
 - [x] Incantesimi che richiedono scelta del livello personaggio invece del livello slot.
 - [x] Danni ripetuti su piu turni o piu bersagli, dove il numero effettivo dipende dal tavolo.
+- [x] Critici automatici sui danni: il roller evidenzia il d20 naturale, ma non raddoppia dadi senza sapere se il tiro e un attacco, un TS o un effetto speciale.
+- [x] Tabelle e intervalli: intestazioni come `1d100` e chiavi `01-20` restano consultabili, non diventano comandi di tiro.
+- [x] Quantita testuali non numeriche: formule come "una creatura aggiuntiva", "fino a tre creature" o "ogni bersaglio" vengono segnalate, non convertite in moltiplicatori.
 
 ## Primo Task Raccomandato
 
