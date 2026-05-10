@@ -1,0 +1,1003 @@
+mostri:
+- id: aboleth
+  nome: Aboleth
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Aboleth.webp
+- id: ameba_paglierina
+  nome: Ameba paglierina
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ochre%20Jelly.webp
+- id: ankheg
+  nome: Ankheg
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ankheg.webp
+- id: arpia
+  nome: Arpia
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Harpy.webp
+- id: orda_di_artigli_striscianti
+  nome: Orda di artigli striscianti
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Swarm%20of%20Crawling%20Claws.webp
+- id: assassino
+  nome: Assassino
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Assassin.webp
+- id: azer_sentinella
+  nome: Azer sentinella
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Azer%20Sentinel.webp
+- id: balor
+  nome: Balor
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Balor.webp
+- id: bandito
+  nome: Bandito
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Bandit.webp
+- id: capo_dei_banditi
+  nome: Capo dei banditi
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Bandit%20Captain.webp
+- id: basilisco
+  nome: Basilisco
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Basilisk.webp
+- id: beccoaguzzo
+  nome: Beccoaguzzo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Axe%20Beak.webp
+- id: behir
+  nome: Behir
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Behir.webp
+- id: berserker
+  nome: Berserker
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Berserker.webp
+- id: bruto
+  nome: Bruto
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Thug.webp
+- id: capo_dei_bruti
+  nome: Capo dei bruti
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Tough%20Boss.webp
+- id: bugbear_cacciatore
+  nome: Bugbear cacciatore
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Bugbear%20Stalker.webp
+- id: bugbear_guerriero
+  nome: Bugbear guerriero
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Bugbear%20Warrior.webp
+- id: bulette
+  nome: Bulette
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Bulette.webp
+- id: cacciatore_invisibile
+  nome: Cacciatore invisibile
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Invisible%20Stalker.webp
+- id: cane_della_morte
+  nome: Cane della morte
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Death%20Dog.webp
+- id: cane_intermittente
+  nome: Cane intermittente
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Blink%20Dog.webp
+- id: cavalcatura_ultraterrena
+  nome: Cavalcatura ultraterrena
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Otherworldly%20Steed.webp
+- id: cavaliere
+  nome: Cavaliere
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Knight.webp
+- id: cavallo_degli_incubi
+  nome: Cavallo degli incubi
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Nightmare.webp
+- id: centauro_combattente
+  nome: Centauro combattente
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Centaur%20Trooper.webp
+- id: chimera
+  nome: Chimera
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Chimera.webp
+- id: chuul
+  nome: Chuul
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Chuul.webp
+- id: cinghiale_mannaro
+  nome: Cinghiale mannaro
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Wereboar.webp
+- id: coboldo_guerriero
+  nome: Coboldo guerriero
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Kobold%20Warrior.webp
+- id: coccatrice
+  nome: Coccatrice
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Cockatrice.webp
+- id: couatl
+  nome: Couatl
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Couatl.webp
+- id: cubo_gelatinoso
+  nome: Cubo gelatinoso
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Gelatinous%20Cube.webp
+- id: cultista
+  nome: Cultista
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Cultist.webp
+- id: cultista_fanatico
+  nome: Cultista fanatico
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Cult%20Fanatic.webp
+- id: cumulo_strisciante
+  nome: Cumulo strisciante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Shambling%20Mound.webp
+- id: deva
+  nome: Deva
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Deva.webp
+- id: diavolo_barbuto
+  nome: Diavolo barbuto
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Bearded%20Devil.webp
+- id: diavolo_cornuto
+  nome: Diavolo cornuto
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Horned%20Devil.webp
+- id: diavolo_del_ghiaccio
+  nome: Diavolo del ghiaccio
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ice%20Devil.webp
+- id: diavolo_della_fossa
+  nome: Diavolo della fossa
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Pit%20Fiend.webp
+- id: diavolo_delle_catene
+  nome: Diavolo delle catene
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Chain%20Devil.webp
+- id: diavolo_d'ossa
+  nome: Diavolo d'ossa
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Bone%20Devil.webp
+- id: diavolo_uncinato
+  nome: Diavolo uncinato
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Barbed%20Devil.webp
+- id: djinni
+  nome: Djinni
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Djinni.webp
+- id: doppelganger
+  nome: Doppelganger
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Doppelganger.webp
+- id: drago_bianco_cucciolo
+  nome: Drago bianco cucciolo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/White%20Dragon%20Wyrmling.webp
+- id: drago_bianco_giovane
+  nome: Drago bianco giovane
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Young%20White%20Dragon.webp
+- id: drago_bianco_adulto
+  nome: Drago bianco adulto
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Adult%20White%20Dragon.webp
+- id: drago_bianco_antico
+  nome: Drago bianco antico
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ancient%20White%20Dragon.webp
+- id: drago_blu_cucciolo
+  nome: Drago blu cucciolo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Blue%20Dragon%20Wyrmling.webp
+- id: drago_blu_giovane
+  nome: Drago blu giovane
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Young%20Blue%20Dragon.webp
+- id: drago_blu_adulto
+  nome: Drago blu adulto
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Adult%20Blue%20Dragon.webp
+- id: drago_blu_antico
+  nome: Drago blu antico
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ancient%20Blue%20Dragon.webp
+- id: drago_d'argento_cucciolo
+  nome: Drago d'argento cucciolo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Silver%20Dragon%20Wyrmling.webp
+- id: drago_d'argento_giovane
+  nome: Drago d'argento giovane
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Young%20Silver%20Dragon.webp
+- id: drago_d'argento_adulto
+  nome: Drago d'argento adulto
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Adult%20Silver%20Dragon.webp
+- id: drago_d'argento_antico
+  nome: Drago d'argento antico
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ancient%20Silver%20Dragon.webp
+- id: drago_di_bronzo_cucciolo
+  nome: Drago di bronzo cucciolo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Bronze%20Dragon%20Wyrmling.webp
+- id: drago_di_bronzo_giovane
+  nome: Drago di bronzo giovane
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Young%20Bronze%20Dragon.webp
+- id: drago_di_bronzo_adulto
+  nome: Drago di bronzo adulto
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Adult%20Bronze%20Dragon.webp
+- id: drago_di_bronzo_antico
+  nome: Drago di bronzo antico
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ancient%20Bronze%20Dragon.webp
+- id: drago_di_rame_cucciolo
+  nome: Drago di rame cucciolo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Copper%20Dragon%20Wyrmling.webp
+- id: drago_di_rame_giovane
+  nome: Drago di rame giovane
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Young%20Copper%20Dragon.webp
+- id: drago_di_rame_adulto
+  nome: Drago di rame adulto
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Adult%20Copper%20Dragon.webp
+- id: drago_di_rame_antico
+  nome: Drago di rame antico
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ancient%20Copper%20Dragon.webp
+- id: drago_d'oro_cucciolo
+  nome: Drago d'oro cucciolo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Gold%20Dragon%20Wyrmling.webp
+- id: drago_d'oro_giovane
+  nome: Drago d'oro giovane
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Young%20Gold%20Dragon.webp
+- id: drago_d'oro_adulto
+  nome: Drago d'oro adulto
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Adult%20Gold%20Dragon.webp
+- id: drago_d'oro_antico
+  nome: Drago d'oro antico
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ancient%20Gold%20Dragon.webp
+- id: drago_d'ottone_cucciolo
+  nome: Drago d'ottone cucciolo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Brass%20Dragon%20Wyrmling.webp
+- id: drago_d'ottone_giovane
+  nome: Drago d'ottone giovane
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Young%20Brass%20Dragon.webp
+- id: drago_d'ottone_adulto
+  nome: Drago d'ottone adulto
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Adult%20Brass%20Dragon.webp
+- id: drago_d'ottone_antico
+  nome: Drago d'ottone antico
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ancient%20Brass%20Dragon.webp
+- id: drago_nero_cucciolo
+  nome: Drago nero cucciolo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Black%20Dragon%20Wyrmling.webp
+- id: drago_nero_giovane
+  nome: Drago nero giovane
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Young%20Black%20Dragon.webp
+- id: drago_nero_adulto
+  nome: Drago nero adulto
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Adult%20Black%20Dragon.webp
+- id: drago_nero_antico
+  nome: Drago nero antico
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ancient%20Black%20Dragon.webp
+- id: drago_rosso_cucciolo
+  nome: Drago rosso cucciolo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Red%20Dragon%20Wyrmling.webp
+- id: drago_rosso_giovane
+  nome: Drago rosso giovane
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Young%20Red%20Dragon.webp
+- id: drago_rosso_adulto
+  nome: Drago rosso adulto
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Adult%20Red%20Dragon.webp
+- id: drago_rosso_antico
+  nome: Drago rosso antico
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ancient%20Red%20Dragon.webp
+- id: drago_verde_cucciolo
+  nome: Drago verde cucciolo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Green%20Dragon%20Wyrmling.webp
+- id: drago_verde_giovane
+  nome: Drago verde giovane
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Young%20Green%20Dragon.webp
+- id: drago_verde_adulto
+  nome: Drago verde adulto
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Adult%20Green%20Dragon.webp
+- id: drago_verde_antico
+  nome: Drago verde antico
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ancient%20Green%20Dragon.webp
+- id: dretch
+  nome: Dretch
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Dretch.webp
+- id: driade
+  nome: Driade
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Dryad.webp
+- id: drider
+  nome: Drider
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Drider.webp
+- id: druido
+  nome: Druido
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Druid.webp
+- id: efreeti
+  nome: Efreeti
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Efreeti.webp
+- id: elementale_del_fuoco
+  nome: Elementale del fuoco
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Fire%20Elemental.webp
+- id: elementale_dell'acqua
+  nome: Elementale dell'acqua
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Water%20Elemental.webp
+- id: elementale_dell'aria
+  nome: Elementale dell'aria
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Air%20Elemental.webp
+- id: elementale_della_terra
+  nome: Elementale della terra
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Earth%20Elemental.webp
+- id: erinni
+  nome: Erinni
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Erinyes.webp
+- id: esploratore
+  nome: Esploratore
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Scout.webp
+- id: ettercap
+  nome: Ettercap
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ettercap.webp
+- id: ettin
+  nome: Ettin
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ettin.webp
+- id: fantasma
+  nome: Fantasma
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ghost.webp
+- id: fauce_gorgogliante
+  nome: Fauce gorgogliante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Gibbering%20Mouther.webp
+- id: boleto_stridente
+  nome: Boleto stridente
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Shrieker%20Fungus.webp
+- id: fungo_viola
+  nome: Fungo viola
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Violet%20Fungus.webp
+- id: fuoco_fatuo
+  nome: Fuoco fatuo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Will-o%27-Wisp.webp
+- id: fustigatore
+  nome: Fustigatore
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Roper.webp
+- id: gargoyle
+  nome: Gargoyle
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Gargoyle.webp
+- id: ghast
+  nome: Ghast
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ghast.webp
+- id: ghoul
+  nome: Ghoul
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ghoul.webp
+- id: gigante_del_fuoco
+  nome: Gigante del fuoco
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Fire%20Giant.webp
+- id: gigante_del_gelo
+  nome: Gigante del gelo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Frost%20Giant.webp
+- id: gigante_delle_colline
+  nome: Gigante delle colline
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Hill%20Giant.webp
+- id: gigante_delle_nuvole
+  nome: Gigante delle nuvole
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Cloud%20Giant.webp
+- id: gigante_delle_pietre
+  nome: Gigante delle pietre
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Stone%20Giant.webp
+- id: gigante_delle_tempeste
+  nome: Gigante delle tempeste
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Storm%20Giant.webp
+- id: glabrezu
+  nome: Glabrezu
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Glabrezu.webp
+- id: gladiatore
+  nome: Gladiatore
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Gladiator.webp
+- id: gnoll_guerriero
+  nome: Gnoll guerriero
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Gnoll%20Warrior.webp
+- id: goblin_tirapiedi
+  nome: Goblin tirapiedi
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Goblin%20Minion.webp
+- id: goblin_guerriero
+  nome: Goblin guerriero
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Goblin%20Warrior.webp
+- id: goblin_capo
+  nome: Goblin capo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Goblin%20Boss.webp
+- id: golem_di_argilla
+  nome: Golem di argilla
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Clay%20Golem.webp
+- id: golem_di_carne
+  nome: Golem di carne
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Flesh%20Golem.webp
+- id: golem_di_ferro
+  nome: Golem di ferro
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Iron%20Golem.webp
+- id: golem_di_pietra
+  nome: Golem di pietra
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Stone%20Golem.webp
+- id: gorgone
+  nome: Gorgone
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Gorgon.webp
+- id: grick
+  nome: Grick
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Grick.webp
+- id: grifone
+  nome: Grifone
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Griffon.webp
+- id: grimlock
+  nome: Grimlock
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Grimlock.webp
+- id: guardiano_protettore
+  nome: Guardiano protettore
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Shield%20Guardian.webp
+- id: guardia
+  nome: Guardia
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Guard.webp
+- id: capitano_delle_guardie
+  nome: Capitano delle guardie
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Guard%20Captain.webp
+- id: guerriero_di_fanteria
+  nome: Guerriero di fanteria
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Warrior%20Infantry.webp
+- id: guerriero_veterano
+  nome: Guerriero veterano
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Warrior%20Veteran.webp
+- id: hezrou
+  nome: Hezrou
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Hezrou.webp
+- id: hobgoblin_guerriero
+  nome: Hobgoblin guerriero
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Hobgoblin%20Warrior.webp
+- id: hobgoblin_capitano
+  nome: Hobgoblin capitano
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Hobgoblin%20Captain.webp
+- id: idra
+  nome: Idra
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Hydra.webp
+- id: imp
+  nome: Imp
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Imp.webp
+- id: incubo
+  nome: Incubo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Incubus.webp
+- id: insetto_gigante
+  nome: Insetto gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Insect.webp
+- id: ippogrifo
+  nome: Ippogrifo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Hippogriff.webp
+- id: kraken
+  nome: Kraken
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Kraken.webp
+- id: lamia
+  nome: Lamia
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Lamia.webp
+- id: lemure
+  nome: Lemure
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Lemure.webp
+- id: lich
+  nome: Lich
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Lich.webp
+- id: lupo_invernale
+  nome: Lupo invernale
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Winter%20Wolf.webp
+- id: lupo_mannaro
+  nome: Lupo mannaro
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Werewolf.webp
+- id: mago
+  nome: Mago
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Mage.webp
+- id: arcimago
+  nome: Arcimago
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Archmage.webp
+- id: magmin
+  nome: Magmin
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Magmin.webp
+- id: manticora
+  nome: Manticora
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Manticore.webp
+- id: manto_assassino
+  nome: Manto assassino
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Cloaker.webp
+- id: mantoscuro
+  nome: Mantoscuro
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Darkmantle.webp
+- id: marilith
+  nome: Marilith
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Marilith.webp
+- id: marinide_schermagliatore
+  nome: Marinide schermagliatore
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Merfolk%20Skirmisher.webp
+- id: medusa
+  nome: Medusa
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Medusa.webp
+- id: megera_marina
+  nome: Megera marina
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Sea%20Hag.webp
+- id: megera_notturna
+  nome: Megera notturna
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Night%20Hag.webp
+- id: megera_verde
+  nome: Megera verde
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Green%20Hag.webp
+- id: melma_grigia
+  nome: Melma Grigia
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Gray%20Ooze.webp
+- id: mephit_del_ghiaccio
+  nome: Mephit del ghiaccio
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ice%20Mephit.webp
+- id: mephit_del_magma
+  nome: Mephit del magma
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Magma%20Mephit.webp
+- id: mephit_del_vapore
+  nome: Mephit del vapore
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Steam%20Mephit.webp
+- id: mephit_della_polvere
+  nome: Mephit della polvere
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Dust%20Mephit.webp
+- id: merrow
+  nome: Merrow
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Merrow.webp
+- id: mezzodrago
+  nome: Mezzodrago
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Half-Dragon.webp
+- id: mimic
+  nome: Mimic
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Mimic.webp
+- id: minotauro_di_baphomet
+  nome: Minotauro di Baphomet
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Minotaur%20of%20Baphomet.webp
+- id: mummia
+  nome: Mummia
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Mummy.webp
+- id: signore_delle_mummie
+  nome: Signore delle mummie
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Mummy%20Lord.webp
+- id: naga_guardiana
+  nome: Naga guardiana
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Guardian%20Naga.webp
+- id: naga_spirituale
+  nome: Naga spirituale
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Spirit%20Naga.webp
+- id: nalfeshnee
+  nome: Nalfeshnee
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Nalfeshnee.webp
+- id: nobile
+  nome: Nobile
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Noble.webp
+- id: armatura_animata
+  nome: Armatura animata
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Animated%20Armor.webp
+- id: oggetto_animato
+  nome: Oggetto animato
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Animated%20Object.webp
+- id: spada_volante_animata
+  nome: Spada volante animata
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Animated%20Flying%20Sword.webp
+- id: tappeto_soffocante_animato
+  nome: Tappeto soffocante animato
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Animated%20Rug%20of%20Smothering.webp
+- id: ogre
+  nome: Ogre
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ogre.webp
+- id: ombra
+  nome: Ombra
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Shadow.webp
+- id: omuncolo
+  nome: Omuncolo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Homunculus.webp
+- id: oni
+  nome: Oni
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Oni.webp
+- id: orsogufo
+  nome: Orsogufo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Owlbear.webp
+- id: orso_mannaro
+  nome: Orso mannaro
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Werebear.webp
+- id: otyugh
+  nome: Otyugh
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Otyugh.webp
+- id: pegaso
+  nome: Pegaso
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Pegasus.webp
+- id: pirata
+  nome: Pirata
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Pirate.webp
+- id: capitano_dei_pirati
+  nome: Capitano dei pirati
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Pirate%20Captain.webp
+- id: planetar
+  nome: Planetar
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Planetar.webp
+- id: popolano
+  nome: Popolano
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Commoner.webp
+- id: protoplasma_nero
+  nome: Protoplasma nero
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Black%20Pudding.webp
+- id: pseudodrago
+  nome: Pseudodrago
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Pseudodragon.webp
+- id: quasit
+  nome: Quasit
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Quasit.webp
+- id: ragno-fase
+  nome: Ragno-fase
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Phase%20Spider.webp
+- id: rakshasa
+  nome: Rakshasa
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Rakshasa.webp
+- id: remorhaz
+  nome: Remorhaz
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Remorhaz.webp
+- id: roc
+  nome: Roc
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Roc.webp
+- id: rugginofago
+  nome: Rugginofago
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Rust%20Monster.webp
+- id: sacerdote_accolito
+  nome: Sacerdote accolito
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Acolyte%20Priest.webp
+- id: sacerdote
+  nome: Sacerdote
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Priest.webp
+- id: sahuagin_guerriero
+  nome: Sahuagin guerriero
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Sahuagin%20Warrior.webp
+- id: salamandra
+  nome: Salamandra
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Salamander.webp
+- id: satiro
+  nome: Satiro
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Satyr.webp
+- id: scheletro
+  nome: Scheletro
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Skeleton.webp
+- id: scheletro_di_cavallo_da_guerra
+  nome: Scheletro di cavallo da guerra
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Warhorse%20Skeleton.webp
+- id: scheletro_di_minotauro
+  nome: Scheletro di minotauro
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Minotaur%20Skeleton.webp
+- id: segugio_infernale
+  nome: Segugio infernale
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Hell%20Hound.webp
+- id: sfinge_della_meraviglia
+  nome: Sfinge della meraviglia
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Sphinx%20of%20Wonder.webp
+- id: sfinge_della_conoscenza
+  nome: Sfinge della conoscenza
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Sphinx%20of%20Lore.webp
+- id: sfinge_del_valore
+  nome: Sfinge del valore
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Sphinx%20of%20Valor.webp
+- id: solar
+  nome: Solar
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Solar.webp
+- id: spettro
+  nome: Spettro
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Specter.webp
+- id: spia
+  nome: Spia
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Spy.webp
+- id: spiritello
+  nome: Spiritello
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Sprite.webp
+- id: spirito_draconico
+  nome: Spirito draconico
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Draconic%20Spirit.webp
+- id: succube
+  nome: Succube
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Succubus.webp
+- id: tarrasque
+  nome: Tarrasque
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Tarrasque.webp
+- id: testuggine_dragona
+  nome: Testuggine dragona
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Dragon%20Turtle.webp
+- id: tigre_mannara
+  nome: Tigre mannara
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Weretiger.webp
+- id: topo_mannaro
+  nome: Topo mannaro
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Wererat.webp
+- id: treant
+  nome: Treant
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Treant.webp
+- id: troll
+  nome: Troll
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Troll.webp
+- id: arto_di_troll
+  nome: Arto di troll
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Troll%20Limb.webp
+- id: uccello_stigeo
+  nome: Uccello stigeo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Stirge.webp
+- id: unicorno
+  nome: Unicorno
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Unicorn.webp
+- id: famiglio_del_vampiro
+  nome: Famiglio del vampiro
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Vampire%20Familiar.webp
+- id: progenie_vampirica
+  nome: Progenie vampirica
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Vampire%20Spawn.webp
+- id: vampiro
+  nome: Vampiro
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Vampire.webp
+- id: albero_risvegliato
+  nome: Albero risvegliato
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Awakened%20Tree.webp
+- id: cespuglio_risvegliato
+  nome: Cespuglio risvegliato
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Awakened%20Shrub.webp
+- id: verme_purpureo
+  nome: Verme purpureo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Purple%20Worm.webp
+- id: viverna
+  nome: Viverna
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Wyvern.webp
+- id: vrock
+  nome: Vrock
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Vrock.webp
+- id: wight
+  nome: Wight
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Wight.webp
+- id: worg
+  nome: Worg
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Worg.webp
+- id: wraith
+  nome: Wraith
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Wraith.webp
+- id: xorn
+  nome: Xorn
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Xorn.webp
+- id: zombi
+  nome: Zombi
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Zombie.webp
+- id: zombi_ogre
+  nome: Zombi ogre
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ogre%20Zombie.webp
+- id: alce
+  nome: Alce
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Elk.webp
+- id: alce_gigante
+  nome: Alce gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Elk.webp
+- id: allosauro
+  nome: Allosauro
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Allosaurus.webp
+- id: anchilosauro
+  nome: Anchilosauro
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ankylosaurus.webp
+- id: aquila
+  nome: Aquila
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Eagle.webp
+- id: aquila_gigante
+  nome: Aquila gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Eagle.webp
+- id: archelon
+  nome: Archelon
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Archelon.webp
+- id: avvoltoio
+  nome: Avvoltoio
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Vulture.webp
+- id: avvoltoio_gigante
+  nome: Avvoltoio gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Vulture.webp
+- id: babbuino
+  nome: Babbuino
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Baboon.webp
+- id: banco_di_piranha
+  nome: Banco di piranha
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Swarm%20of%20Piranhas.webp
+- id: cammello
+  nome: Cammello
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Camel.webp
+- id: capra
+  nome: Capra
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Goat.webp
+- id: capra_gigante
+  nome: Capra gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Goat.webp
+- id: cavallo_da_galoppo
+  nome: Cavallo da galoppo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Riding%20Horse.webp
+- id: cavallo_da_guerra
+  nome: Cavallo da guerra
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Warhorse.webp
+- id: cavallo_da_tiro
+  nome: Cavallo da tiro
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Draft%20Horse.webp
+- id: cavalluccio_marino
+  nome: Cavalluccio marino
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Sea%20Horse.webp
+- id: cavalluccio_marino_gigante
+  nome: Cavalluccio marino gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Sea%20Horse.webp
+- id: cinghiale
+  nome: Cinghiale
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Boar.webp
+- id: cinghiale_gigante
+  nome: Cinghiale gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Boar.webp
+- id: coccodrillo
+  nome: Coccodrillo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Crocodile.webp
+- id: coccodrillo_gigante
+  nome: Coccodrillo gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Crocodile.webp
+- id: colonia_di_serpenti_velenosi
+  nome: Colonia di serpenti velenosi
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Swarm%20of%20Venomous%20Snakes.webp
+- id: colonia_di_topi
+  nome: Colonia di topi
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Swarm%20of%20Rats.webp
+- id: corvo
+  nome: Corvo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Raven.webp
+- id: daino
+  nome: Daino
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Deer.webp
+- id: elefante
+  nome: Elefante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Elephant.webp
+- id: faina
+  nome: Faina
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Weasel.webp
+- id: faina_gigante
+  nome: Faina gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Weasel.webp
+- id: falco
+  nome: Falco
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Hawk.webp
+- id: falco_di_sangue
+  nome: Falco di sangue
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Blood%20Hawk.webp
+- id: gatto
+  nome: Gatto
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Cat.webp
+- id: gorilla
+  nome: Gorilla
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Ape.webp
+- id: gorilla_gigante
+  nome: Gorilla gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Ape.webp
+- id: granchio
+  nome: Granchio
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Crab.webp
+- id: granchio_gigante
+  nome: Granchio gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Crab.webp
+- id: gufo
+  nome: Gufo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Owl.webp
+- id: gufo_gigante
+  nome: Gufo gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Owl.webp
+- id: iena
+  nome: Iena
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Hyena.webp
+- id: iena_gigante
+  nome: Iena gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Hyena.webp
+- id: ippopotamo
+  nome: Ippopotamo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Hippopotamus.webp
+- id: leone
+  nome: Leone
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Lion.webp
+- id: lucertola
+  nome: Lucertola
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Lizard.webp
+- id: lucertola_gigante
+  nome: Lucertola gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Lizard.webp
+- id: lupo
+  nome: Lupo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Wolf.webp
+- id: lupo_feroce
+  nome: Lupo feroce
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Dire%20Wolf.webp
+- id: mammut
+  nome: Mammut
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Mammoth.webp
+- id: mastino
+  nome: Mastino
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Mastiff.webp
+- id: millepiedi_gigante
+  nome: Millepiedi gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Centipede.webp
+- id: mulo
+  nome: Mulo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Mule.webp
+- id: orca_assassina
+  nome: Orca assassina
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Killer%20Whale.webp
+- id: orso_bruno
+  nome: Orso bruno
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Brown%20Bear.webp
+- id: orso_nero
+  nome: Orso nero
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Black%20Bear.webp
+- id: orso_polare
+  nome: Orso polare
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Polar%20Bear.webp
+- id: pantera
+  nome: Pantera
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Panther.webp
+- id: piovra
+  nome: Piovra
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Octopus.webp
+- id: piovra_gigante
+  nome: Piovra gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Octopus.webp
+- id: pipistrello
+  nome: Pipistrello
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Bat.webp
+- id: pipistrello_gigante
+  nome: Pipistrello gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Bat.webp
+- id: piranha
+  nome: Piranha
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Piranha.webp
+- id: plesiosauro
+  nome: Plesiosauro
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Plesiosaurus.webp
+- id: pony
+  nome: Pony
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Pony.webp
+- id: pteranodonte
+  nome: Pteranodonte
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Pteranodon.webp
+- id: ragno
+  nome: Ragno
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Spider.webp
+- id: ragno_gigante
+  nome: Ragno gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Spider.webp
+- id: ragno_lupo_gigante
+  nome: Ragno lupo gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Wolf%20Spider.webp
+- id: rana
+  nome: Rana
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Frog.webp
+- id: rana_gigante
+  nome: Rana gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Frog.webp
+- id: rinoceronte
+  nome: Rinoceronte
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Rhinoceros.webp
+- id: rospo_gigante
+  nome: Rospo gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Toad.webp
+- id: scarabeo_di_fuoco_gigante
+  nome: Scarabeo di fuoco gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Fire%20Beetle.webp
+- id: sciacallo
+  nome: Sciacallo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Jackal.webp
+- id: sciame_di_insetti
+  nome: Sciame di insetti
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Swarm%20of%20Insects.webp
+- id: sciame_di_pipistrelli
+  nome: Sciame di pipistrelli
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Swarm%20of%20Bats.webp
+- id: scorpione
+  nome: Scorpione
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Scorpion.webp
+- id: scorpione_gigante
+  nome: Scorpione gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Scorpion.webp
+- id: serpente_stritolatore
+  nome: Serpente stritolatore
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Constrictor%20Snake.webp
+- id: serpente_stritolatore_gigante
+  nome: Serpente stritolatore gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Constrictor%20Snake.webp
+- id: serpente_velenoso
+  nome: Serpente velenoso
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Poisonous%20Snake.webp
+- id: serpente_velenoso_gigante
+  nome: Serpente velenoso gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Poisonous%20Snake.webp
+- id: serpente_volante
+  nome: Serpente volante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Flying%20Snake.webp
+- id: squalo_cacciatore
+  nome: Squalo cacciatore
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Hunter%20Shark.webp
+- id: squalo_gigante
+  nome: Squalo gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Shark.webp
+- id: squalo_tropicale
+  nome: Squalo tropicale
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Reef%20Shark.webp
+- id: stormo_di_corvi
+  nome: Stormo di corvi
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Swarm%20of%20Ravens.webp
+- id: tasso
+  nome: Tasso
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Badger.webp
+- id: tasso_gigante
+  nome: Tasso gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Badger.webp
+- id: tigre
+  nome: Tigre
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Tiger.webp
+- id: tigre_dai_denti_a_sciabola
+  nome: Tigre dai denti a sciabola
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Saber-Toothed%20Tiger.webp
+- id: tirannosauro
+  nome: Tirannosauro
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Tyrannosaurus%20Rex.webp
+- id: topo
+  nome: Topo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Rat.webp
+- id: topo_gigante
+  nome: Topo gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Rat.webp
+- id: triceratopo
+  nome: Triceratopo
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Triceratops.webp
+- id: vespa_gigante
+  nome: Vespa gigante
+  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Wasp.webp
