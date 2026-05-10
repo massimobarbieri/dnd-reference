@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#251a12">
+  <title>D&D Reference</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#app">Salta al contenuto</a>
+
+  <header class="site-header">
+    <div>
+      <p class="eyebrow">SRD 5.2.1</p>
+      <h1 id="site-title">D&D Reference</h1>
+      <p id="site-subtitle" class="subtitle">Mostri, incantesimi e oggetti magici</p>
+    </div>
+  </header>
+
+  <main id="app" class="app-shell" aria-live="polite">
+    <section id="home-view" class="view"></section>
+    <section id="list-view" class="view" hidden></section>
+    <section id="detail-view" class="view" hidden></section>
+  </main>
+
+  <template id="loading-template">
+    <div class="state-box">Caricamento dati...</div>
+  </template>
+
+  <template id="error-template">
+    <div class="state-box state-box--error">
+      <strong>Impossibile caricare l'app.</strong>
+      <p>Avvia il sito con un server locale, ad esempio: <code>python3 -m http.server 8000</code>.</p>
+    </div>
+  </template>
+
+  <script src="assets/js/app.js" defer></script>
+</body>
+</html>

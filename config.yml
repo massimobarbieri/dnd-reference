@@ -1,0 +1,26 @@
+# Configurazione principale della web app D&D Reference.
+# Questo file e' pensato per essere modificato senza toccare il codice JavaScript.
+site:
+  title: D&D Reference
+  subtitle: Mostri, incantesimi e oggetti magici SRD 5.2.1
+  language: it
+  default_section: monsters
+  enable_favorites: true
+  compact_cards: true
+  show_monster_images: true
+  image_fallback_text: Immagine non disponibile
+
+paths:
+  monsters: data/srd/5.2.1/json/srd_5_2_1_monsters.json
+  spells: data/srd/5.2.1/json/srd_5_2_1_spells.json
+  magic_items: data/srd/5.2.1/json/srd_5_2_1_magic_items.json
+  monster_images: monster-images.yml
+
+labels:
+  monsters: Mostri
+  spells: Incantesimi
+  magic_items: Oggetti magici
+  favorites: Preferiti
+  search_placeholder: Cerca per nome, tipo, descrizione...
+  empty_results: Nessun risultato trovato.
+  empty_favorites: Non hai ancora salvato preferiti in questa sezione.
