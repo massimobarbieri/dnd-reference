@@ -458,8 +458,14 @@
     const labels = { forza: 'FOR', destrezza: 'DES', costituzione: 'COS', intelligenza: 'INT', saggezza: 'SAG', carisma: 'CAR' };
     return `<div class="stats-row">${Object.entries(labels).map(([key, label]) => {
       const stat = scores[key] || {};
-      return `<div class="stat"><b>${label}</b>${escapeHtml(String(stat.valore ?? '-'))} <span>${escapeHtml(stat.modificatore || '')}</span></div>`;
+      return `<div class="stat"><b>${label}</b>${escapeHtml(String(stat.valore ?? '-'))} <span>${escapeHtml(formatAbilityModifier(stat.modificatore))}</span></div>`;
     }).join('')}</div>`;
+  }
+
+  function formatAbilityModifier(modifier) {
+    if (!modifier) return '';
+    const text = String(modifier).trim();
+    return text.startsWith('(') && text.endsWith(')') ? text : `(${text})`;
   }
 
   function renderEntries(title, entries) {
