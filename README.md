@@ -5,7 +5,6 @@ L’app raccoglie in un’unica interfaccia:
 - incantesimi
 - mostri
 - oggetti magici
-- equipaggiamento
 
 Tutto è organizzato in modo semplice e leggibile, ottimizzato sia per desktop che per dispositivi mobile, così da essere utilizzabile direttamente al tavolo di gioco.
 L'app fa uso del System Reference Document 5.2.1 rilasciato gratuitamente da Wizards. Si rimanda al documento di Licenza per i dettagli.
@@ -16,9 +15,7 @@ Scarica tutto il progetto. Puoi clonarlo con git oppure scaricalo a mano. Per cl
 
 ``git clone https://github.com/massimobarbieri/dnd-reference.git``
 
-Puoi aggiornarlo successivamente con il comando
-
-``git pull``
+``git submodule update --init --recursive``
 
 **dnd-reference** è una webapp quindi ti serve un webserver qualunque (nginx o apache sono i più comuni) oppure puoi usare python3 durante le tue sessioni di gioco.
 Se usi python, accedi alla cartella del progetto con il terminale e digita il seguente comando:

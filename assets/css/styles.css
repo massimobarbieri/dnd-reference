@@ -31,6 +31,7 @@ h1 { margin: 0; font-size: clamp(1.6rem, 7vw, 2.6rem); line-height: .95; }
 .toolbar { position: sticky; top: 0; z-index: 5; background: rgba(246,239,229,.94); backdrop-filter: blur(10px); padding: .55rem 0 .6rem; border-bottom: 1px solid rgba(217,199,179,.65); }
 .toolbar-row { display: flex; gap: .45rem; align-items: center; }
 .search { flex: 1; border: 1px solid var(--line); background: var(--paper); border-radius: 999px; min-height: 2.55rem; padding: 0 .9rem; color: var(--ink); }
+.filter-select { border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 999px; min-height: 2.55rem; padding: 0 2rem 0 .8rem; max-width: 13rem; cursor: pointer; }
 .button { border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 999px; min-height: 2.55rem; padding: 0 .8rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: .35rem; white-space: nowrap; }
 .button--primary { background: var(--accent); border-color: var(--accent); color: #fff8ee; }
 .button--ghost { background: transparent; }
@@ -74,6 +75,7 @@ code { background: rgba(0,0,0,.06); padding: .1rem .25rem; border-radius: .25rem
   .home-card { min-height: 6.7rem; }
   .toolbar-row { flex-wrap: wrap; }
   .search { flex-basis: 100%; }
+  .filter-select { flex: 1; min-width: 0; max-width: none; min-height: 2.35rem; font-size: .92rem; }
   .button { min-height: 2.35rem; padding: 0 .7rem; font-size: .92rem; }
   .detail-card { padding: .55rem .15rem; box-shadow: none; background: transparent; }
   .monster-hero { grid-template-columns: 1fr 86px; gap: .55rem; }

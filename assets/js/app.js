@@ -13,6 +13,7 @@
     favorites: loadFavorites(),
     currentSection: null,
     searchTerm: '',
+    filters: { monsters: '', spells: '', magic_items: '' },
     showOnlyFavorites: false,
   };
 
@@ -47,7 +48,7 @@
 
       appState.data.monsters = normalizeArray(monsters);
       appState.data.spells = normalizeArray(spells);
-      appState.data.magic_items = normalizeArray(magicItems);
+      appState.data.magic_items = normalizeArray(magicItems).map(normalizeMagicItem);
       appState.monsterImages = parseMonsterImages(monsterImageYaml);
       renderRoute();
     } catch (error) {
@@ -70,6 +71,27 @@
 
   function normalizeArray(value) {
     return Array.isArray(value) ? value : [];
+  }
+
+  function normalizeMagicItem(item) {
+    return { ...item, rarita: normalizeMagicItemRarity(item.rarita) };
+  }
+
+  function normalizeMagicItemRarity(rarity) {
+    const text = String(rarity || '').trim().toLowerCase();
+    if (!text) return '';
+    if (text.includes(',') || text.includes(' o ') || text.includes('variabile')) return 'rarità variabile';
+
+    const canonicalRarities = {
+      raro: 'rara',
+      rara: 'rara',
+      'molto raro': 'molto rara',
+      'molto rara': 'molto rara',
+      leggendario: 'leggendaria',
+      leggendaria: 'leggendaria',
+    };
+
+    return canonicalRarities[text] || text;
   }
 
   /* Parser YAML minimale per config.yml: supporta blocchi a due livelli con valori scalari. */
@@ -188,58 +210,125 @@
     setView('list');
     const labels = appState.config.labels;
     const title = labels[section] || section;
-    const allItems = appState.data[section];
-    const items = getFilteredItems(section);
 
     views.list.innerHTML = `
       <div class="toolbar">
         <div class="toolbar-row">
           <a class="button button--ghost" href="#/">Home</a>
           <input id="search-input" class="search" type="search" value="${escapeAttr(appState.searchTerm)}" placeholder="${escapeAttr(labels.search_placeholder)}" aria-label="Cerca">
+          ${filterControl(section)}
           <button id="favorites-toggle" class="button" type="button" aria-pressed="${appState.showOnlyFavorites}">${labels.favorites}</button>
         </div>
       </div>
       <div class="section-title">
         <h2>${escapeHtml(title)}</h2>
-        <span class="count">${items.length} / ${allItems.length}</span>
+        <span id="result-count" class="count"></span>
       </div>
-      <div class="item-list">
-        ${items.length ? items.map((item) => listItem(section, item)).join('') : `<div class="state-box">${escapeHtml(appState.showOnlyFavorites ? labels.empty_favorites : labels.empty_results)}</div>`}
-      </div>
+      <div id="item-list" class="item-list"></div>
     `;
 
-    const searchInput = document.querySelector('#search-input');
-    const favoritesToggle = document.querySelector('#favorites-toggle');
-
-    searchInput.addEventListener('input', (event) => {
-      const { value, selectionStart, selectionEnd } = event.target;
-      appState.searchTerm = value;
-      renderList(section, {
-        focusSearch: true,
-        selectionStart,
-        selectionEnd,
-      });
+    views.list.querySelector('#search-input').addEventListener('input', (event) => {
+      appState.searchTerm = event.target.value;
+      renderListResults(section);
     });
 
-    favoritesToggle.addEventListener('click', () => {
+    views.list.querySelector('#section-filter')?.addEventListener('change', (event) => {
+      appState.filters[section] = event.target.value;
+      renderListResults(section);
+    });
+
+    views.list.querySelector('#favorites-toggle').addEventListener('click', (event) => {
       appState.showOnlyFavorites = !appState.showOnlyFavorites;
-      renderList(section);
+      event.currentTarget.setAttribute('aria-pressed', String(appState.showOnlyFavorites));
+      renderListResults(section);
     });
 
-    if (options.focusSearch) {
-      searchInput.focus({ preventScroll: true });
-      const start = options.selectionStart ?? searchInput.value.length;
-      const end = options.selectionEnd ?? start;
-      searchInput.setSelectionRange(start, end);
-    }
+    renderListResults(section);
+  }
+
+  function renderListResults(section) {
+    const labels = appState.config.labels;
+    const allItems = appState.data[section];
+    const items = getFilteredItems(section);
+    const count = views.list.querySelector('#result-count');
+    const list = views.list.querySelector('#item-list');
+
+    count.textContent = `${items.length} / ${allItems.length}`;
+    list.innerHTML = items.length
+      ? items.map((item) => listItem(section, item)).join('')
+      : `<div class="state-box">${escapeHtml(appState.showOnlyFavorites ? labels.empty_favorites : labels.empty_results)}</div>`;
   }
 
   function getFilteredItems(section) {
     const term = normalizeText(appState.searchTerm);
+    const filter = appState.filters[section];
     return appState.data[section]
       .filter((item) => !appState.showOnlyFavorites || isFavorite(section, item.id))
+      .filter((item) => matchesSectionFilter(section, item, filter))
       .filter((item) => !term || normalizeText(searchableText(section, item)).includes(term))
       .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'it'));
+  }
+
+  function filterControl(section) {
+    const options = filterOptions(section);
+    if (!options.length) return '';
+
+    const labels = {
+      monsters: 'Tutti i GS',
+      spells: 'Tutti i livelli',
+      magic_items: 'Tutte le rarità',
+    };
+
+    return `
+      <select id="section-filter" class="filter-select" aria-label="${escapeAttr(labels[section])}">
+        <option value="">${escapeHtml(labels[section])}</option>
+        ${options.map((option) => `<option value="${escapeAttr(option.value)}"${option.value === appState.filters[section] ? ' selected' : ''}>${escapeHtml(option.label)}</option>`).join('')}
+      </select>
+    `;
+  }
+
+  function filterOptions(section) {
+    if (section === 'monsters') {
+      return uniqueValues(appState.data.monsters, 'grado_sfida')
+        .sort((a, b) => challengeRatingValue(a) - challengeRatingValue(b))
+        .map((value) => ({ value, label: `GS ${value}` }));
+    }
+
+    if (section === 'spells') {
+      return uniqueValues(appState.data.spells, 'livello')
+        .sort((a, b) => Number(a) - Number(b))
+        .map((value) => ({ value: String(value), label: spellLevel({ livello: Number(value) }) }));
+    }
+
+    return uniqueValues(appState.data.magic_items, 'rarita')
+      .sort((a, b) => a.localeCompare(b, 'it'))
+      .map((value) => ({ value, label: capitalizeFirst(value) }));
+  }
+
+  function matchesSectionFilter(section, item, filter) {
+    if (!filter) return true;
+    if (section === 'monsters') return String(item.grado_sfida || '') === filter;
+    if (section === 'spells') return String(item.livello ?? '') === filter;
+    return String(item.rarita || '') === filter;
+  }
+
+  function uniqueValues(items, key) {
+    return Array.from(new Set(items.map((item) => item[key]).filter((value) => value !== null && value !== undefined && value !== '')))
+      .map(String);
+  }
+
+  function challengeRatingValue(value) {
+    const text = String(value);
+    if (text.includes('/')) {
+      const [numerator, denominator] = text.split('/').map(Number);
+      return numerator / denominator;
+    }
+    return Number(text);
+  }
+
+  function capitalizeFirst(value) {
+    const text = String(value);
+    return text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
   }
 
   function searchableText(section, item) {
@@ -390,8 +479,14 @@
     const labels = { forza: 'FOR', destrezza: 'DES', costituzione: 'COS', intelligenza: 'INT', saggezza: 'SAG', carisma: 'CAR' };
     return `<div class="stats-row">${Object.entries(labels).map(([key, label]) => {
       const stat = scores[key] || {};
-      return `<div class="stat"><b>${label}</b>${escapeHtml(String(stat.valore ?? '-'))} <span>${escapeHtml(stat.modificatore || '')}</span></div>`;
+      return `<div class="stat"><b>${label}</b>${escapeHtml(String(stat.valore ?? '-'))} <span>${escapeHtml(formatAbilityModifier(stat.modificatore))}</span></div>`;
     }).join('')}</div>`;
+  }
+
+  function formatAbilityModifier(modifier) {
+    if (!modifier) return '';
+    const text = String(modifier).trim();
+    return text.startsWith('(') && text.endsWith(')') ? text : `(${text})`;
   }
 
   function renderEntries(title, entries) {
