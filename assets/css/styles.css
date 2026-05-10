@@ -21,7 +21,7 @@ body {
   margin: 0;
   color: var(--ink);
   background: radial-gradient(circle at top, #fff8ef 0, var(--bg) 48rem);
-  padding-bottom: 13.5rem;
+  padding-bottom: 10.5rem;
 }
 
 a { color: inherit; }
@@ -554,6 +554,8 @@ h1 {
   backdrop-filter: blur(10px);
   box-shadow: var(--shadow);
   padding: .65rem;
+  max-height: min(18rem, calc(100vh - 1.5rem));
+  overflow-y: auto;
 }
 
 .roll-tray-header {
@@ -692,6 +694,8 @@ h1 {
   display: grid;
   gap: .2rem;
   font-size: .86rem;
+  max-height: 5.8rem;
+  overflow-y: auto;
 }
 
 .roll-history li {
@@ -725,12 +729,56 @@ code {
   border-radius: .25rem;
 }
 
+/* Sidebar del dice roller su schermi larghi */
+@media (min-width: 1320px) {
+  body {
+    padding-bottom: 0;
+  }
+
+  .site-header,
+  .app-shell {
+    margin-left: calc((100vw - var(--content-width) - 19rem) / 2);
+    margin-right: auto;
+  }
+
+  .roll-tray {
+    top: 5.25rem;
+    right: 1rem;
+    bottom: auto;
+    left: auto;
+    transform: none;
+    width: 17.5rem;
+    max-height: calc(100vh - 6.25rem);
+    padding: .6rem;
+  }
+
+  .roll-form {
+    grid-template-columns: 1fr;
+  }
+
+  .roll-submit {
+    width: 100%;
+  }
+
+  .roll-result {
+    grid-template-columns: auto auto;
+  }
+
+  .roll-breakdown {
+    grid-column: 1 / -1;
+  }
+
+  .roll-history {
+    max-height: 10rem;
+  }
+}
+
 /* Adattamenti per schermi piccoli */
 @media (max-width: 720px) {
   .site-header { padding-top: .9rem; }
 
   body {
-    padding-bottom: 15.5rem;
+    padding-bottom: 12rem;
   }
 
   .app-shell {
@@ -812,6 +860,7 @@ code {
     width: calc(100vw - .9rem);
     bottom: .45rem;
     padding: .55rem;
+    max-height: 11rem;
   }
 
   .roll-form {
@@ -828,6 +877,21 @@ code {
 
   .roll-breakdown {
     grid-column: 1 / -1;
+  }
+
+  .quick-dice {
+    gap: .18rem;
+  }
+
+  .quick-dice button {
+    min-height: 1.5rem;
+    padding: 0 .38rem;
+  }
+
+  .roll-help,
+  .roll-error,
+  .roll-empty {
+    font-size: .76rem;
   }
 
   .data-table {
