@@ -130,7 +130,7 @@ Criteri di accettazione:
 
 Scopo: passare da parsing runtime a dati arricchiti dove ha senso.
 
-- [ ] Mappare esempi reali di mostri con attacchi frequenti.
+- [x] Mappare esempi reali di mostri con attacchi frequenti.
 - [ ] Definire schema opzionale per `tiri`, `danni`, `cd`, `ricarica`.
 - [ ] Arricchire JSON solo per campi ad alta confidenza.
 - [ ] Mantenere fallback al parser runtime.
