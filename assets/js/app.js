@@ -188,8 +188,6 @@
     setView('list');
     const labels = appState.config.labels;
     const title = labels[section] || section;
-    const allItems = appState.data[section];
-    const items = getFilteredItems(section);
 
     views.list.innerHTML = `
       <div class="toolbar">
@@ -201,22 +199,36 @@
       </div>
       <div class="section-title">
         <h2>${escapeHtml(title)}</h2>
-        <span class="count">${items.length} / ${allItems.length}</span>
+        <span id="result-count" class="count"></span>
       </div>
-      <div class="item-list">
-        ${items.length ? items.map((item) => listItem(section, item)).join('') : `<div class="state-box">${escapeHtml(appState.showOnlyFavorites ? labels.empty_favorites : labels.empty_results)}</div>`}
-      </div>
+      <div id="item-list" class="item-list"></div>
     `;
 
-    document.querySelector('#search-input').addEventListener('input', (event) => {
+    views.list.querySelector('#search-input').addEventListener('input', (event) => {
       appState.searchTerm = event.target.value;
-      renderList(section);
+      renderListResults(section);
     });
 
-    document.querySelector('#favorites-toggle').addEventListener('click', () => {
+    views.list.querySelector('#favorites-toggle').addEventListener('click', (event) => {
       appState.showOnlyFavorites = !appState.showOnlyFavorites;
-      renderList(section);
+      event.currentTarget.setAttribute('aria-pressed', String(appState.showOnlyFavorites));
+      renderListResults(section);
     });
+
+    renderListResults(section);
+  }
+
+  function renderListResults(section) {
+    const labels = appState.config.labels;
+    const allItems = appState.data[section];
+    const items = getFilteredItems(section);
+    const count = views.list.querySelector('#result-count');
+    const list = views.list.querySelector('#item-list');
+
+    count.textContent = `${items.length} / ${allItems.length}`;
+    list.innerHTML = items.length
+      ? items.map((item) => listItem(section, item)).join('')
+      : `<div class="state-box">${escapeHtml(appState.showOnlyFavorites ? labels.empty_favorites : labels.empty_results)}</div>`;
   }
 
   function getFilteredItems(section) {
