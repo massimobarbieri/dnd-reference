@@ -134,7 +134,7 @@ Scopo: passare da parsing runtime a dati arricchiti dove ha senso.
 - [x] Definire schema opzionale per `tiri`, `danni`, `cd`, `ricarica`.
 - [x] Arricchire JSON solo per campi ad alta confidenza.
 - [x] Mantenere fallback al parser runtime.
-- [ ] Aggiornare gli schemi MD/JSON nel submodule dati.
+- [x] Aggiornare gli schemi MD/JSON nel submodule dati.
 
 Criteri di accettazione:
 
