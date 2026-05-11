@@ -92,4 +92,8 @@ assert.deepEqual(dropLowest.rolls, [1, 6, 3, 4]);
 assert.deepEqual(dropLowest.keptRolls, [3, 4, 6]);
 assert.equal(dropLowest.total, 13);
 
+const realRoll = rollDice(parseDiceFormula('1d20'));
+assert.equal(realRoll.rolls.length, 1);
+assert.ok(realRoll.total >= 1 && realRoll.total <= 20);
+
 console.log('Fixture dice roller OK');

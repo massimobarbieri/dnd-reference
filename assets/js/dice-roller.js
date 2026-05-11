@@ -3,14 +3,14 @@
  * Espone funzioni pure per browser e test Node senza dipendenze.
  */
 (function exposeDiceRoller(root, factory) {
-  const api = factory();
+  const api = factory(root);
 
   if (typeof module === 'object' && module.exports) {
     module.exports = api;
   }
 
   root.DndDiceRoller = api;
-}(typeof globalThis !== 'undefined' ? globalThis : window, function createDiceRoller() {
+}(typeof globalThis !== 'undefined' ? globalThis : window, function createDiceRoller(root) {
   'use strict';
 
   const DICE_LIMITS = {

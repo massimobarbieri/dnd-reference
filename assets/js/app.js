@@ -764,9 +764,7 @@
 
       if (!Number.isFinite(modifier)) return;
 
-      addRollResult(rollAttack(modifier, mode));
-      appState.rollTrayOpen = true;
-      renderRollTray();
+      showRollResult(rollAttack(modifier, mode));
       return;
     }
 
@@ -778,12 +776,10 @@
 
       if (!parsed) return;
 
-      addRollResult({
+      showRollResult({
         ...rollDice(parsed),
         kind: 'scaling',
       });
-      appState.rollTrayOpen = true;
-      renderRollTray();
       return;
     }
 
@@ -796,13 +792,11 @@
 
       if (!parsed) return;
 
-      addRollResult({
+      showRollResult({
         ...rollDice(parsed),
         formula: label || parsed.formula,
         kind: 'structured',
       });
-      appState.rollTrayOpen = true;
-      renderRollTray();
       return;
     }
 
@@ -814,9 +808,7 @@
 
       if (!parsed) return;
 
-      addRollResult(rollDice(parsed));
-      appState.rollTrayOpen = true;
-      renderRollTray();
+      showRollResult(rollDice(parsed));
       return;
     }
 
@@ -836,9 +828,7 @@
       if (!parsed) return;
 
       appState.rollError = '';
-      addRollResult(rollDice(parsed));
-      appState.rollTrayOpen = true;
-      renderRollTray();
+      showRollResult(rollDice(parsed));
     }
   }
 
@@ -862,9 +852,7 @@
     }
 
     appState.rollError = '';
-    addRollResult(rollDice(parsed));
-    appState.rollTrayOpen = true;
-    renderRollTray();
+    showRollResult(rollDice(parsed));
   }
 
   /*
@@ -1440,11 +1428,11 @@
 
     if (existing) {
       existing.outerHTML = markup;
-      return '';
+      return document.querySelector('#roll-tray');
     }
 
     document.body.insertAdjacentHTML('beforeend', markup);
-    return '';
+    return document.querySelector('#roll-tray');
   }
 
   /*
@@ -1455,7 +1443,7 @@
     const isOpen = appState.rollTrayOpen || Boolean(appState.rollError);
 
     return `
-      <aside id="roll-tray" class="roll-tray${isOpen ? ' is-open' : ''}" aria-live="polite">
+      <aside id="roll-tray" class="roll-tray${isOpen ? ' is-open' : ''}${lastRoll ? ' has-result' : ''}" aria-live="polite">
         <div class="roll-tray-header">
           <button
             class="roll-toggle"
@@ -1464,8 +1452,16 @@
             aria-expanded="${isOpen}"
             aria-controls="roll-tray-body"
           >
-            <span>Dice roller</span>
-            ${lastRoll ? `<strong>${escapeHtml(String(lastRoll.total))}</strong>` : ''}
+            <span class="roll-toggle-label">Dice roller</span>
+            ${lastRoll
+              ? `
+                <span class="roll-toggle-result" aria-label="Ultimo tiro: ${escapeAttr(lastRoll.formula)}, totale ${escapeAttr(String(lastRoll.total))}">
+                  <span>${escapeHtml(lastRoll.formula)}</span>
+                  <strong>${escapeHtml(String(lastRoll.total))}</strong>
+                </span>
+              `
+              : ''
+            }
           </button>
 
           <div class="roll-header-actions">
@@ -1479,7 +1475,7 @@
         <div id="roll-tray-body" class="roll-tray-body">
           ${lastRoll
             ? `
-              <div class="roll-result ${escapeAttr(rollResultClass(lastRoll))}">
+              <div class="roll-result ${escapeAttr(rollResultClass(lastRoll))}" role="status" aria-live="polite">
                 <span class="roll-formula">${escapeHtml(lastRoll.formula)}</span>
                 <strong class="roll-total">${escapeHtml(String(lastRoll.total))}</strong>
                 <span class="roll-breakdown">${escapeHtml(formatRollBreakdown(lastRoll))}</span>
@@ -1542,6 +1538,20 @@
       result,
       ...appState.rollHistory,
     ].slice(0, DICE_LIMITS.historySize);
+  }
+
+  /*
+   * Registra il tiro e mantiene il risultato subito visibile anche su mobile.
+   */
+  function showRollResult(result) {
+    appState.rollError = '';
+    addRollResult(result);
+    appState.rollTrayOpen = true;
+
+    const tray = renderRollTray();
+    const body = tray?.querySelector('.roll-tray-body');
+
+    if (body) body.scrollTop = 0;
   }
 
   /*
