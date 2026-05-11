@@ -217,6 +217,8 @@ Confidenza: alta per ricarica nel nome e tiro salvezza.
 
 ## Decisione Per Il Primo Schema
 
+Schema di riferimento: `docs/dice-roller-schema.md`.
+
 La prima versione dello schema deve coprire solo:
 
 - `tipo: "attacco"` con `bonus`, `modalita`, `portata` o `gittata`;
