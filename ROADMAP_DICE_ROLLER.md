@@ -147,7 +147,7 @@ Criteri di accettazione:
 - [x] Ambiguita del testo SRD: alcune formule non sono azioni di tiro ma intervalli, tabelle o spiegazioni.
 - [x] Critici: raddoppiare i dadi e non i modifier richiede contesto di attacco.
 - [x] Scaling incantesimi: spesso dipende da livello, turno o bersagli.
-- [ ] Accessibilita: i bottoni inline devono essere navigabili ma non invadenti.
+- [x] Accessibilita: i bottoni inline devono essere navigabili ma non invadenti.
 - [x] Mobile: il risultato deve essere leggibile senza occupare tutta la scheda.
 
 ## Casi Non Automatizzati
@@ -165,8 +165,8 @@ Criteri di accettazione:
 - [x] Implementare parser e roller puri in `assets/js/app.js`, dietro funzioni isolate.
 - [x] Aggiungere renderer inline dei dadi solo per descrizioni, tratti e azioni.
 - [x] Aggiungere pannello risultato minimale nella scheda dettaglio.
-- [ ] Verificare manualmente con:
-  - [ ] un mostro con attacco e danni
-  - [ ] un incantesimo con danno
-  - [ ] un oggetto con tabella `1d100`
-  - [ ] una scheda senza dadi
+- [x] Verificare manualmente con:
+  - [x] un mostro con attacco e danni
+  - [x] un incantesimo con danno
+  - [x] un oggetto con tabella `1d100`
+  - [x] una scheda senza dadi

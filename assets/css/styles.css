@@ -427,6 +427,15 @@ h1 {
   border-color: var(--accent);
 }
 
+.dice-inline:focus-visible,
+.attack-roll button:focus-visible,
+.structured-roll-button:focus-visible,
+.scaling-controls button:focus-visible,
+.quick-dice button:focus-visible {
+  outline: 2px solid rgba(138,63,35,.68);
+  outline-offset: 2px;
+}
+
 /* Controlli inline per i tiri per colpire */
 .attack-roll {
   display: inline-flex;

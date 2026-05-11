@@ -44,6 +44,10 @@ Per verificare il renderer dei tiri strutturati:
 
 ``node tests/structured-roll-renderer.test.js``
 
+Per verificare i requisiti base di accessibilità del dice roller:
+
+``node tests/roll-accessibility.test.js``
+
 All’interno dell’app puoi:
 
 - navigare tra le categorie (incantesimi, mostri, ecc.)

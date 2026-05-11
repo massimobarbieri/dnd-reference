@@ -1518,7 +1518,7 @@
 
           <div class="quick-dice" aria-label="Dadi rapidi">
             ${[4, 6, 8, 10, 12, 20, 100].map((faces) => `
-              <button type="button" data-quick-roll="1d${faces}">d${faces}</button>
+              <button type="button" data-quick-roll="1d${faces}" aria-label="Tira 1d${faces}">d${faces}</button>
             `).join('')}
           </div>
 
@@ -1820,7 +1820,7 @@
     const modifier = Number(rawModifier);
     const normalized = modifier >= 0 ? `+${modifier}` : String(modifier);
 
-    return `<span class="attack-roll" aria-label="Tiro per colpire ${escapeAttr(normalized)}"><button class="attack-roll-main" type="button" data-attack-roll="${escapeAttr(String(modifier))}" data-attack-mode="normal" aria-label="Tira per colpire ${escapeAttr(normalized)}">${escapeHtml(normalized)}</button><button class="attack-roll-mode" type="button" data-attack-roll="${escapeAttr(String(modifier))}" data-attack-mode="advantage" aria-label="Tira per colpire ${escapeAttr(normalized)} con vantaggio">V</button><button class="attack-roll-mode" type="button" data-attack-roll="${escapeAttr(String(modifier))}" data-attack-mode="disadvantage" aria-label="Tira per colpire ${escapeAttr(normalized)} con svantaggio">S</button></span>`;
+    return `<span class="attack-roll" aria-label="Tiro per colpire ${escapeAttr(normalized)}"><button class="attack-roll-main" type="button" data-attack-roll="${escapeAttr(String(modifier))}" data-attack-mode="normal" aria-label="Tira per colpire ${escapeAttr(normalized)}">${escapeHtml(normalized)}</button><button class="attack-roll-mode" type="button" data-attack-roll="${escapeAttr(String(modifier))}" data-attack-mode="advantage" aria-label="Tira per colpire ${escapeAttr(normalized)} con vantaggio" title="Vantaggio">V</button><button class="attack-roll-mode" type="button" data-attack-roll="${escapeAttr(String(modifier))}" data-attack-mode="disadvantage" aria-label="Tira per colpire ${escapeAttr(normalized)} con svantaggio" title="Svantaggio">S</button></span>`;
   }
 
   /*
