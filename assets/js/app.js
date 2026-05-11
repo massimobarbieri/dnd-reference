@@ -1340,30 +1340,6 @@
         </div>
 
         <div id="roll-tray-body" class="roll-tray-body">
-          <form id="roll-tray-form" class="roll-form">
-            <label class="visually-hidden" for="roll-tray-input">Formula di dado</label>
-            <input
-              id="roll-tray-input"
-              class="roll-input"
-              type="text"
-              inputmode="text"
-              autocomplete="off"
-              placeholder="1d20 + 5"
-              aria-describedby="roll-tray-help"
-            >
-            <button class="button button--primary roll-submit" type="submit">Tira</button>
-          </form>
-
-          <div class="quick-dice" aria-label="Dadi rapidi">
-            ${[4, 6, 8, 10, 12, 20, 100].map((faces) => `
-              <button type="button" data-quick-roll="1d${faces}">d${faces}</button>
-            `).join('')}
-          </div>
-
-          <p id="roll-tray-help" class="${appState.rollError ? 'roll-error' : 'roll-help'}">
-            ${escapeHtml(appState.rollError || 'Formula libera: d20, 2d6 + 3, 2d20kh1, 4d6dl1.')}
-          </p>
-
           ${lastRoll
             ? `
               <div class="roll-result ${escapeAttr(rollResultClass(lastRoll))}">
@@ -1392,6 +1368,30 @@
             `
             : '<p class="roll-empty">Clicca una formula di dado nella scheda.</p>'
           }
+
+          <form id="roll-tray-form" class="roll-form">
+            <label class="visually-hidden" for="roll-tray-input">Formula di dado</label>
+            <input
+              id="roll-tray-input"
+              class="roll-input"
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              placeholder="1d20 + 5"
+              aria-describedby="roll-tray-help"
+            >
+            <button class="button button--primary roll-submit" type="submit">Tira</button>
+          </form>
+
+          <div class="quick-dice" aria-label="Dadi rapidi">
+            ${[4, 6, 8, 10, 12, 20, 100].map((faces) => `
+              <button type="button" data-quick-roll="1d${faces}">d${faces}</button>
+            `).join('')}
+          </div>
+
+          <p id="roll-tray-help" class="${appState.rollError ? 'roll-error' : 'roll-help'}">
+            ${escapeHtml(appState.rollError || 'Formula libera: d20, 2d6 + 3, 2d20kh1, 4d6dl1.')}
+          </p>
         </div>
       </aside>
     `;

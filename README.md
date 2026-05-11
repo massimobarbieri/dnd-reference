@@ -32,6 +32,10 @@ Per verificare le fixture del dice roller:
 
 ``node tests/dice-roller.test.js``
 
+Per verificare il markup del tray:
+
+``node tests/roll-tray-markup.test.js``
+
 All’interno dell’app puoi:
 
 - navigare tra le categorie (incantesimi, mostri, ecc.)
