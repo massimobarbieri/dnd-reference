@@ -40,6 +40,10 @@ Per verificare i dati mostri arricchiti:
 
 ``node tests/monster-rolls-data.test.js``
 
+Per verificare il renderer dei tiri strutturati:
+
+``node tests/structured-roll-renderer.test.js``
+
 All’interno dell’app puoi:
 
 - navigare tra le categorie (incantesimi, mostri, ecc.)

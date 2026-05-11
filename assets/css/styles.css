@@ -472,6 +472,48 @@ h1 {
   border-color: var(--accent);
 }
 
+/* Controlli generati da dati strutturati */
+.structured-rolls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .28rem;
+  margin: .3rem 0 .12rem;
+}
+
+.structured-roll-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .18rem;
+}
+
+.structured-roll-label {
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 760;
+}
+
+.structured-roll-button {
+  border: 1px solid rgba(138,63,35,.38);
+  background: rgba(255,250,242,.88);
+  color: var(--accent);
+  border-radius: 999px;
+  min-height: 1.55rem;
+  padding: 0 .45rem;
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 760;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.structured-roll-button:hover,
+.structured-roll-button:focus-visible {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
 /* Controlli per scaling degli incantesimi */
 .scaling-controls {
   display: flex;

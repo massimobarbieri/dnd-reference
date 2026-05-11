@@ -787,6 +787,25 @@
       return;
     }
 
+    const structuredDamageButton = event.target.closest('[data-structured-damage-roll]');
+
+    if (structuredDamageButton) {
+      const formula = structuredDamageButton.getAttribute('data-structured-damage-roll');
+      const label = structuredDamageButton.getAttribute('data-structured-roll-label');
+      const parsed = parseDiceFormula(formula);
+
+      if (!parsed) return;
+
+      addRollResult({
+        ...rollDice(parsed),
+        formula: label || parsed.formula,
+        kind: 'structured',
+      });
+      appState.rollTrayOpen = true;
+      renderRollTray();
+      return;
+    }
+
     const rollButton = event.target.closest('[data-dice-roll]');
 
     if (rollButton) {
@@ -1214,15 +1233,133 @@
 
     const name = entry.nome || entry.chiave || '';
     const description = entry.descrizione || entry.valore || '';
+    const structuredControls = renderStructuredRollControls(entry);
+    const inlineOptions = hasValidStructuredRollData(entry)
+      ? { dice: false, attacks: false }
+      : {};
 
     if (!name && !description) return '';
 
     return `
       <div class="entry">
         ${name ? `<span class="entry-title">${escapeHtml(name)}</span>` : ''}
-        ${description ? `<p>${formatInline(description)}</p>` : ''}
+        ${description ? `<p>${formatInline(description, inlineOptions)}</p>` : ''}
+        ${structuredControls}
       </div>
     `;
+  }
+
+  /*
+   * Mostra controlli basati su dati strutturati validi.
+   * Se i dati sono assenti o incompleti, il renderer torna al parser inline.
+   */
+  function renderStructuredRollControls(entry) {
+    const rolls = Array.isArray(entry?.tiri) ? entry.tiri : [];
+    const controls = [];
+    const recharge = validRecharge(entry?.ricarica);
+
+    if (recharge) {
+      controls.push(`
+        <button
+          class="structured-roll-button"
+          type="button"
+          data-dice-roll="${escapeAttr(recharge.formula)}"
+          aria-label="Tira ${escapeAttr(recharge.formula)} per ${escapeAttr(recharge.testo)}"
+        >${escapeHtml(recharge.testo)}</button>
+      `);
+    }
+
+    rolls.forEach((roll) => {
+      if (isValidStructuredAttack(roll)) {
+        const damages = roll.danni.filter(isValidStructuredDamage);
+
+        controls.push(`
+          <span class="structured-roll-group">
+            <span class="structured-roll-label">Colpire</span>
+            ${attackRollControls(roll.bonus)}
+            ${damages.map((damage) => structuredDamageButton(damage)).join('')}
+          </span>
+        `);
+      }
+
+      if (isValidStructuredSave(roll)) {
+        const damages = roll.fallimento.danni.filter(isValidStructuredDamage);
+
+        controls.push(`
+          <span class="structured-roll-group">
+            <span class="structured-roll-label">CD ${escapeHtml(String(roll.cd))} ${escapeHtml(roll.caratteristica)}</span>
+            ${damages.map((damage) => structuredDamageButton(damage)).join('')}
+          </span>
+        `);
+      }
+    });
+
+    if (!controls.length) return '';
+
+    return `
+      <div class="structured-rolls" aria-label="Tiri strutturati">
+        ${controls.join('')}
+      </div>
+    `;
+  }
+
+  function hasValidStructuredRollData(entry) {
+    const rolls = Array.isArray(entry?.tiri) ? entry.tiri : [];
+
+    return rolls.some((roll) => isValidStructuredAttack(roll) || isValidStructuredSave(roll));
+  }
+
+  function structuredDamageButton(damage) {
+    const label = [damage.formula, damage.tipo].filter(Boolean).join(' ');
+
+    return `
+      <button
+        class="structured-roll-button"
+        type="button"
+        data-structured-damage-roll="${escapeAttr(damage.formula)}"
+        data-structured-roll-label="${escapeAttr(label)}"
+        aria-label="Tira danni ${escapeAttr(label)}"
+      >${escapeHtml(label)}</button>
+    `;
+  }
+
+  function isValidStructuredAttack(roll) {
+    return (
+      roll?.tipo === 'attacco' &&
+      Number.isFinite(Number(roll.bonus)) &&
+      Array.isArray(roll.danni) &&
+      roll.danni.some(isValidStructuredDamage)
+    );
+  }
+
+  function isValidStructuredSave(roll) {
+    return (
+      roll?.tipo === 'salvezza' &&
+      Number.isFinite(Number(roll.cd)) &&
+      Boolean(roll.caratteristica) &&
+      Array.isArray(roll.fallimento?.danni) &&
+      roll.fallimento.danni.some(isValidStructuredDamage)
+    );
+  }
+
+  function isValidStructuredDamage(damage) {
+    return Boolean(damage?.formula && parseDiceFormula(damage.formula));
+  }
+
+  function validRecharge(recharge) {
+    if (
+      !recharge ||
+      recharge.formula !== '1d6' ||
+      !Array.isArray(recharge.successo) ||
+      !recharge.successo.every((value) => Number.isInteger(value) && value >= 1 && value <= 6)
+    ) {
+      return null;
+    }
+
+    return {
+      formula: recharge.formula,
+      testo: recharge.testo || `ricarica ${recharge.successo.join('-')}`,
+    };
   }
 
   /*
@@ -1642,10 +1779,12 @@
    */
   function formatInline(text, options = {}) {
     const withDice = options.dice !== false;
+    const withAttacks = options.attacks !== false;
     const value = String(text);
     const formatted = formatMarkdownInline(value);
+    const withAttackRolls = withAttacks ? enrichAttackRolls(formatted) : formatted;
 
-    return withDice ? enrichDiceFormulas(enrichAttackRolls(formatted)) : formatted;
+    return withDice ? enrichDiceFormulas(withAttackRolls) : withAttackRolls;
   }
 
   /*

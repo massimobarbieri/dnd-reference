@@ -133,14 +133,14 @@ Scopo: passare da parsing runtime a dati arricchiti dove ha senso.
 - [x] Mappare esempi reali di mostri con attacchi frequenti.
 - [x] Definire schema opzionale per `tiri`, `danni`, `cd`, `ricarica`.
 - [x] Arricchire JSON solo per campi ad alta confidenza.
-- [ ] Mantenere fallback al parser runtime.
+- [x] Mantenere fallback al parser runtime.
 - [ ] Aggiornare gli schemi MD/JSON nel submodule dati.
 
 Criteri di accettazione:
 
-- [ ] Un record arricchito migliora UI senza duplicare testo.
-- [ ] I dati incompleti non rompono il rendering.
-- [ ] Parser runtime e dati strutturati convivono.
+- [x] Un record arricchito migliora UI senza duplicare testo.
+- [x] I dati incompleti non rompono il rendering.
+- [x] Parser runtime e dati strutturati convivono.
 
 ## Rischi e Decisioni
 
