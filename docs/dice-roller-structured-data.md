@@ -228,3 +228,18 @@ La prima versione dello schema deve coprire solo:
 - `multiattacco` solo come sequenza testuale referenziata, senza eseguire automaticamente tutti i tiri.
 
 Tutto il resto resta testo originale piu parser runtime.
+
+## Arricchimento Applicato
+
+Script: `scripts/enrich-monster-rolls.js`.
+
+Risultato sul dataset mostri:
+
+| Campo | Valore |
+| --- | ---: |
+| Azioni arricchite | 494 |
+| Tiri per colpire strutturati | 391 |
+| Tiri salvezza strutturati | 91 |
+| Ricariche strutturate | 73 |
+
+L'arricchimento e limitato alle azioni dei mostri e conserva sempre `nome` e `descrizione` originali.

@@ -36,6 +36,10 @@ Per verificare il markup del tray:
 
 ``node tests/roll-tray-markup.test.js``
 
+Per verificare i dati mostri arricchiti:
+
+``node tests/monster-rolls-data.test.js``
+
 All’interno dell’app puoi:
 
 - navigare tra le categorie (incantesimi, mostri, ecc.)
