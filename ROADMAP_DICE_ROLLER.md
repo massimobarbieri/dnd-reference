@@ -138,9 +138,10 @@ Scopo: passare da parsing runtime a dati arricchiti dove ha senso.
 
 Criteri di accettazione:
 
-- [x] Un record arricchito migliora UI senza duplicare testo.
+- [x] Un record arricchito non duplica il testo e resta disponibile come dato di supporto.
 - [x] I dati incompleti non rompono il rendering.
 - [x] Parser runtime e dati strutturati convivono.
+- [x] I comandi di tiro visibili restano inline nella descrizione, non in una seconda riga di controlli.
 
 ## Rischi e Decisioni
 
@@ -159,6 +160,13 @@ Criteri di accettazione:
 - [x] Critici automatici sui danni: il roller evidenzia il d20 naturale, ma non raddoppia dadi senza sapere se il tiro e un attacco, un TS o un effetto speciale.
 - [x] Tabelle e intervalli: intestazioni come `1d100` e chiavi `01-20` restano consultabili, non diventano comandi di tiro.
 - [x] Quantita testuali non numeriche: formule come "una creatura aggiuntiva", "fino a tre creature" o "ogni bersaglio" vengono segnalate, non convertite in moltiplicatori.
+
+## Espansioni Future
+
+- [ ] Valutare tiri complessi arricchiti direttamente inline, senza aggiungere controlli sotto la descrizione.
+- [ ] Gestire tipo di danno e contesto del tiro nel risultato, per esempio `2d6 + 5 contundenti`.
+- [ ] Valutare payload strutturati per formule multiple nello stesso attacco, distinguendo danno principale, extra e condizionale.
+- [ ] Decidere se usare i dati `tiri` del submodule solo come hint del parser o come sorgente primaria per sostituzioni inline.
 
 ## Primo Task Raccomandato
 
