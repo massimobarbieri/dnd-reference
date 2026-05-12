@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#251a12">
+  <title>D&D Reference</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#app">Salta al contenuto</a>
+
+  <header class="site-header">
+    <div>
+      <p class="eyebrow">SRD 5.2.1</p>
+      <h1 id="site-title">D&D Reference</h1>
+      <p id="site-subtitle" class="subtitle">Mostri, incantesimi e oggetti magici</p>
+    </div>
+  </header>
+
+  <main id="app" class="app-shell" aria-live="polite">
+  <h1>Informazioni sulle licenze</h1>
+
+  <section>
+    <p>
+      Siamo appassionati del gioco di ruolo <strong>Dungeons &amp; Dragons</strong>. 
+      <strong>dnd-reference</strong> è un’applicazione web sviluppata con l’obiettivo di facilitare e arricchire l’esperienza di gioco.
+    </p>
+  </section>
+
+  <section>
+    <h2>Contenuti SRD e licenza Creative Commons</h2>
+    <p>
+      Questa applicazione include contenuti derivati dal 
+      <a href="https://www.dndbeyond.com/srd" target="_blank" rel="noopener noreferrer">
+        System Reference Document 5.2.1 (SRD 5.2.1)
+      </a>, reso disponibile da Wizards of the Coast LLC ("Wizards").
+    </p>
+    <p>
+      Tali contenuti sono pubblicati da Wizards con licenza 
+      <strong>Creative Commons Attribution 4.0 International (CC BY 4.0)</strong>. 
+      L’utilizzo all’interno di questa applicazione avviene nel rispetto dei termini previsti da tale licenza.
+    </p>
+    <p>
+      <strong>dnd-reference</strong> non è affiliata, sponsorizzata o approvata da Wizards of the Coast LLC.
+    </p>
+  </section>
+
+  <section>
+    <h2>Dati e progetto open source</h2>
+    <p>
+      I dati strutturati e tipizzati utilizzati da <strong>dnd-reference</strong> sono pubblicati nel progetto open source:
+    </p>
+    <p>
+      <a href="https://github.com/massimobarbieri/DND-SRD-IT/" target="_blank" rel="noopener noreferrer">
+        DND-SRD-IT su GitHub
+      </a>.
+    </p>
+    <p>
+      Chiunque può consultare, riutilizzare e contribuire a tali dati nel rispetto delle relative licenze.
+    </p>
+  </section>
+
+  <section>
+    <h2>Licenza del software</h2>
+    <p>
+      L’applicazione <strong>dnd-reference</strong> è distribuita con licenza 
+      <strong>GNU General Public License v3.0 (GPL-3.0)</strong>.
+    </p>
+    <p>
+      Il codice sorgente è disponibile pubblicamente al seguente indirizzo:
+    </p>
+    <p>
+      <a href="https://github.com/massimobarbieri/dnd-reference" target="_blank" rel="noopener noreferrer">
+        Repository GitHub del progetto
+      </a>.
+    </p>
+  </section>
+
+  <section>
+    <h2>Contenuti di terze parti</h2>
+    <p>
+      L’applicazione può includere o visualizzare immagini e altri contenuti provenienti da fonti esterne, tra cui:
+      <a href="https://5e.tools/" target="_blank" rel="noopener noreferrer">5e.tools</a>.
+    </p>
+    <p>
+      Tali contenuti rimangono di proprietà dei rispettivi titolari e sono soggetti alle condizioni di licenza stabilite dagli stessi.
+      L’applicazione non rivendica alcun diritto su tali materiali.
+    </p>
+    <p>
+      L’utilizzo di contenuti esterni avviene tramite collegamenti (link) a risorse pubblicamente disponibili. 
+      La disponibilità di tali contenuti dipende esclusivamente dai rispettivi fornitori.
+    </p>
+  </section>
+
+  <section>
+    <h2>Limitazione di responsabilità</h2>
+    <p>
+      Le informazioni e i contenuti forniti tramite questa applicazione sono messi a disposizione "così come sono", 
+      senza garanzie di alcun tipo, espresse o implicite.
+    </p>
+    <p>
+      Gli sviluppatori non si assumono alcuna responsabilità per eventuali errori, omissioni o per l’uso improprio dei contenuti.
+    </p>
+  </section>
+  </main>
+
+  <template id="loading-template">
+    <div class="state-box">Caricamento dati...</div>
+  </template>
+
+  <template id="error-template">
+    <div class="state-box state-box--error">
+      <strong>Impossibile caricare l'app.</strong>
+      <p>Avvia il sito con un server locale, ad esempio: <code>python3 -m http.server 8000</code>.</p>
+    </div>
+  </template>
+
+  <script src="assets/js/app.js" defer></script>
+</body>
+</html>
