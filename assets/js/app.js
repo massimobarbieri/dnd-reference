@@ -54,18 +54,21 @@
 
     // Messaggio di validazione per il dice tray globale.
     rollError: '',
+
+    // Stato espanso/collassato del dice roller, utile soprattutto su mobile.
+    rollTrayOpen: false,
   };
 
-  /*
-   * Limiti del dice roller leggero.
-   * Evitano input accidentali o troppo grandi per un uso al tavolo.
-   */
-  const DICE_LIMITS = {
-    maxDice: 100,
-    maxFaces: 1000,
-    maxModifier: 10000,
-    historySize: 6,
-  };
+  const {
+    analyzeRollContext,
+    DICE_LIMITS,
+    findDiceFormulas,
+    formatDiceFormula,
+    isLikelyTableDie,
+    parseDiceFormula,
+    randomInt,
+    rollDice,
+  } = window.DndDiceRoller;
 
   /*
    * Metadati delle sezioni.
@@ -745,6 +748,14 @@
    * Gestisce tutti i comandi del dice roller, inclusi quelli inline.
    */
   function handleRollCommand(event) {
+    const toggleButton = event.target.closest('[data-roll-toggle]');
+
+    if (toggleButton) {
+      appState.rollTrayOpen = !appState.rollTrayOpen;
+      renderRollTray();
+      return;
+    }
+
     const attackButton = event.target.closest('[data-attack-roll]');
 
     if (attackButton) {
@@ -753,8 +764,7 @@
 
       if (!Number.isFinite(modifier)) return;
 
-      addRollResult(rollAttack(modifier, mode));
-      renderRollTray();
+      showRollResult(rollAttack(modifier, mode));
       return;
     }
 
@@ -766,11 +776,10 @@
 
       if (!parsed) return;
 
-      addRollResult({
+      showRollResult({
         ...rollDice(parsed),
         kind: 'scaling',
       });
-      renderRollTray();
       return;
     }
 
@@ -782,14 +791,14 @@
 
       if (!parsed) return;
 
-      addRollResult(rollDice(parsed));
-      renderRollTray();
+      showRollResult(rollDice(parsed));
       return;
     }
 
     if (event.target.closest('[data-roll-clear]')) {
       appState.rollHistory = [];
       appState.rollError = '';
+      appState.rollTrayOpen = false;
       renderRollTray();
       return;
     }
@@ -802,8 +811,7 @@
       if (!parsed) return;
 
       appState.rollError = '';
-      addRollResult(rollDice(parsed));
-      renderRollTray();
+      showRollResult(rollDice(parsed));
     }
   }
 
@@ -821,13 +829,13 @@
 
     if (!parsed) {
       appState.rollError = 'Formula non valida. Usa esempi come 1d20 + 5 o 2d6.';
+      appState.rollTrayOpen = true;
       renderRollTray();
       return;
     }
 
     appState.rollError = '';
-    addRollResult(rollDice(parsed));
-    renderRollTray();
+    showRollResult(rollDice(parsed));
   }
 
   /*
@@ -975,10 +983,54 @@
       ])}
 
       <div class="description">${formatInline(spell.descrizione || '')}</div>
+      ${renderRollContextNote(spell)}
 
       ${renderScalingEntries('Slot superiori', spell.scaling, spell)}
       ${renderSections('Sezioni', spell.sezioni)}
     `;
+  }
+
+  /*
+   * Segnala incantesimi con danni ripetuti o multi-bersaglio senza automatizzare.
+   */
+  function renderRollContextNote(spell) {
+    const context = analyzeRollContext(spellRollText(spell));
+
+    if (!context.notes.length) return '';
+
+    return `
+      <p class="roll-context">
+        <strong>Tiri situazionali.</strong>
+        Ripeti il tiro ${escapeHtml(context.notes.join(' e '))}, secondo il testo dell'incantesimo.
+      </p>
+    `;
+  }
+
+  /*
+   * Raccoglie il testo rilevante di un incantesimo per analisi non invasiva.
+   */
+  function spellRollText(spell) {
+    const sections = Array.isArray(spell?.sezioni) ? spell.sezioni : [];
+    const scaling = Array.isArray(spell?.scaling) ? spell.scaling : [];
+    const parts = [
+      spell?.descrizione || '',
+      ...scaling.map((entry) => `${entry?.nome || ''} ${entry?.descrizione || ''}`),
+      ...sections.flatMap((section) => [
+        section?.titolo || '',
+        section?.descrizione || '',
+        ...(Array.isArray(section?.righe)
+          ? section.righe.map((row) => `${row?.chiave || ''} ${row?.valore || ''}`)
+          : []),
+        ...(Array.isArray(section?.blocchi)
+          ? section.blocchi.map((entry) => `${entry?.nome || ''} ${entry?.descrizione || ''}`)
+          : []),
+        ...(Array.isArray(section?.voci)
+          ? section.voci.map((entry) => `${entry?.nome || ''} ${entry?.descrizione || ''}`)
+          : []),
+      ]),
+    ];
+
+    return parts.filter(Boolean).join('\n');
   }
 
   /*
@@ -1241,11 +1293,11 @@
 
     if (existing) {
       existing.outerHTML = markup;
-      return '';
+      return document.querySelector('#roll-tray');
     }
 
     document.body.insertAdjacentHTML('beforeend', markup);
-    return '';
+    return document.querySelector('#roll-tray');
   }
 
   /*
@@ -1253,69 +1305,95 @@
    */
   function rollTrayMarkup() {
     const lastRoll = appState.rollHistory[0];
+    const isOpen = appState.rollTrayOpen || Boolean(appState.rollError);
 
     return `
-      <aside id="roll-tray" class="roll-tray" aria-live="polite">
+      <aside id="roll-tray" class="roll-tray${isOpen ? ' is-open' : ''}${lastRoll ? ' has-result' : ''}" aria-live="polite">
         <div class="roll-tray-header">
-          <strong>Dice roller</strong>
-          ${appState.rollHistory.length
-            ? '<button class="button button--ghost roll-clear" type="button" data-roll-clear>Svuota</button>'
-            : ''
-          }
-        </div>
-
-        <form id="roll-tray-form" class="roll-form">
-          <label class="visually-hidden" for="roll-tray-input">Formula di dado</label>
-          <input
-            id="roll-tray-input"
-            class="roll-input"
-            type="text"
-            inputmode="text"
-            autocomplete="off"
-            placeholder="1d20 + 5"
-            aria-describedby="roll-tray-help"
+          <button
+            class="roll-toggle"
+            type="button"
+            data-roll-toggle
+            aria-expanded="${isOpen}"
+            aria-controls="roll-tray-body"
           >
-          <button class="button button--primary roll-submit" type="submit">Tira</button>
-        </form>
-
-        <div class="quick-dice" aria-label="Dadi rapidi">
-          ${[4, 6, 8, 10, 12, 20, 100].map((faces) => `
-            <button type="button" data-quick-roll="1d${faces}">d${faces}</button>
-          `).join('')}
-        </div>
-
-        <p id="roll-tray-help" class="${appState.rollError ? 'roll-error' : 'roll-help'}">
-          ${escapeHtml(appState.rollError || 'Formula libera: d20, 2d6 + 3, 4d10-2.')}
-        </p>
-
-        ${lastRoll
-          ? `
-            <div class="roll-result ${escapeAttr(rollResultClass(lastRoll))}">
-              <span class="roll-formula">${escapeHtml(lastRoll.formula)}</span>
-              <strong class="roll-total">${escapeHtml(String(lastRoll.total))}</strong>
-              <span class="roll-breakdown">${escapeHtml(formatRollBreakdown(lastRoll))}</span>
-              ${rollResultNote(lastRoll)
-                ? `<span class="roll-note">${escapeHtml(rollResultNote(lastRoll))}</span>`
-                : ''
-              }
-            </div>
-
-            ${appState.rollHistory.length > 1
+            <span class="roll-toggle-label">
+              <span class="roll-toggle-label-full">Dice roller</span>
+              <span class="roll-toggle-label-short">Dadi</span>
+            </span>
+            ${lastRoll
               ? `
-                <ol class="roll-history">
-                  ${appState.rollHistory.slice(1).map((roll) => `
-                    <li>
-                      <span>${escapeHtml(roll.formula)}</span>
-                      <strong>${escapeHtml(String(roll.total))}</strong>
-                    </li>
-                  `).join('')}
-                </ol>
+                <span class="roll-toggle-result" aria-label="Ultimo tiro: ${escapeAttr(lastRoll.formula)}, totale ${escapeAttr(String(lastRoll.total))}">
+                  <span>${escapeHtml(lastRoll.formula)}</span>
+                  <strong>${escapeHtml(String(lastRoll.total))}</strong>
+                </span>
               `
               : ''
             }
-          `
-          : '<p class="roll-empty">Clicca una formula di dado nella scheda.</p>'
-        }
+          </button>
+
+          <div class="roll-header-actions">
+            ${appState.rollHistory.length
+              ? '<button class="button button--ghost roll-clear" type="button" data-roll-clear>Svuota</button>'
+              : ''
+            }
+          </div>
+        </div>
+
+        <div id="roll-tray-body" class="roll-tray-body">
+          ${lastRoll
+            ? `
+              <div class="roll-result ${escapeAttr(rollResultClass(lastRoll))}" role="status" aria-live="polite">
+                <span class="roll-formula">${escapeHtml(lastRoll.formula)}</span>
+                <strong class="roll-total">${escapeHtml(String(lastRoll.total))}</strong>
+                <span class="roll-breakdown">${escapeHtml(formatRollBreakdown(lastRoll))}</span>
+                ${rollResultNote(lastRoll)
+                  ? `<span class="roll-note">${escapeHtml(rollResultNote(lastRoll))}</span>`
+                  : ''
+                }
+              </div>
+
+              ${appState.rollHistory.length > 1
+                ? `
+                  <ol class="roll-history">
+                    ${appState.rollHistory.slice(1).map((roll) => `
+                      <li>
+                        <span>${escapeHtml(roll.formula)}</span>
+                        <strong>${escapeHtml(String(roll.total))}</strong>
+                      </li>
+                    `).join('')}
+                  </ol>
+                `
+                : ''
+              }
+            `
+            : '<p class="roll-empty">Clicca una formula di dado nella scheda.</p>'
+          }
+
+          <form id="roll-tray-form" class="roll-form">
+            <label class="visually-hidden" for="roll-tray-input">Formula di dado</label>
+            <input
+              id="roll-tray-input"
+              class="roll-input"
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              placeholder="1d20 + 5"
+              aria-describedby="roll-tray-help"
+            >
+            <button class="button button--primary roll-submit" type="submit">Tira</button>
+          </form>
+
+          <div class="quick-dice" aria-label="Dadi rapidi">
+            ${[4, 6, 8, 10, 12, 20, 100].map((faces) => `
+              <button type="button" data-quick-roll="1d${faces}" aria-label="Tira 1d${faces}">d${faces}</button>
+            `).join('')}
+          </div>
+
+          <p id="roll-tray-help" class="${appState.rollError ? 'roll-error' : 'roll-help'}">
+            ${escapeHtml(appState.rollError || 'Formula libera: d20, 2d6 + 3, 2d20kh1, 4d6dl1.')}
+          </p>
+        </div>
       </aside>
     `;
   }
@@ -1328,6 +1406,20 @@
       result,
       ...appState.rollHistory,
     ].slice(0, DICE_LIMITS.historySize);
+  }
+
+  /*
+   * Registra il tiro e mantiene il risultato subito visibile anche su mobile.
+   */
+  function showRollResult(result) {
+    appState.rollError = '';
+    addRollResult(result);
+    appState.rollTrayOpen = true;
+
+    const tray = renderRollTray();
+    const body = tray?.querySelector('.roll-tray-body');
+
+    if (body) body.scrollTop = 0;
   }
 
   /*
@@ -1345,11 +1437,14 @@
     }
 
     const dice = result.rolls.join(' + ');
+    const kept = result.keepMode
+      ? `; usati ${result.keptRolls.join(' + ')}`
+      : '';
     const modifier = result.modifier
       ? ` ${result.modifier > 0 ? '+' : '-'} ${Math.abs(result.modifier)}`
       : '';
 
-    return `${dice}${modifier}`;
+    return `${dice}${kept}${modifier}`;
   }
 
   /*
@@ -1376,7 +1471,7 @@
    * Riconosce i risultati basati su d20.
    */
   function isD20Roll(result) {
-    return result.kind === 'attack' || (result.rolls?.length === 1 && result.formula?.startsWith('1d20'));
+    return result.kind === 'attack' || result.faces === 20 || (result.rolls?.length === 1 && result.formula?.startsWith('1d20'));
   }
 
   /*
@@ -1421,91 +1516,6 @@
   }
 
   /*
-   * Converte una formula testuale in parti strutturate.
-   * Sintassi supportata: d20, 1d8, 2d6 + 3, 4d10-2.
-   */
-  function parseDiceFormula(formula) {
-    const text = String(formula || '').trim();
-    const match = text.match(/^(\d*)d(\d+)(?:\s*([+-])\s*(\d+))?$/i);
-
-    if (!match) return null;
-
-    const count = match[1] ? Number(match[1]) : 1;
-    const faces = Number(match[2]);
-    const modifierValue = match[4] ? Number(match[4]) : 0;
-    const modifier = match[3] === '-' ? -modifierValue : modifierValue;
-
-    if (
-      count < 1 ||
-      faces < 2 ||
-      count > DICE_LIMITS.maxDice ||
-      faces > DICE_LIMITS.maxFaces ||
-      Math.abs(modifier) > DICE_LIMITS.maxModifier
-    ) {
-      return null;
-    }
-
-    return {
-      raw: text,
-      count,
-      faces,
-      modifier,
-      formula: formatDiceFormula(count, faces, modifier),
-    };
-  }
-
-  /*
-   * Trova formule dado all'interno di un testo.
-   */
-  function findDiceFormulas(text) {
-    const value = String(text || '');
-    const pattern = /\b(\d*d\d+(?:\s*[+-]\s*\d+)?)\b/gi;
-    const tokens = [];
-    let match;
-
-    while ((match = pattern.exec(value)) !== null) {
-      const parsed = parseDiceFormula(match[1]);
-
-      if (!parsed || isLikelyTableDie(value, match.index, match[1])) continue;
-
-      tokens.push({
-        ...parsed,
-        start: match.index,
-        end: match.index + match[1].length,
-      });
-    }
-
-    return tokens;
-  }
-
-  /*
-   * Evita di rendere cliccabili intestazioni come "1d100" a inizio riga.
-   */
-  function isLikelyTableDie(text, index, raw) {
-    const before = text.slice(0, index);
-    const lineStart = Math.max(before.lastIndexOf('\n') + 1, 0);
-    const prefix = text.slice(lineStart, index).trim();
-    const suffix = text.slice(index + raw.length, index + raw.length + 24).trim();
-
-    return !prefix && /^1d100$/i.test(raw.trim()) && /^[A-ZÀ-Ü]/.test(suffix);
-  }
-
-  /*
-   * Esegue un tiro a partire da una formula gia parsata.
-   */
-  function rollDice(parsed) {
-    const rolls = Array.from({ length: parsed.count }, () => randomInt(1, parsed.faces));
-    const subtotal = rolls.reduce((sum, value) => sum + value, 0);
-
-    return {
-      formula: parsed.formula,
-      rolls,
-      modifier: parsed.modifier,
-      total: subtotal + parsed.modifier,
-    };
-  }
-
-  /*
    * Esegue un tiro per colpire con eventuale vantaggio o svantaggio.
    */
   function rollAttack(modifier, mode = 'normal') {
@@ -1527,38 +1537,6 @@
       modifier,
       total,
     };
-  }
-
-  /*
-   * Genera un intero casuale inclusivo.
-   */
-  function randomInt(min, max) {
-    const range = max - min + 1;
-
-    if (window.crypto?.getRandomValues) {
-      const maxUint = 0xffffffff;
-      const limit = maxUint - (maxUint % range);
-      const buffer = new Uint32Array(1);
-
-      do {
-        window.crypto.getRandomValues(buffer);
-      } while (buffer[0] >= limit);
-
-      return min + (buffer[0] % range);
-    }
-
-    return min + Math.floor(Math.random() * range);
-  }
-
-  /*
-   * Normalizza la formula per mostrarla in modo coerente.
-   */
-  function formatDiceFormula(count, faces, modifier) {
-    const dice = `${count}d${faces}`;
-
-    if (!modifier) return dice;
-
-    return `${dice} ${modifier > 0 ? '+' : '-'} ${Math.abs(modifier)}`;
   }
 
   /*
@@ -1679,10 +1657,12 @@
    */
   function formatInline(text, options = {}) {
     const withDice = options.dice !== false;
+    const withAttacks = options.attacks !== false;
     const value = String(text);
     const formatted = formatMarkdownInline(value);
+    const withAttackRolls = withAttacks ? enrichAttackRolls(formatted) : formatted;
 
-    return withDice ? enrichDiceFormulas(enrichAttackRolls(formatted)) : formatted;
+    return withDice ? enrichDiceFormulas(withAttackRolls) : withAttackRolls;
   }
 
   /*
@@ -1708,7 +1688,7 @@
     const modifier = Number(rawModifier);
     const normalized = modifier >= 0 ? `+${modifier}` : String(modifier);
 
-    return `<span class="attack-roll" aria-label="Tiro per colpire ${escapeAttr(normalized)}"><button class="attack-roll-main" type="button" data-attack-roll="${escapeAttr(String(modifier))}" data-attack-mode="normal" aria-label="Tira per colpire ${escapeAttr(normalized)}">${escapeHtml(normalized)}</button><button class="attack-roll-mode" type="button" data-attack-roll="${escapeAttr(String(modifier))}" data-attack-mode="advantage" aria-label="Tira per colpire ${escapeAttr(normalized)} con vantaggio">V</button><button class="attack-roll-mode" type="button" data-attack-roll="${escapeAttr(String(modifier))}" data-attack-mode="disadvantage" aria-label="Tira per colpire ${escapeAttr(normalized)} con svantaggio">S</button></span>`;
+    return `<span class="attack-roll" aria-label="Tiro per colpire ${escapeAttr(normalized)}"><button class="attack-roll-main" type="button" data-attack-roll="${escapeAttr(String(modifier))}" data-attack-mode="normal" aria-label="Tira per colpire ${escapeAttr(normalized)}">${escapeHtml(normalized)}</button><button class="attack-roll-mode" type="button" data-attack-roll="${escapeAttr(String(modifier))}" data-attack-mode="advantage" aria-label="Tira per colpire ${escapeAttr(normalized)} con vantaggio" title="Vantaggio">V</button><button class="attack-roll-mode" type="button" data-attack-roll="${escapeAttr(String(modifier))}" data-attack-mode="disadvantage" aria-label="Tira per colpire ${escapeAttr(normalized)} con svantaggio" title="Svantaggio">S</button></span>`;
   }
 
   /*
@@ -1718,7 +1698,7 @@
     const pattern = /((?:<em>)?Tiro per colpire[\s\S]{0,90}?:?(?:<\/em>)?\s*)([+-]\d+)/gi;
 
     return String(html).replace(pattern, (match, prefix, modifier, offset, fullText) => {
-      if (isInsideHtmlTag(fullText, offset)) return match;
+      if (isInsideHtmlTag(fullText, offset + prefix.length)) return match;
 
       return `${prefix}${attackRollControls(modifier)}`;
     });
@@ -1729,7 +1709,7 @@
    * In questa fase l'HTML contiene solo tag generati localmente.
    */
   function enrichDiceFormulas(html) {
-    const pattern = /\b(\d*d\d+(?:\s*[+-]\s*\d+)?)\b/gi;
+    const pattern = /\b(\d*d\d+(?:(?:kh|kl|dl)1)?(?:\s*[+-]\s*\d+)?)\b/gi;
 
     return String(html).replace(pattern, (raw, formula, offset, fullText) => {
       const parsed = parseDiceFormula(formula);

@@ -21,7 +21,7 @@ body {
   margin: 0;
   color: var(--ink);
   background: radial-gradient(circle at top, #fff8ef 0, var(--bg) 48rem);
-  padding-bottom: 10.5rem;
+  padding-bottom: 4.8rem;
 }
 
 a { color: inherit; }
@@ -404,6 +404,8 @@ h1 {
 
 /* Formula di dado cliccabile dentro il testo */
 .dice-inline {
+  display: inline-block;
+  max-width: 100%;
   border: 1px solid rgba(138,63,35,.42);
   background: rgba(234,208,189,.52);
   color: var(--accent);
@@ -413,7 +415,10 @@ h1 {
   font: inherit;
   font-weight: 760;
   line-height: 1.15;
+  white-space: nowrap;
   cursor: pointer;
+  touch-action: manipulation;
+  vertical-align: baseline;
 }
 
 .dice-inline:hover,
@@ -422,13 +427,23 @@ h1 {
   border-color: var(--accent);
 }
 
+.dice-inline:focus-visible,
+.attack-roll button:focus-visible,
+.scaling-controls button:focus-visible,
+.quick-dice button:focus-visible {
+  outline: 2px solid rgba(138,63,35,.68);
+  outline-offset: 2px;
+}
+
 /* Controlli inline per i tiri per colpire */
 .attack-roll {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: .12rem;
+  max-width: 100%;
   margin: 0 .08rem;
-  vertical-align: baseline;
+  vertical-align: middle;
 }
 
 .attack-roll button {
@@ -438,12 +453,15 @@ h1 {
   font: inherit;
   line-height: 1.1;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .attack-roll-main {
+  max-width: 100%;
   border-radius: .35rem;
   padding: .03rem .28rem;
   font-weight: 780;
+  white-space: nowrap;
 }
 
 .attack-roll-mode {
@@ -495,6 +513,21 @@ h1 {
   border-color: var(--accent);
 }
 
+/* Nota compatta per tiri non automatizzabili */
+.roll-context {
+  margin: .45rem 0 .1rem;
+  padding: .42rem .55rem;
+  border-left: 3px solid rgba(138,63,35,.42);
+  background: rgba(234,208,189,.25);
+  color: var(--muted);
+  font-size: .86rem;
+  line-height: 1.34;
+}
+
+.roll-context strong {
+  color: var(--accent);
+}
+
 /* Tabelle generate dalle sezioni JSON */
 .table-wrap {
   overflow-x: auto;
@@ -517,6 +550,7 @@ h1 {
   border-bottom: 1px solid rgba(217,199,179,.75);
   vertical-align: top;
   text-align: left;
+  overflow-wrap: anywhere;
 }
 
 .data-table tr:last-child th,
@@ -528,7 +562,7 @@ h1 {
   width: 9.5rem;
   color: var(--accent);
   font-weight: 760;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 /* Descrizione lunga */
@@ -544,7 +578,7 @@ h1 {
   position: fixed;
   left: 50%;
   right: auto;
-  bottom: .75rem;
+  bottom: calc(.75rem + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   z-index: 8;
   width: min(42rem, calc(100vw - 1.4rem));
@@ -554,8 +588,10 @@ h1 {
   backdrop-filter: blur(10px);
   box-shadow: var(--shadow);
   padding: .65rem;
-  max-height: min(18rem, calc(100vh - 1.5rem));
+  max-height: min(18rem, calc(100vh - 1.5rem - env(safe-area-inset-bottom)));
+  max-height: min(18rem, calc(100dvh - 1.5rem - env(safe-area-inset-bottom)));
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .roll-tray-header {
@@ -565,14 +601,79 @@ h1 {
   gap: .5rem;
 }
 
-.roll-tray-header strong {
+.roll-toggle {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
   color: var(--accent);
+  padding: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .6rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.roll-toggle-label {
+  font-weight: 780;
+}
+
+.roll-toggle-label-short {
+  display: none;
+}
+
+.roll-toggle-result {
+  min-width: 0;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: .35rem;
+  max-width: 70%;
+  color: var(--muted);
+}
+
+.roll-toggle-result span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.roll-toggle-result strong {
+  color: var(--accent);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.roll-header-actions {
+  display: flex;
+  gap: .3rem;
 }
 
 .roll-clear {
   min-height: 2rem;
   padding: 0 .55rem;
   font-size: .82rem;
+}
+
+.roll-tray-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.roll-tray:not(.is-open) {
+  padding: .45rem .55rem;
+  max-height: 3.4rem;
+  overflow: hidden;
+}
+
+.roll-tray:not(.is-open) .roll-tray-body,
+.roll-tray:not(.is-open) .roll-header-actions {
+  display: none;
 }
 
 .roll-form {
@@ -648,10 +749,18 @@ h1 {
   gap: .45rem;
   align-items: baseline;
   margin-top: .45rem;
+  padding: .58rem .65rem;
+  border: 1px solid rgba(138,63,35,.18);
+  border-radius: 12px;
+  background: rgba(255,255,255,.62);
+  box-shadow: 0 6px 18px rgba(66,37,24,.08);
+  order: -3;
 }
 
 .roll-formula {
   font-weight: 760;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .roll-total {
@@ -752,6 +861,10 @@ code {
     padding: .6rem;
   }
 
+  .roll-tray:not(.is-open) {
+    width: 12.5rem;
+  }
+
   .roll-form {
     grid-template-columns: 1fr;
   }
@@ -778,7 +891,7 @@ code {
   .site-header { padding-top: .9rem; }
 
   body {
-    padding-bottom: 12rem;
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   .app-shell {
@@ -852,35 +965,115 @@ code {
     line-height: 1.31;
   }
 
+  .dice-inline {
+    margin: 0 .02rem;
+    padding: .02rem .2rem;
+    line-height: 1.2;
+  }
+
+  .attack-roll {
+    gap: .08rem;
+    margin: .02rem .04rem;
+  }
+
+  .attack-roll-main {
+    padding: .04rem .24rem;
+  }
+
+  .attack-roll-mode {
+    width: 1.5rem;
+    min-width: 1.5rem;
+    height: 1.5rem;
+  }
+
   .content-section {
     margin-top: .62rem;
   }
 
   .roll-tray {
-    width: calc(100vw - .9rem);
-    bottom: .45rem;
+    top: calc(.75rem + env(safe-area-inset-top));
+    right: 0;
+    bottom: auto;
+    left: auto;
+    transform: none;
+    width: min(20rem, calc(100vw - 3.25rem));
     padding: .55rem;
-    max-height: 11rem;
+    max-height: calc(100vh - 1.5rem - env(safe-area-inset-top));
+    max-height: calc(100dvh - 1.5rem - env(safe-area-inset-top));
+    border-radius: 14px 0 0 14px;
+    transition: transform .18s ease;
   }
 
-  .roll-form {
-    grid-template-columns: 1fr;
+  .roll-tray:not(.is-open) {
+    width: min(20rem, calc(100vw - 3.25rem));
+    max-height: 3.35rem;
+    transform: translateX(calc(100% - 3.25rem));
+    padding: .5rem;
   }
 
-  .roll-submit {
-    width: 100%;
+  .roll-tray:not(.is-open) .roll-tray-header {
+    width: 2.25rem;
+  }
+
+  .roll-tray:not(.is-open) .roll-toggle {
+    width: 2.25rem;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .roll-tray:not(.is-open) .roll-toggle-label-full,
+  .roll-tray:not(.is-open) .roll-toggle-result {
+    display: none;
+  }
+
+  .roll-tray:not(.is-open) .roll-toggle-label-short {
+    display: inline;
+  }
+
+  .roll-toggle-result {
+    max-width: 62%;
+  }
+
+  .roll-toggle-result span {
+    font-size: .74rem;
   }
 
   .roll-result {
     grid-template-columns: auto auto;
+    gap: .32rem .45rem;
   }
 
   .roll-breakdown {
     grid-column: 1 / -1;
   }
 
+  .roll-result {
+    margin-top: .38rem;
+  }
+
+  .roll-note {
+    order: -2;
+  }
+
+  .roll-form {
+    grid-template-columns: 1fr auto;
+    order: -1;
+    margin-top: .45rem;
+  }
+
+  .roll-submit {
+    min-height: 2.2rem;
+  }
+
+  .roll-history {
+    max-height: 3.4rem;
+  }
+
   .quick-dice {
     gap: .18rem;
+    margin-top: .35rem;
   }
 
   .quick-dice button {

@@ -10,7 +10,7 @@ Obiettivo: introdurre un dice roller leggero, affidabile e progressivo per mostr
 - [x] Rendere i roll cliccabili dove gia appaiono nel testo, senza cambiare il contenuto SRD.
 - [x] Conservare sempre il testo originale, anche quando viene arricchito con bottoni.
 - [x] Gestire errori e casi ambigui senza bloccare la scheda.
-- [ ] Preparare estensioni future per vantaggio, svantaggio, critici, scaling e storico.
+- [x] Preparare estensioni future per vantaggio, svantaggio, critici, scaling e storico.
 
 ## Componenti
 
@@ -67,15 +67,15 @@ Scopo: cliccare una formula di dado nelle descrizioni e ottenere un risultato le
 - [x] Creare funzioni pure: `parseDiceFormula`, `findDiceFormulas`, `rollDice`.
 - [x] Aggiungere bottoni inline per formule nelle descrizioni di mostri, incantesimi e oggetti.
 - [x] Aggiungere pannello risultato minimale.
-- [ ] Coprire i casi base con test manuali da console o fixture locali.
-- [ ] Verificare su mobile che i bottoni inline non rompano il layout.
+- [x] Coprire i casi base con test manuali da console o fixture locali.
+- [x] Verificare su mobile che i bottoni inline non rompano il layout.
 
 Criteri di accettazione:
 
 - [x] `2d6 + 3` viene riconosciuto e tirato.
 - [x] `1d20 + 7` viene riconosciuto e tirato.
 - [x] Le descrizioni senza dadi restano identiche.
-- [ ] Le tabelle SRD restano leggibili.
+- [x] Le tabelle SRD restano leggibili.
 - [x] Nessun HTML non sicuro viene introdotto dal testo sorgente.
 
 ### Fase 2 - Attacchi Mostri
@@ -101,8 +101,8 @@ Scopo: gestire formule in descrizioni complesse e slot superiori.
 - [x] Identificare formule nelle descrizioni degli incantesimi.
 - [x] Analizzare sezioni `scaling` per testi come `1d6 per ogni slot`.
 - [x] Progettare UI per scegliere il livello dello slot quando applicabile.
-- [ ] Supportare danni ripetuti o multi-bersaglio senza automatismi invasivi.
-- [ ] Documentare i casi non automatizzabili.
+- [x] Supportare danni ripetuti o multi-bersaglio senza automatismi invasivi.
+- [x] Documentare i casi non automatizzabili.
 
 Criteri di accettazione:
 
@@ -118,7 +118,7 @@ Scopo: offrire uno strumento sempre disponibile per tiri liberi.
 - [x] Validare formula prima del tiro.
 - [x] Supportare storico sessione.
 - [x] Supportare scorciatoie rapide: d4, d6, d8, d10, d12, d20, d100.
-- [ ] Valutare sintassi avanzata: `2d20kh1`, `2d20kl1`, `4d6dl1`.
+- [x] Valutare sintassi avanzata: `2d20kh1`, `2d20kl1`, `4d6dl1`.
 
 Criteri di accettazione:
 
@@ -130,25 +130,26 @@ Criteri di accettazione:
 
 Scopo: passare da parsing runtime a dati arricchiti dove ha senso.
 
-- [ ] Mappare esempi reali di mostri con attacchi frequenti.
-- [ ] Definire schema opzionale per `tiri`, `danni`, `cd`, `ricarica`.
-- [ ] Arricchire JSON solo per campi ad alta confidenza.
-- [ ] Mantenere fallback al parser runtime.
-- [ ] Aggiornare gli schemi MD/JSON nel submodule dati.
+- [x] Mappare esempi reali di mostri con attacchi frequenti.
+- [x] Definire schema opzionale per `tiri`, `danni`, `cd`, `ricarica`.
+- [x] Arricchire JSON solo per campi ad alta confidenza.
+- [x] Mantenere fallback al parser runtime.
+- [x] Aggiornare gli schemi MD/JSON nel submodule dati.
 
 Criteri di accettazione:
 
-- [ ] Un record arricchito migliora UI senza duplicare testo.
-- [ ] I dati incompleti non rompono il rendering.
-- [ ] Parser runtime e dati strutturati convivono.
+- [x] Un record arricchito non duplica il testo e resta disponibile come dato di supporto.
+- [x] I dati incompleti non rompono il rendering.
+- [x] Parser runtime e dati strutturati convivono.
+- [x] I comandi di tiro visibili restano inline nella descrizione, non in una seconda riga di controlli.
 
 ## Rischi e Decisioni
 
-- [ ] Ambiguita del testo SRD: alcune formule non sono azioni di tiro ma intervalli, tabelle o spiegazioni.
-- [ ] Critici: raddoppiare i dadi e non i modifier richiede contesto di attacco.
-- [ ] Scaling incantesimi: spesso dipende da livello, turno o bersagli.
-- [ ] Accessibilita: i bottoni inline devono essere navigabili ma non invadenti.
-- [ ] Mobile: il risultato deve essere leggibile senza occupare tutta la scheda.
+- [x] Ambiguita del testo SRD: alcune formule non sono azioni di tiro ma intervalli, tabelle o spiegazioni.
+- [x] Critici: raddoppiare i dadi e non i modifier richiede contesto di attacco.
+- [x] Scaling incantesimi: spesso dipende da livello, turno o bersagli.
+- [x] Accessibilita: i bottoni inline devono essere navigabili ma non invadenti.
+- [x] Mobile: il risultato deve essere leggibile senza occupare tutta la scheda.
 
 ## Casi Non Automatizzati
 
@@ -156,14 +157,24 @@ Criteri di accettazione:
 - [x] Scaling che aumenta bersagli, durata, raggio, numero di raggi o creature evocate.
 - [x] Incantesimi che richiedono scelta del livello personaggio invece del livello slot.
 - [x] Danni ripetuti su piu turni o piu bersagli, dove il numero effettivo dipende dal tavolo.
+- [x] Critici automatici sui danni: il roller evidenzia il d20 naturale, ma non raddoppia dadi senza sapere se il tiro e un attacco, un TS o un effetto speciale.
+- [x] Tabelle e intervalli: intestazioni come `1d100` e chiavi `01-20` restano consultabili, non diventano comandi di tiro.
+- [x] Quantita testuali non numeriche: formule come "una creatura aggiuntiva", "fino a tre creature" o "ogni bersaglio" vengono segnalate, non convertite in moltiplicatori.
+
+## Espansioni Future
+
+- [ ] Valutare tiri complessi arricchiti direttamente inline, senza aggiungere controlli sotto la descrizione.
+- [ ] Gestire tipo di danno e contesto del tiro nel risultato, per esempio `2d6 + 5 contundenti`.
+- [ ] Valutare payload strutturati per formule multiple nello stesso attacco, distinguendo danno principale, extra e condizionale.
+- [ ] Decidere se usare i dati `tiri` del submodule solo come hint del parser o come sorgente primaria per sostituzioni inline.
 
 ## Primo Task Raccomandato
 
 - [x] Implementare parser e roller puri in `assets/js/app.js`, dietro funzioni isolate.
 - [x] Aggiungere renderer inline dei dadi solo per descrizioni, tratti e azioni.
 - [x] Aggiungere pannello risultato minimale nella scheda dettaglio.
-- [ ] Verificare manualmente con:
-  - [ ] un mostro con attacco e danni
-  - [ ] un incantesimo con danno
-  - [ ] un oggetto con tabella `1d100`
-  - [ ] una scheda senza dadi
+- [x] Verificare manualmente con:
+  - [x] un mostro con attacco e danni
+  - [x] un incantesimo con danno
+  - [x] un oggetto con tabella `1d100`
+  - [x] una scheda senza dadi
