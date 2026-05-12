@@ -1317,7 +1317,10 @@
             aria-expanded="${isOpen}"
             aria-controls="roll-tray-body"
           >
-            <span class="roll-toggle-label">Dice roller</span>
+            <span class="roll-toggle-label">
+              <span class="roll-toggle-label-full">Dice roller</span>
+              <span class="roll-toggle-label-short">Dadi</span>
+            </span>
             ${lastRoll
               ? `
                 <span class="roll-toggle-result" aria-label="Ultimo tiro: ${escapeAttr(lastRoll.formula)}, totale ${escapeAttr(String(lastRoll.total))}">

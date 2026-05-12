@@ -620,6 +620,10 @@ h1 {
   font-weight: 780;
 }
 
+.roll-toggle-label-short {
+  display: none;
+}
+
 .roll-toggle-result {
   min-width: 0;
   display: inline-flex;
@@ -887,7 +891,7 @@ code {
   .site-header { padding-top: .9rem; }
 
   body {
-    padding-bottom: calc(4.8rem + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   .app-shell {
@@ -987,11 +991,45 @@ code {
   }
 
   .roll-tray {
-    width: calc(100vw - .9rem);
-    bottom: calc(.45rem + env(safe-area-inset-bottom));
+    top: calc(.75rem + env(safe-area-inset-top));
+    right: 0;
+    bottom: auto;
+    left: auto;
+    transform: none;
+    width: min(20rem, calc(100vw - 3.25rem));
     padding: .55rem;
-    max-height: min(16rem, calc(100vh - 1rem - env(safe-area-inset-bottom)));
-    max-height: min(16rem, calc(100dvh - 1rem - env(safe-area-inset-bottom)));
+    max-height: calc(100vh - 1.5rem - env(safe-area-inset-top));
+    max-height: calc(100dvh - 1.5rem - env(safe-area-inset-top));
+    border-radius: 14px 0 0 14px;
+    transition: transform .18s ease;
+  }
+
+  .roll-tray:not(.is-open) {
+    width: min(20rem, calc(100vw - 3.25rem));
+    max-height: 3.35rem;
+    transform: translateX(calc(100% - 3.25rem));
+    padding: .5rem;
+  }
+
+  .roll-tray:not(.is-open) .roll-tray-header {
+    width: 2.25rem;
+  }
+
+  .roll-tray:not(.is-open) .roll-toggle {
+    width: 2.25rem;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .roll-tray:not(.is-open) .roll-toggle-label-full,
+  .roll-tray:not(.is-open) .roll-toggle-result {
+    display: none;
+  }
+
+  .roll-tray:not(.is-open) .roll-toggle-label-short {
+    display: inline;
   }
 
   .roll-toggle-result {
