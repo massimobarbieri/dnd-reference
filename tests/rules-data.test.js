@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const rules = require('../data/srd/5.2.1/json/srd_5_2_1_rules.json');
 
-assert.equal(rules.length, 39);
+assert.equal(rules.length, 45);
 
 const ids = new Set();
 
@@ -57,5 +57,11 @@ assert.ok(ids.has('paura_e_stress_mentale'));
 assert.ok(ids.has('veleno'));
 assert.ok(ids.has('trappole'));
 assert.ok(ids.has('combattimenti'));
+assert.ok(ids.has('creare_personaggio'));
+assert.ok(ids.has('origini_lingue_personaggio'));
+assert.ok(ids.has('caratteristiche_allineamento_personaggio'));
+assert.ok(ids.has('compilare_scheda_personaggio'));
+assert.ok(ids.has('avanzamento_livelli_superiori'));
+assert.ok(ids.has('multiclasse_e_monili'));
 
 console.log('Dati regole SRD OK');
