@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const rules = require('../data/srd/5.2.1/json/srd_5_2_1_rules.json');
 
-assert.equal(rules.length, 16);
+assert.equal(rules.length, 21);
 
 const ids = new Set();
 
@@ -34,5 +34,10 @@ assert.ok(ids.has('equipaggiamento_avventura'));
 assert.ok(ids.has('cavalcature_e_veicoli'));
 assert.ok(ids.has('spese_servizi_e_stile_di_vita'));
 assert.ok(ids.has('oggetti_magici_e_creazione'));
+assert.ok(ids.has('ottenere_incantesimi'));
+assert.ok(ids.has('slot_e_lancio_incantesimi'));
+assert.ok(ids.has('scuole_tempo_gittata_incantesimi'));
+assert.ok(ids.has('componenti_durata_incantesimi'));
+assert.ok(ids.has('bersagli_tiri_effetti_incantesimi'));
 
 console.log('Dati regole SRD OK');
