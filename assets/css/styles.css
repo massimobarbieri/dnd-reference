@@ -553,16 +553,21 @@ h1 {
 .table-wrap {
   overflow-x: auto;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 8px;
   background: rgba(255,255,255,.35);
 }
 
+.table-wrap-wide {
+  max-width: 100%;
+}
+
 .data-table {
-  width: 100%;
+  width: max-content;
   border-collapse: collapse;
-  min-width: 22rem;
+  min-width: 100%;
   font-size: .9rem;
   line-height: 1.32;
+  table-layout: auto;
 }
 
 .data-table th,
@@ -571,7 +576,8 @@ h1 {
   border-bottom: 1px solid rgba(217,199,179,.75);
   vertical-align: top;
   text-align: left;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .data-table tr:last-child th,
@@ -579,11 +585,51 @@ h1 {
   border-bottom: 0;
 }
 
-.data-table th {
+.data-table-key-value th {
   width: 9.5rem;
   color: var(--accent);
   font-weight: 760;
   white-space: normal;
+}
+
+.data-table thead th {
+  background: rgba(138,63,35,.08);
+  color: var(--text);
+}
+
+.data-table-matrix {
+  min-width: max(100%, calc(var(--table-columns, 4) * 8.5rem));
+}
+
+.data-table-matrix[data-column-count="2"] { --table-columns: 2; }
+.data-table-matrix[data-column-count="3"] { --table-columns: 3; }
+.data-table-matrix[data-column-count="4"] { --table-columns: 4; }
+.data-table-matrix[data-column-count="5"] { --table-columns: 5; }
+.data-table-matrix[data-column-count="6"] { --table-columns: 6; }
+.data-table-matrix[data-column-count="7"] { --table-columns: 7; }
+.data-table-matrix[data-column-count="8"] { --table-columns: 8; }
+.data-table-matrix[data-column-count="9"] { --table-columns: 9; }
+.data-table-matrix[data-column-count="10"] { --table-columns: 10; }
+.data-table-matrix[data-column-count="11"] { --table-columns: 11; }
+.data-table-matrix[data-column-count="12"] { --table-columns: 12; }
+.data-table-matrix[data-column-count="13"] { --table-columns: 13; }
+.data-table-matrix[data-column-count="14"] { --table-columns: 14; }
+.data-table-matrix[data-column-count="15"] { --table-columns: 15; }
+.data-table-matrix[data-column-count="16"] { --table-columns: 16; }
+
+.data-table-matrix th,
+.data-table-matrix td {
+  min-width: 5rem;
+  white-space: nowrap;
+}
+
+.data-table-matrix th {
+  width: auto;
+  font-weight: 760;
+}
+
+.data-table-matrix tbody th {
+  color: var(--accent);
 }
 
 /* Descrizione lunga */
