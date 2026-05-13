@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const rules = require('../data/srd/5.2.1/json/srd_5_2_1_rules.json');
 
-assert.equal(rules.length, 45);
+assert.equal(rules.length, 61);
 
 const ids = new Set();
 
@@ -63,5 +63,21 @@ assert.ok(ids.has('caratteristiche_allineamento_personaggio'));
 assert.ok(ids.has('compilare_scheda_personaggio'));
 assert.ok(ids.has('avanzamento_livelli_superiori'));
 assert.ok(ids.has('multiclasse_e_monili'));
+assert.ok(ids.has('background_origini_personaggio'));
+assert.ok(ids.has('specie_origini_personaggio'));
+assert.ok(ids.has('talenti_origini_generali'));
+assert.ok(ids.has('talenti_stile_doni_epici'));
+assert.ok(ids.has('classe_barbaro'));
+assert.ok(ids.has('classe_bardo'));
+assert.ok(ids.has('classe_chierico'));
+assert.ok(ids.has('classe_druido'));
+assert.ok(ids.has('classe_guerriero'));
+assert.ok(ids.has('classe_ladro'));
+assert.ok(ids.has('classe_mago'));
+assert.ok(ids.has('classe_monaco'));
+assert.ok(ids.has('classe_paladino'));
+assert.ok(ids.has('classe_ranger'));
+assert.ok(ids.has('classe_stregone'));
+assert.ok(ids.has('classe_warlock'));
 
 console.log('Dati regole SRD OK');
