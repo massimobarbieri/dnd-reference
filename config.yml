@@ -11,6 +11,7 @@ site:
   image_fallback_text: Immagine non disponibile
 
 paths:
+  data_fallback_base: https://raw.githubusercontent.com/massimobarbieri/DND-SRD-IT/rules-srd-5-2-1/
   monsters: data/srd/5.2.1/json/srd_5_2_1_monsters.json
   spells: data/srd/5.2.1/json/srd_5_2_1_spells.json
   magic_items: data/srd/5.2.1/json/srd_5_2_1_magic_items.json
