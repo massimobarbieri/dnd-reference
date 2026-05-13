@@ -1,6 +1,6 @@
 /*
  * D&D Reference
- * Applicazione statica per consultare mostri, incantesimi e oggetti magici.
+ * Applicazione statica per consultare mostri, incantesimi, oggetti magici e regole.
  *
  * Caratteristiche principali:
  * - Non usa framework JavaScript.
@@ -25,6 +25,7 @@
       monsters: [],
       spells: [],
       magic_items: [],
+      rules: [],
     },
 
     // Mappa id mostro -> dati immagine.
@@ -44,6 +45,7 @@
       monsters: '',
       spells: '',
       magic_items: '',
+      rules: '',
     },
 
     // Se true mostra solo gli elementi preferiti.
@@ -90,6 +92,11 @@
       singular: 'oggetto magico',
       titleKey: 'magic_items',
     },
+    rules: {
+      icon: '📖',
+      singular: 'regola',
+      titleKey: 'rules',
+    },
   };
 
   /*
@@ -132,10 +139,11 @@
        * Carica in parallelo tutti i dati.
        * Promise.all migliora i tempi perché non aspetta un file alla volta.
        */
-      const [monsters, spells, magicItems, monsterImageYaml] = await Promise.all([
+      const [monsters, spells, magicItems, rules, monsterImageYaml] = await Promise.all([
         fetchJson(paths.monsters),
         fetchJson(paths.spells),
         fetchJson(paths.magic_items),
+        fetchJson(paths.rules),
 
         // Se il file immagini manca o fallisce, usa una stringa vuota.
         fetchText(paths.monster_images).catch(() => ''),
@@ -147,6 +155,7 @@
 
       // Gli oggetti magici vengono anche normalizzati nella rarità.
       appState.data.magic_items = normalizeArray(magicItems).map(normalizeMagicItem);
+      appState.data.rules = normalizeArray(rules);
 
       // Converte il piccolo YAML delle immagini in una Map.
       appState.monsterImages = parseMonsterImages(monsterImageYaml);
@@ -385,7 +394,7 @@
   }
 
   /*
-   * Renderizza la schermata iniziale con le tre card principali.
+   * Renderizza la schermata iniziale con le card principali.
    */
   function renderHome() {
     setView('home');
@@ -394,9 +403,9 @@
 
     views.home.innerHTML = `
       <div class="home-grid">
-        ${sectionHomeCard('monsters', labels.monsters, appState.data.monsters.length)}
-        ${sectionHomeCard('spells', labels.spells, appState.data.spells.length)}
-        ${sectionHomeCard('magic_items', labels.magic_items, appState.data.magic_items.length)}
+        ${Object.keys(SECTION_META)
+          .map((section) => sectionHomeCard(section, labels[section], appState.data[section].length))
+          .join('')}
       </div>
     `;
   }
@@ -537,6 +546,7 @@
       monsters: 'Tutti i GS',
       spells: 'Tutti i livelli',
       magic_items: 'Tutte le rarità',
+      rules: 'Tutte le categorie',
     };
 
     return `
@@ -572,6 +582,15 @@
         }));
     }
 
+    if (section === 'rules') {
+      return uniqueValues(appState.data.rules, 'categoria')
+        .sort((a, b) => a.localeCompare(b, 'it'))
+        .map((value) => ({
+          value,
+          label: value,
+        }));
+    }
+
     return uniqueValues(appState.data.magic_items, 'rarita')
       .sort((a, b) => a.localeCompare(b, 'it'))
       .map((value) => ({
@@ -592,6 +611,10 @@
 
     if (section === 'spells') {
       return String(item.livello ?? '') === filter;
+    }
+
+    if (section === 'rules') {
+      return String(item.categoria || '') === filter;
     }
 
     return String(item.rarita || '') === filter;
@@ -654,6 +677,27 @@
       ].join(' ');
     }
 
+    if (section === 'rules') {
+      return [
+        item.nome,
+        item.capitolo,
+        item.categoria,
+        item.descrizione,
+        ...(Array.isArray(item.sezioni)
+          ? item.sezioni.flatMap((sectionEntry) => [
+            sectionEntry.titolo,
+            sectionEntry.descrizione,
+            ...(Array.isArray(sectionEntry.righe)
+              ? sectionEntry.righe.map((row) => `${row.chiave || ''} ${row.valore || ''}`)
+              : []),
+            ...(Array.isArray(sectionEntry.blocchi)
+              ? sectionEntry.blocchi.map((block) => `${block.nome || ''} ${block.descrizione || ''}`)
+              : []),
+          ])
+          : []),
+      ].join(' ');
+    }
+
     return [
       item.nome,
       item.tipo,
@@ -692,6 +736,13 @@
         spellLevel(item),
         item.scuola,
         item.tempo_lancio,
+      ].filter(Boolean).join(' · ');
+    }
+
+    if (section === 'rules') {
+      return [
+        item.categoria,
+        item.pagine_sorgente ? `pag. ${item.pagine_sorgente}` : null,
       ].filter(Boolean).join(' · ');
     }
 
@@ -858,6 +909,7 @@
   function renderDetailContent(section, item) {
     if (section === 'monsters') return renderMonster(item);
     if (section === 'spells') return renderSpell(item);
+    if (section === 'rules') return renderRule(item);
     return renderMagicItem(item);
   }
 
@@ -1054,6 +1106,29 @@
 
       ${renderEntries('Proprietà', item.proprieta)}
       ${renderSections('Tabelle e sezioni', item.sezioni)}
+    `;
+  }
+
+  /*
+   * Renderizza una voce delle regole SRD.
+   */
+  function renderRule(rule) {
+    return `
+      ${renderHeader(
+        'rules',
+        rule,
+        [rule.categoria, rule.pagine_sorgente ? `pag. ${rule.pagine_sorgente}` : null].filter(Boolean).join(' · ')
+      )}
+
+      ${compactMeta([
+        ['Capitolo', rule.capitolo],
+        ['Categoria', rule.categoria],
+        ['Pagine SRD', rule.pagine_sorgente],
+      ])}
+
+      <div class="description">${formatInline(rule.descrizione || '')}</div>
+
+      ${renderSections('Dettagli', rule.sezioni)}
     `;
   }
 
