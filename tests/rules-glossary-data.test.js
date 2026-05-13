@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const glossary = require('../data/srd/5.2.1/json/srd_5_2_1_rules_glossary.json');
 
-assert.equal(glossary.length, 128);
+assert.equal(glossary.length, 153);
 
 const ids = new Set();
 
@@ -34,5 +34,8 @@ assert.ok(ids.has('ispirazione_eroica'));
 assert.ok(ids.has('morte'));
 assert.ok(ids.has('riposo_lungo'));
 assert.ok(ids.has('studio'));
+assert.ok(ids.has('teletrasporto'));
+assert.ok(ids.has('trattenuto'));
+assert.ok(ids.has('vulnerabilita'));
 
 console.log('Dati glossario regole OK');
