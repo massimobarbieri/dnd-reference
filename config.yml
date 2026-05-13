@@ -2,7 +2,7 @@
 # Questo file e' pensato per essere modificato senza toccare il codice JavaScript.
 site:
   title: D&D Reference
-  subtitle: Mostri, incantesimi e oggetti magici SRD 5.2.1
+  subtitle: Mostri, incantesimi, oggetti magici, regole e glossario SRD 5.2.1
   language: it
   default_section: monsters
   enable_favorites: true
@@ -14,12 +14,16 @@ paths:
   monsters: data/srd/5.2.1/json/srd_5_2_1_monsters.json
   spells: data/srd/5.2.1/json/srd_5_2_1_spells.json
   magic_items: data/srd/5.2.1/json/srd_5_2_1_magic_items.json
+  rules: data/srd/5.2.1/json/srd_5_2_1_rules.json
+  rules_glossary: data/srd/5.2.1/json/srd_5_2_1_rules_glossary.json
   monster_images: monster-images.yml
 
 labels:
   monsters: Mostri
   spells: Incantesimi
   magic_items: Oggetti magici
+  rules: Regole
+  rules_glossary: Glossario
   favorites: Preferiti
   search_placeholder: Cerca per nome, tipo, descrizione...
   empty_results: Nessun risultato trovato.

@@ -1,6 +1,6 @@
 /*
  * D&D Reference
- * Applicazione statica per consultare mostri, incantesimi e oggetti magici.
+ * Applicazione statica per consultare mostri, incantesimi, oggetti magici, regole e glossario.
  *
  * Caratteristiche principali:
  * - Non usa framework JavaScript.
@@ -25,6 +25,8 @@
       monsters: [],
       spells: [],
       magic_items: [],
+      rules: [],
+      rules_glossary: [],
     },
 
     // Mappa id mostro -> dati immagine.
@@ -44,6 +46,8 @@
       monsters: '',
       spells: '',
       magic_items: '',
+      rules: '',
+      rules_glossary: '',
     },
 
     // Se true mostra solo gli elementi preferiti.
@@ -90,6 +94,34 @@
       singular: 'oggetto magico',
       titleKey: 'magic_items',
     },
+    rules: {
+      icon: '📖',
+      singular: 'regola',
+      titleKey: 'rules',
+    },
+    rules_glossary: {
+      icon: '🔎',
+      singular: 'voce',
+      titleKey: 'rules_glossary',
+    },
+  };
+
+  const CONDITION_ALIASES = {
+    accecato: ['accecato', 'accecata', 'accecati', 'accecate'],
+    affascinato: ['affascinato', 'affascinata', 'affascinati', 'affascinate'],
+    afferrato: ['afferrato', 'afferrata', 'afferrati', 'afferrate'],
+    assordato: ['assordato', 'assordata', 'assordati', 'assordate'],
+    avvelenato: ['avvelenato', 'avvelenata', 'avvelenati', 'avvelenate'],
+    incapacitato: ['incapacitato', 'incapacitata', 'incapacitati', 'incapacitate'],
+    indebolimento: ['indebolimento'],
+    invisibile: ['invisibile', 'invisibili'],
+    paralizzato: ['paralizzato', 'paralizzata', 'paralizzati', 'paralizzate'],
+    pietrificato: ['pietrificato', 'pietrificata', 'pietrificati', 'pietrificate'],
+    privo_di_sensi: ['privo di sensi', 'priva di sensi', 'privi di sensi', 'prive di sensi'],
+    prono: ['prono', 'prona', 'proni', 'prone'],
+    spaventato: ['spaventato', 'spaventata', 'spaventati', 'spaventate'],
+    stordito: ['stordito', 'stordita', 'storditi', 'stordite'],
+    trattenuto: ['trattenuto', 'trattenuta', 'trattenuti', 'trattenute'],
   };
 
   /*
@@ -132,10 +164,12 @@
        * Carica in parallelo tutti i dati.
        * Promise.all migliora i tempi perché non aspetta un file alla volta.
        */
-      const [monsters, spells, magicItems, monsterImageYaml] = await Promise.all([
+      const [monsters, spells, magicItems, rules, rulesGlossary, monsterImageYaml] = await Promise.all([
         fetchJson(paths.monsters),
         fetchJson(paths.spells),
         fetchJson(paths.magic_items),
+        fetchJson(paths.rules),
+        fetchJson(paths.rules_glossary),
 
         // Se il file immagini manca o fallisce, usa una stringa vuota.
         fetchText(paths.monster_images).catch(() => ''),
@@ -147,6 +181,8 @@
 
       // Gli oggetti magici vengono anche normalizzati nella rarità.
       appState.data.magic_items = normalizeArray(magicItems).map(normalizeMagicItem);
+      appState.data.rules = normalizeArray(rules);
+      appState.data.rules_glossary = normalizeArray(rulesGlossary);
 
       // Converte il piccolo YAML delle immagini in una Map.
       appState.monsterImages = parseMonsterImages(monsterImageYaml);
@@ -385,7 +421,7 @@
   }
 
   /*
-   * Renderizza la schermata iniziale con le tre card principali.
+   * Renderizza la schermata iniziale con le card principali.
    */
   function renderHome() {
     setView('home');
@@ -394,9 +430,9 @@
 
     views.home.innerHTML = `
       <div class="home-grid">
-        ${sectionHomeCard('monsters', labels.monsters, appState.data.monsters.length)}
-        ${sectionHomeCard('spells', labels.spells, appState.data.spells.length)}
-        ${sectionHomeCard('magic_items', labels.magic_items, appState.data.magic_items.length)}
+        ${Object.keys(SECTION_META)
+          .map((section) => sectionHomeCard(section, labels[section], appState.data[section].length))
+          .join('')}
       </div>
     `;
   }
@@ -519,7 +555,18 @@
       .filter((item) => !appState.showOnlyFavorites || isFavorite(section, item.id))
       .filter((item) => matchesSectionFilter(section, item, filter))
       .filter((item) => !term || normalizeText(searchableText(section, item)).includes(term))
-      .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'it'));
+      .sort((a, b) => sortItems(section, a, b));
+  }
+
+  /*
+   * Mantiene le regole nell'ordine del PDF; le altre sezioni restano alfabetiche.
+   */
+  function sortItems(section, a, b) {
+    if (section === 'rules') {
+      return sourcePageValue(a.pagine_sorgente) - sourcePageValue(b.pagine_sorgente);
+    }
+
+    return String(a.nome || '').localeCompare(String(b.nome || ''), 'it');
   }
 
   /*
@@ -537,6 +584,8 @@
       monsters: 'Tutti i GS',
       spells: 'Tutti i livelli',
       magic_items: 'Tutte le rarità',
+      rules: 'Tutte le categorie',
+      rules_glossary: 'Tutti i descrittori',
     };
 
     return `
@@ -572,6 +621,23 @@
         }));
     }
 
+    if (section === 'rules') {
+      return uniqueValues(appState.data.rules, 'categoria')
+        .map((value) => ({
+          value,
+          label: value,
+        }));
+    }
+
+    if (section === 'rules_glossary') {
+      return uniqueValues(appState.data.rules_glossary, 'descrittore')
+        .sort((a, b) => a.localeCompare(b, 'it'))
+        .map((value) => ({
+          value,
+          label: capitalizeFirst(value),
+        }));
+    }
+
     return uniqueValues(appState.data.magic_items, 'rarita')
       .sort((a, b) => a.localeCompare(b, 'it'))
       .map((value) => ({
@@ -594,6 +660,14 @@
       return String(item.livello ?? '') === filter;
     }
 
+    if (section === 'rules') {
+      return String(item.categoria || '') === filter;
+    }
+
+    if (section === 'rules_glossary') {
+      return String(item.descrittore || '') === filter;
+    }
+
     return String(item.rarita || '') === filter;
   }
 
@@ -608,6 +682,15 @@
           .filter((value) => value !== null && value !== undefined && value !== '')
       )
     ).map(String);
+  }
+
+  /*
+   * Prima pagina sorgente di una voce, usata per ordinare le regole come nel PDF.
+   */
+  function sourcePageValue(value) {
+    const [page] = String(value || '').match(/\d+/) || [];
+
+    return page ? Number(page) : Number.POSITIVE_INFINITY;
   }
 
   /*
@@ -654,6 +737,49 @@
       ].join(' ');
     }
 
+    if (section === 'rules') {
+      return [
+        item.nome,
+        item.capitolo,
+        item.categoria,
+        item.descrizione,
+        ...(Array.isArray(item.sezioni)
+          ? item.sezioni.flatMap((sectionEntry) => [
+            sectionEntry.titolo,
+            sectionEntry.descrizione,
+            ...(Array.isArray(sectionEntry.righe)
+              ? sectionEntry.righe.map((row) => `${row.chiave || ''} ${row.valore || ''}`)
+              : []),
+            ...(Array.isArray(sectionEntry.blocchi)
+              ? sectionEntry.blocchi.map((block) => `${block.nome || ''} ${block.descrizione || ''}`)
+              : []),
+          ])
+          : []),
+      ].join(' ');
+    }
+
+    if (section === 'rules_glossary') {
+      return [
+        item.nome,
+        item.lettera,
+        item.descrittore,
+        item.descrizione,
+        item.vedi_anche?.join(' '),
+        ...(Array.isArray(item.sezioni)
+          ? item.sezioni.flatMap((sectionEntry) => [
+            sectionEntry.titolo,
+            sectionEntry.descrizione,
+            ...(Array.isArray(sectionEntry.righe)
+              ? sectionEntry.righe.map((row) => `${row.chiave || ''} ${row.valore || ''}`)
+              : []),
+            ...(Array.isArray(sectionEntry.blocchi)
+              ? sectionEntry.blocchi.map((block) => `${block.nome || ''} ${block.descrizione || ''}`)
+              : []),
+          ])
+          : []),
+      ].join(' ');
+    }
+
     return [
       item.nome,
       item.tipo,
@@ -692,6 +818,20 @@
         spellLevel(item),
         item.scuola,
         item.tempo_lancio,
+      ].filter(Boolean).join(' · ');
+    }
+
+    if (section === 'rules') {
+      return [
+        item.categoria,
+        item.pagine_sorgente ? `pag. ${item.pagine_sorgente}` : null,
+      ].filter(Boolean).join(' · ');
+    }
+
+    if (section === 'rules_glossary') {
+      return [
+        item.descrittore ? capitalizeFirst(item.descrittore) : `Lettera ${item.lettera}`,
+        item.pagine_sorgente ? `pag. ${item.pagine_sorgente}` : null,
       ].filter(Boolean).join(' · ');
     }
 
@@ -858,6 +998,8 @@
   function renderDetailContent(section, item) {
     if (section === 'monsters') return renderMonster(item);
     if (section === 'spells') return renderSpell(item);
+    if (section === 'rules') return renderRule(item);
+    if (section === 'rules_glossary') return renderGlossaryEntry(item);
     return renderMagicItem(item);
   }
 
@@ -1054,6 +1196,53 @@
 
       ${renderEntries('Proprietà', item.proprieta)}
       ${renderSections('Tabelle e sezioni', item.sezioni)}
+    `;
+  }
+
+  /*
+   * Renderizza una voce delle regole SRD.
+   */
+  function renderRule(rule) {
+    return `
+      ${renderHeader(
+        'rules',
+        rule,
+        [rule.categoria, rule.pagine_sorgente ? `pag. ${rule.pagine_sorgente}` : null].filter(Boolean).join(' · ')
+      )}
+
+      ${compactMeta([
+        ['Capitolo', rule.capitolo],
+        ['Categoria', rule.categoria],
+        ['Pagine SRD', rule.pagine_sorgente],
+      ])}
+
+      <div class="description">${formatInline(rule.descrizione || '')}</div>
+
+      ${renderSections('Dettagli', rule.sezioni)}
+    `;
+  }
+
+  /*
+   * Renderizza una voce del glossario delle regole.
+   */
+  function renderGlossaryEntry(entry) {
+    return `
+      ${renderHeader(
+        'rules_glossary',
+        entry,
+        [entry.descrittore ? capitalizeFirst(entry.descrittore) : null, entry.pagine_sorgente ? `pag. ${entry.pagine_sorgente}` : null].filter(Boolean).join(' · ')
+      )}
+
+      ${compactMeta([
+        ['Lettera', entry.lettera],
+        ['Descrittore', entry.descrittore ? capitalizeFirst(entry.descrittore) : null],
+        ['Pagine SRD', entry.pagine_sorgente],
+        ['Vedi anche', Array.isArray(entry.vedi_anche) ? entry.vedi_anche.join(', ') : null],
+      ])}
+
+      <div class="description">${formatInline(entry.descrizione || '')}</div>
+
+      ${renderSections('Dettagli', entry.sezioni)}
     `;
   }
 
@@ -1658,9 +1847,11 @@
   function formatInline(text, options = {}) {
     const withDice = options.dice !== false;
     const withAttacks = options.attacks !== false;
+    const withGlossary = options.glossary !== false;
     const value = String(text);
     const formatted = formatMarkdownInline(value);
-    const withAttackRolls = withAttacks ? enrichAttackRolls(formatted) : formatted;
+    const withGlossaryLinks = withGlossary ? enrichGlossaryLinks(formatted) : formatted;
+    const withAttackRolls = withAttacks ? enrichAttackRolls(withGlossaryLinks) : withGlossaryLinks;
 
     return withDice ? enrichDiceFormulas(withAttackRolls) : withAttackRolls;
   }
@@ -1672,6 +1863,49 @@
     return escapeHtml(String(text))
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>');
+  }
+
+  /*
+   * Collega le condizioni citate nel testo alla relativa voce di glossario.
+   */
+  function enrichGlossaryLinks(html) {
+    const terms = glossaryConditionTerms();
+
+    if (!terms.length) return String(html);
+
+    const pattern = new RegExp(`\\b(${terms.map((term) => escapeRegExp(term.label)).join('|')})\\b`, 'gi');
+
+    return String(html).replace(pattern, (match, _term, offset, fullText) => {
+      if (isInsideHtmlTag(fullText, offset)) return match;
+
+      const condition = terms.find((term) => normalizeText(term.label) === normalizeText(match));
+      if (!condition) return match;
+
+      return glossaryLink(match, condition.id);
+    });
+  }
+
+  /*
+   * Crea la lista di alias delle condizioni presenti davvero nel glossario.
+   */
+  function glossaryConditionTerms() {
+    const conditionIds = new Set(
+      appState.data.rules_glossary
+        .filter((entry) => entry.descrittore === 'condizione')
+        .map((entry) => entry.id)
+    );
+
+    return Object.entries(CONDITION_ALIASES)
+      .filter(([id]) => conditionIds.has(id))
+      .flatMap(([id, aliases]) => aliases.map((label) => ({ id, label })))
+      .sort((a, b) => b.label.length - a.label.length);
+  }
+
+  /*
+   * Link interno a una voce del glossario.
+   */
+  function glossaryLink(label, id) {
+    return `<a class="glossary-link" href="#/rules_glossary/${encodeURIComponent(id)}" title="Apri definizione: ${escapeAttr(label)}">${escapeHtml(label)}</a>`;
   }
 
   /*
@@ -1750,6 +1984,13 @@
    */
   function escapeAttr(value) {
     return escapeHtml(value).replace(/'/g, '&#39;');
+  }
+
+  /*
+   * Escapa una stringa da usare in una RegExp dinamica.
+   */
+  function escapeRegExp(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   /*
