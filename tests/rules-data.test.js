@@ -33,6 +33,15 @@ for (const rule of rules) {
     assert.equal(typeof section.titolo, 'string');
     assert.ok(Array.isArray(section.righe));
     assert.ok(Array.isArray(section.blocchi));
+    if (section.colonne) {
+      assert.ok(Array.isArray(section.colonne), `${rule.id}/${section.titolo} deve avere colonne in array`);
+      assert.ok(section.colonne.length > 1, `${rule.id}/${section.titolo} deve avere piu colonne`);
+      section.righe.forEach((row) => {
+        section.colonne.forEach((column) => {
+          assert.ok(Object.hasOwn(row, column), `${rule.id}/${section.titolo} riga senza colonna ${column}`);
+        });
+      });
+    }
   }
 }
 
@@ -95,7 +104,7 @@ assert.ok(ids.has('classe_warlock'));
 
 for (const rule of rules.filter((entry) => entry.id.startsWith('classe_'))) {
   const progression = rule.sezioni.find((section) => section.titolo === 'Progressione di classe');
-  const subclass = rule.sezioni.find((section) => section.titolo === 'Sottoclasse SRD');
+  const subclass = rule.sezioni.find((section) => section.titolo.startsWith('Sottoclasse '));
 
   assert.ok(
     rule.sezioni.some((section) => section.titolo.startsWith('Tratti del ') || section.titolo.startsWith('Tratti dello ')),
@@ -103,15 +112,48 @@ for (const rule of rules.filter((entry) => entry.id.startsWith('classe_'))) {
   );
   assert.ok(progression, `${rule.id} deve includere la tabella di progressione`);
   assert.equal(progression.righe.length, 20, `${rule.id} deve avere 20 livelli`);
+  assert.ok(Array.isArray(progression.colonne), `${rule.id} deve avere una progressione multi-colonna`);
+  assert.ok(progression.colonne.includes('Livello'), `${rule.id} deve includere la colonna livello`);
+  assert.ok(progression.colonne.includes('Bonus di competenza'), `${rule.id} deve includere il bonus di competenza`);
+  assert.ok(progression.colonne.includes('Privilegi di classe'), `${rule.id} deve includere i privilegi di classe`);
   assert.ok(subclass, `${rule.id} deve includere la sottoclasse SRD`);
+  assert.deepEqual(subclass.colonne, ['Livello', 'Privilegio', 'Riepilogo'], `${rule.id} deve strutturare i privilegi della sottoclasse`);
+  assert.ok(subclass.righe.length >= 4, `${rule.id} deve includere i privilegi della sottoclasse`);
 }
 
 assert.ok(
-  rules
-    .find((entry) => entry.id === 'classe_druido')
-    .sezioni.some((section) => section.titolo === 'Forme bestiali'),
+  (() => {
+    const section = rules
+      .find((entry) => entry.id === 'classe_druido')
+      .sezioni.find((entry) => entry.titolo === 'Forme bestiali');
+
+    return (
+      section &&
+      section.righe.length === 3 &&
+      section.colonne.includes('Forme conosciute') &&
+      section.colonne.includes('GS max') &&
+      section.colonne.includes('Velocità di volo')
+    );
+  })(),
   'classe_druido deve includere la tabella Forme bestiali'
 );
+
+[
+  ['classe_bardo', 'Lista degli incantesimi da bardo'],
+  ['classe_chierico', 'Lista degli incantesimi da chierico'],
+  ['classe_druido', 'Lista degli incantesimi da druido'],
+  ['classe_mago', 'Lista degli incantesimi da mago'],
+  ['classe_paladino', 'Lista degli incantesimi da paladino'],
+  ['classe_ranger', 'Lista degli incantesimi da ranger'],
+  ['classe_stregone', 'Lista degli incantesimi da stregone'],
+  ['classe_warlock', 'Lista degli incantesimi da warlock'],
+].forEach(([ruleId, sectionTitle]) => {
+  const section = rules.find((entry) => entry.id === ruleId)?.sezioni.find((entry) => entry.titolo === sectionTitle);
+
+  assert.ok(section, `${ruleId} deve includere ${sectionTitle}`);
+  assert.deepEqual(section.colonne, ['Livello', 'Incantesimo', 'Scuola', 'Speciale']);
+  assert.ok(section.righe.length > 0, `${sectionTitle} deve avere righe`);
+});
 
 [
   ['azioni', 'Abilita', 18],
@@ -119,7 +161,9 @@ assert.ok(
   ['caratteristiche_allineamento_personaggio', 'Costi in punti del punteggio di caratteristica', 8],
   ['caratteristiche_allineamento_personaggio', 'Serie standard per classe', 12],
   ['avanzamento_livelli_superiori', 'Avanzamento dei personaggi', 20],
+  ['avanzamento_livelli_superiori', 'Equipaggiamento a livelli superiori', 4],
   ['multiclasse_e_monili', 'Incantatore multiclasse: slot incantesimo 1-9', 20],
+  ['multiclasse_e_monili', 'Monili', 100],
   ['specie_origini_personaggio', 'Antenati draconici', 10],
   ['specie_origini_personaggio', 'Lignaggi elfici', 3],
   ['specie_origini_personaggio', 'Retaggi immondi', 3],
@@ -128,8 +172,13 @@ assert.ok(
   ['equipaggiamento_avventura', "Equipaggiamento d'avventura: peso e costo", 82],
   ['cavalcature_e_veicoli', 'Finimenti e veicoli da tiro', 10],
   ['cavalcature_e_veicoli', 'Veicoli aerei e imbarcazioni', 7],
-  ['spese_servizi_e_stile_di_vita', 'Vitto e alloggio', 6],
+  ['spese_servizi_e_stile_di_vita', 'Vitto e alloggio', 17],
   ['spese_servizi_e_stile_di_vita', 'Gregari e servizi magici', 10],
+  ['pozioni_maledizioni_resilienza', 'Miscibilita delle pozioni', 8],
+  ['creare_oggetti_magici', 'Strumenti per categoria', 9],
+  ['creare_oggetti_magici', 'Tempi e costi', 5],
+  ['componenti_statistiche_mostri', 'Punti esperienza per grado di sfida', 17],
+  ['componenti_statistiche_mostri', 'Bonus di competenza per grado di sfida', 4],
   ['combattimenti', 'Budget di PE per personaggio', 20],
 ].forEach(([ruleId, sectionTitle, rowCount]) => {
   const rule = rules.find((entry) => entry.id === ruleId);

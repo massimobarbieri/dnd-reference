@@ -199,7 +199,7 @@
    * Scarica un file JSON e lo converte in oggetto JavaScript.
    */
   async function fetchJson(path) {
-    const response = await fetch(path);
+    const response = await fetch(path, { cache: 'no-store' });
     if (!response.ok) throw new Error(`Errore caricamento JSON: ${path}`);
     return response.json();
   }
@@ -209,7 +209,7 @@
    * Usato per config.yml e monster-images.yml.
    */
   async function fetchText(path) {
-    const response = await fetch(path);
+    const response = await fetch(path, { cache: 'no-store' });
     if (!response.ok) throw new Error(`Errore caricamento testo: ${path}`);
     return response.text();
   }
@@ -748,7 +748,7 @@
             sectionEntry.titolo,
             sectionEntry.descrizione,
             ...(Array.isArray(sectionEntry.righe)
-              ? sectionEntry.righe.map((row) => `${row.chiave || ''} ${row.valore || ''}`)
+              ? sectionEntry.righe.map((row) => Object.values(row || {}).join(' '))
               : []),
             ...(Array.isArray(sectionEntry.blocchi)
               ? sectionEntry.blocchi.map((block) => `${block.nome || ''} ${block.descrizione || ''}`)
@@ -770,7 +770,7 @@
             sectionEntry.titolo,
             sectionEntry.descrizione,
             ...(Array.isArray(sectionEntry.righe)
-              ? sectionEntry.righe.map((row) => `${row.chiave || ''} ${row.valore || ''}`)
+              ? sectionEntry.righe.map((row) => Object.values(row || {}).join(' '))
               : []),
             ...(Array.isArray(sectionEntry.blocchi)
               ? sectionEntry.blocchi.map((block) => `${block.nome || ''} ${block.descrizione || ''}`)
@@ -1431,8 +1431,9 @@
     const rows = Array.isArray(section.righe) ? section.righe : [];
     const blocks = Array.isArray(section.blocchi) ? section.blocchi : [];
     const entries = Array.isArray(section.voci) ? section.voci : [];
+    const columns = Array.isArray(section.colonne) ? section.colonne : [];
     const body = [
-      rows.length ? renderTableRows(rows) : '',
+      rows.length ? renderTableRows(rows, columns) : '',
       blocks.length ? blocks.map(renderEntry).filter(Boolean).join('') : '',
       entries.length ? entries.map(renderEntry).filter(Boolean).join('') : '',
       section.descrizione ? `<div class="description">${formatInline(section.descrizione)}</div>` : '',
@@ -1451,13 +1452,18 @@
   /*
    * Renderizza righe chiave/valore come tabella responsive.
    */
-  function renderTableRows(rows) {
-    const visibleRows = rows.filter((row) => row && (row.chiave || row.valore));
+  function renderTableRows(rows, columns = []) {
+    const visibleRows = rows.filter((row) => row && Object.keys(row).length);
     if (!visibleRows.length) return '';
+
+    const matrixColumns = normalizeTableColumns(visibleRows, columns);
+    if (matrixColumns.length) {
+      return renderMatrixRows(visibleRows, matrixColumns);
+    }
 
     return `
       <div class="table-wrap">
-        <table class="data-table">
+        <table class="data-table data-table-key-value">
           <tbody>
             ${visibleRows
               .map((row) => `
@@ -1471,6 +1477,67 @@
         </table>
       </div>
     `;
+  }
+
+  /*
+   * Le tabelle SRD estratte dal PDF possono arrivare con colonne esplicite
+   * oppure come oggetti gia multi-chiave. Mantiene l'ordine dichiarato e
+   * preserva comunque tutte le celle presenti nei dati.
+   */
+  function normalizeTableColumns(rows, columns) {
+    const explicitColumns = Array.isArray(columns)
+      ? columns.map((column) => String(column || '').trim()).filter(Boolean)
+      : [];
+
+    if (explicitColumns.length) return explicitColumns;
+
+    const inferredColumns = [];
+    rows.forEach((row) => {
+      Object.keys(row || {}).forEach((key) => {
+        if (key !== 'chiave' && key !== 'valore' && !inferredColumns.includes(key)) {
+          inferredColumns.push(key);
+        }
+      });
+    });
+
+    return inferredColumns.length > 1 ? inferredColumns : [];
+  }
+
+  /*
+   * Renderizza tabelle multi-colonna, usate per progressioni di classe
+   * e altre matrici che nel PDF hanno intestazioni proprie.
+   */
+  function renderMatrixRows(rows, columns) {
+    return `
+      <div class="table-wrap table-wrap-wide">
+        <table class="data-table data-table-matrix" data-column-count="${columns.length}">
+          <thead>
+            <tr>
+              ${columns.map((column) => `<th scope="col">${formatInline(displayTableColumn(column), { dice: false })}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${rows
+              .map((row) => `
+                <tr>
+                  ${columns
+                    .map((column, index) => {
+                      const tag = index === 0 ? 'th scope="row"' : 'td';
+                      const closeTag = index === 0 ? 'th' : 'td';
+                      return `<${tag}>${formatInline(row[column] ?? '', { dice: false })}</${closeTag}>`;
+                    })
+                    .join('')}
+                </tr>
+              `)
+              .join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function displayTableColumn(column) {
+    return String(column || '').replace(/\s+2$/, '');
   }
 
   /*
