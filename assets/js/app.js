@@ -200,8 +200,28 @@
    */
   async function fetchJson(path) {
     const response = await fetch(path, { cache: 'no-store' });
-    if (!response.ok) throw new Error(`Errore caricamento JSON: ${path}`);
+    if (!response.ok) {
+      const fallbackPath = fallbackDataPath(path);
+      if (fallbackPath) {
+        const fallbackResponse = await fetch(fallbackPath, { cache: 'no-store' });
+        if (fallbackResponse.ok) return fallbackResponse.json();
+      }
+
+      throw new Error(`Errore caricamento JSON: ${path}`);
+    }
     return response.json();
+  }
+
+  /*
+   * Su alcuni hosting il submodule data non viene materializzato nei file
+   * pubblicati. In quel caso i JSON locali rispondono 404 e si usa il repo
+   * dati come sorgente di fallback.
+   */
+  function fallbackDataPath(path) {
+    const base = appState.config?.paths?.data_fallback_base;
+    if (!base || !String(path).startsWith('data/')) return '';
+
+    return `${String(base).replace(/\/?$/, '/')}${String(path).replace(/^data\//, '')}`;
   }
 
   /*

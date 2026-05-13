@@ -56,6 +56,8 @@ Poi apri:
 http://localhost:8080
 ```
 
+Non aprire `index.html` direttamente con `file://`: l'app carica `config.yml` e i JSON SRD con `fetch()`, quindi deve essere servita via HTTP.
+
 Su rete locale, altri dispositivi possono collegarsi all'indirizzo IP del computer che sta servendo il progetto, per esempio:
 
 ```text
@@ -82,7 +84,7 @@ http://ip-del-tuo-server:8080
 
 ## Dati SRD
 
-Il submodule `data` contiene i dati strutturati:
+Il submodule `data` punta al repository `DND-SRD-IT` e contiene i dati strutturati. I JSON non vanno duplicati nel repository principale.
 
 ```text
 data/srd/5.2.1/
