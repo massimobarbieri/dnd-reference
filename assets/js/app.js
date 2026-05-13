@@ -106,6 +106,24 @@
     },
   };
 
+  const CONDITION_ALIASES = {
+    accecato: ['accecato', 'accecata', 'accecati', 'accecate'],
+    affascinato: ['affascinato', 'affascinata', 'affascinati', 'affascinate'],
+    afferrato: ['afferrato', 'afferrata', 'afferrati', 'afferrate'],
+    assordato: ['assordato', 'assordata', 'assordati', 'assordate'],
+    avvelenato: ['avvelenato', 'avvelenata', 'avvelenati', 'avvelenate'],
+    incapacitato: ['incapacitato', 'incapacitata', 'incapacitati', 'incapacitate'],
+    indebolimento: ['indebolimento'],
+    invisibile: ['invisibile', 'invisibili'],
+    paralizzato: ['paralizzato', 'paralizzata', 'paralizzati', 'paralizzate'],
+    pietrificato: ['pietrificato', 'pietrificata', 'pietrificati', 'pietrificate'],
+    privo_di_sensi: ['privo di sensi', 'priva di sensi', 'privi di sensi', 'prive di sensi'],
+    prono: ['prono', 'prona', 'proni', 'prone'],
+    spaventato: ['spaventato', 'spaventata', 'spaventati', 'spaventate'],
+    stordito: ['stordito', 'stordita', 'storditi', 'stordite'],
+    trattenuto: ['trattenuto', 'trattenuta', 'trattenuti', 'trattenute'],
+  };
+
   /*
    * Riferimenti alle tre viste principali dell’interfaccia.
    * Ogni vista viene mostrata o nascosta in base alla rotta corrente.
@@ -537,7 +555,18 @@
       .filter((item) => !appState.showOnlyFavorites || isFavorite(section, item.id))
       .filter((item) => matchesSectionFilter(section, item, filter))
       .filter((item) => !term || normalizeText(searchableText(section, item)).includes(term))
-      .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'it'));
+      .sort((a, b) => sortItems(section, a, b));
+  }
+
+  /*
+   * Mantiene le regole nell'ordine del PDF; le altre sezioni restano alfabetiche.
+   */
+  function sortItems(section, a, b) {
+    if (section === 'rules') {
+      return sourcePageValue(a.pagine_sorgente) - sourcePageValue(b.pagine_sorgente);
+    }
+
+    return String(a.nome || '').localeCompare(String(b.nome || ''), 'it');
   }
 
   /*
@@ -594,7 +623,6 @@
 
     if (section === 'rules') {
       return uniqueValues(appState.data.rules, 'categoria')
-        .sort((a, b) => a.localeCompare(b, 'it'))
         .map((value) => ({
           value,
           label: value,
@@ -654,6 +682,15 @@
           .filter((value) => value !== null && value !== undefined && value !== '')
       )
     ).map(String);
+  }
+
+  /*
+   * Prima pagina sorgente di una voce, usata per ordinare le regole come nel PDF.
+   */
+  function sourcePageValue(value) {
+    const [page] = String(value || '').match(/\d+/) || [];
+
+    return page ? Number(page) : Number.POSITIVE_INFINITY;
   }
 
   /*
@@ -1810,9 +1847,11 @@
   function formatInline(text, options = {}) {
     const withDice = options.dice !== false;
     const withAttacks = options.attacks !== false;
+    const withGlossary = options.glossary !== false;
     const value = String(text);
     const formatted = formatMarkdownInline(value);
-    const withAttackRolls = withAttacks ? enrichAttackRolls(formatted) : formatted;
+    const withGlossaryLinks = withGlossary ? enrichGlossaryLinks(formatted) : formatted;
+    const withAttackRolls = withAttacks ? enrichAttackRolls(withGlossaryLinks) : withGlossaryLinks;
 
     return withDice ? enrichDiceFormulas(withAttackRolls) : withAttackRolls;
   }
@@ -1824,6 +1863,49 @@
     return escapeHtml(String(text))
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>');
+  }
+
+  /*
+   * Collega le condizioni citate nel testo alla relativa voce di glossario.
+   */
+  function enrichGlossaryLinks(html) {
+    const terms = glossaryConditionTerms();
+
+    if (!terms.length) return String(html);
+
+    const pattern = new RegExp(`\\b(${terms.map((term) => escapeRegExp(term.label)).join('|')})\\b`, 'gi');
+
+    return String(html).replace(pattern, (match, _term, offset, fullText) => {
+      if (isInsideHtmlTag(fullText, offset)) return match;
+
+      const condition = terms.find((term) => normalizeText(term.label) === normalizeText(match));
+      if (!condition) return match;
+
+      return glossaryLink(match, condition.id);
+    });
+  }
+
+  /*
+   * Crea la lista di alias delle condizioni presenti davvero nel glossario.
+   */
+  function glossaryConditionTerms() {
+    const conditionIds = new Set(
+      appState.data.rules_glossary
+        .filter((entry) => entry.descrittore === 'condizione')
+        .map((entry) => entry.id)
+    );
+
+    return Object.entries(CONDITION_ALIASES)
+      .filter(([id]) => conditionIds.has(id))
+      .flatMap(([id, aliases]) => aliases.map((label) => ({ id, label })))
+      .sort((a, b) => b.label.length - a.label.length);
+  }
+
+  /*
+   * Link interno a una voce del glossario.
+   */
+  function glossaryLink(label, id) {
+    return `<a class="glossary-link" href="#/rules_glossary/${encodeURIComponent(id)}" title="Apri definizione: ${escapeAttr(label)}">${escapeHtml(label)}</a>`;
   }
 
   /*
@@ -1902,6 +1984,13 @@
    */
   function escapeAttr(value) {
     return escapeHtml(value).replace(/'/g, '&#39;');
+  }
+
+  /*
+   * Escapa una stringa da usare in una RegExp dinamica.
+   */
+  function escapeRegExp(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   /*
