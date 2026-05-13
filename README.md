@@ -6,6 +6,7 @@ L’app raccoglie in un’unica interfaccia:
 - mostri
 - oggetti magici
 - regole
+- glossario delle regole
 
 Tutto è organizzato in modo semplice e leggibile, ottimizzato sia per desktop che per dispositivi mobile, così da essere utilizzabile direttamente al tavolo di gioco.
 L'app fa uso del System Reference Document 5.2.1 rilasciato gratuitamente da Wizards. Si rimanda al documento di Licenza per i dettagli.
@@ -44,6 +45,10 @@ Per verificare i dati mostri arricchiti:
 Per verificare i dati delle regole:
 
 ``node tests/rules-data.test.js``
+
+Per verificare i dati del glossario:
+
+``node tests/rules-glossary-data.test.js``
 
 Per verificare i requisiti base di accessibilità del dice roller:
 

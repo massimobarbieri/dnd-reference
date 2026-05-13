@@ -1,6 +1,6 @@
 /*
  * D&D Reference
- * Applicazione statica per consultare mostri, incantesimi, oggetti magici e regole.
+ * Applicazione statica per consultare mostri, incantesimi, oggetti magici, regole e glossario.
  *
  * Caratteristiche principali:
  * - Non usa framework JavaScript.
@@ -26,6 +26,7 @@
       spells: [],
       magic_items: [],
       rules: [],
+      rules_glossary: [],
     },
 
     // Mappa id mostro -> dati immagine.
@@ -46,6 +47,7 @@
       spells: '',
       magic_items: '',
       rules: '',
+      rules_glossary: '',
     },
 
     // Se true mostra solo gli elementi preferiti.
@@ -97,6 +99,11 @@
       singular: 'regola',
       titleKey: 'rules',
     },
+    rules_glossary: {
+      icon: '🔎',
+      singular: 'voce',
+      titleKey: 'rules_glossary',
+    },
   };
 
   /*
@@ -139,11 +146,12 @@
        * Carica in parallelo tutti i dati.
        * Promise.all migliora i tempi perché non aspetta un file alla volta.
        */
-      const [monsters, spells, magicItems, rules, monsterImageYaml] = await Promise.all([
+      const [monsters, spells, magicItems, rules, rulesGlossary, monsterImageYaml] = await Promise.all([
         fetchJson(paths.monsters),
         fetchJson(paths.spells),
         fetchJson(paths.magic_items),
         fetchJson(paths.rules),
+        fetchJson(paths.rules_glossary),
 
         // Se il file immagini manca o fallisce, usa una stringa vuota.
         fetchText(paths.monster_images).catch(() => ''),
@@ -156,6 +164,7 @@
       // Gli oggetti magici vengono anche normalizzati nella rarità.
       appState.data.magic_items = normalizeArray(magicItems).map(normalizeMagicItem);
       appState.data.rules = normalizeArray(rules);
+      appState.data.rules_glossary = normalizeArray(rulesGlossary);
 
       // Converte il piccolo YAML delle immagini in una Map.
       appState.monsterImages = parseMonsterImages(monsterImageYaml);
@@ -547,6 +556,7 @@
       spells: 'Tutti i livelli',
       magic_items: 'Tutte le rarità',
       rules: 'Tutte le categorie',
+      rules_glossary: 'Tutti i descrittori',
     };
 
     return `
@@ -591,6 +601,15 @@
         }));
     }
 
+    if (section === 'rules_glossary') {
+      return uniqueValues(appState.data.rules_glossary, 'descrittore')
+        .sort((a, b) => a.localeCompare(b, 'it'))
+        .map((value) => ({
+          value,
+          label: capitalizeFirst(value),
+        }));
+    }
+
     return uniqueValues(appState.data.magic_items, 'rarita')
       .sort((a, b) => a.localeCompare(b, 'it'))
       .map((value) => ({
@@ -615,6 +634,10 @@
 
     if (section === 'rules') {
       return String(item.categoria || '') === filter;
+    }
+
+    if (section === 'rules_glossary') {
+      return String(item.descrittore || '') === filter;
     }
 
     return String(item.rarita || '') === filter;
@@ -698,6 +721,28 @@
       ].join(' ');
     }
 
+    if (section === 'rules_glossary') {
+      return [
+        item.nome,
+        item.lettera,
+        item.descrittore,
+        item.descrizione,
+        item.vedi_anche?.join(' '),
+        ...(Array.isArray(item.sezioni)
+          ? item.sezioni.flatMap((sectionEntry) => [
+            sectionEntry.titolo,
+            sectionEntry.descrizione,
+            ...(Array.isArray(sectionEntry.righe)
+              ? sectionEntry.righe.map((row) => `${row.chiave || ''} ${row.valore || ''}`)
+              : []),
+            ...(Array.isArray(sectionEntry.blocchi)
+              ? sectionEntry.blocchi.map((block) => `${block.nome || ''} ${block.descrizione || ''}`)
+              : []),
+          ])
+          : []),
+      ].join(' ');
+    }
+
     return [
       item.nome,
       item.tipo,
@@ -742,6 +787,13 @@
     if (section === 'rules') {
       return [
         item.categoria,
+        item.pagine_sorgente ? `pag. ${item.pagine_sorgente}` : null,
+      ].filter(Boolean).join(' · ');
+    }
+
+    if (section === 'rules_glossary') {
+      return [
+        item.descrittore ? capitalizeFirst(item.descrittore) : `Lettera ${item.lettera}`,
         item.pagine_sorgente ? `pag. ${item.pagine_sorgente}` : null,
       ].filter(Boolean).join(' · ');
     }
@@ -910,6 +962,7 @@
     if (section === 'monsters') return renderMonster(item);
     if (section === 'spells') return renderSpell(item);
     if (section === 'rules') return renderRule(item);
+    if (section === 'rules_glossary') return renderGlossaryEntry(item);
     return renderMagicItem(item);
   }
 
@@ -1129,6 +1182,30 @@
       <div class="description">${formatInline(rule.descrizione || '')}</div>
 
       ${renderSections('Dettagli', rule.sezioni)}
+    `;
+  }
+
+  /*
+   * Renderizza una voce del glossario delle regole.
+   */
+  function renderGlossaryEntry(entry) {
+    return `
+      ${renderHeader(
+        'rules_glossary',
+        entry,
+        [entry.descrittore ? capitalizeFirst(entry.descrittore) : null, entry.pagine_sorgente ? `pag. ${entry.pagine_sorgente}` : null].filter(Boolean).join(' · ')
+      )}
+
+      ${compactMeta([
+        ['Lettera', entry.lettera],
+        ['Descrittore', entry.descrittore ? capitalizeFirst(entry.descrittore) : null],
+        ['Pagine SRD', entry.pagine_sorgente],
+        ['Vedi anche', Array.isArray(entry.vedi_anche) ? entry.vedi_anche.join(', ') : null],
+      ])}
+
+      <div class="description">${formatInline(entry.descrizione || '')}</div>
+
+      ${renderSections('Dettagli', entry.sezioni)}
     `;
   }
 
