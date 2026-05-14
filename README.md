@@ -7,6 +7,7 @@ L'app raccoglie in un'unica interfaccia:
 - mostri
 - incantesimi
 - classi
+- scheda personaggio
 - oggetti magici
 - regole
 - glossario delle regole
@@ -18,6 +19,7 @@ I dati SRD sono mantenuti nel submodule `data` e vengono caricati dal browser co
 - Navigazione per categoria.
 - Ricerca full text nelle schede.
 - Schede dettagliate per mostri, incantesimi, classi, oggetti magici, regole e glossario.
+- Scheda personaggio locale con caratteristiche, combattimento, incantesimi, inventario, import ed export JSON.
 - Preferiti locali per sezione.
 - Dice roller integrato.
 - Riconoscimento di formule di dado nel testo, per esempio `d20`, `2d6 + 3`, `2d20kh1`, `4d6dl1`.
@@ -118,6 +120,7 @@ Test utili durante lo sviluppo:
 
 ```bash
 node tests/dice-roller.test.js
+node tests/character-sheet.test.js
 node tests/classes-section.test.js
 node tests/monster-rolls-data.test.js
 node tests/rules-data.test.js
@@ -138,6 +141,8 @@ L'app e' volutamente semplice:
 - `assets/js/dice-roller.js` contiene parser e logica dei tiri.
 - `assets/css/styles.css` contiene layout e componenti visuali.
 - `config.yml` definisce titoli, label e percorsi dei dati.
+
+Le schede personaggio esportate sono JSON con `schemaVersion`. Le importazioni passano sempre da una migrazione permissiva in `normalizeCharacterSheet`, cosi' i salvataggi locali precedenti restano caricabili quando si aggiungono nuovi campi.
 
 Non c'e' una fase di build. Dopo ogni modifica a CSS, JS o dati, ricarica la pagina servita dal web server locale.
 

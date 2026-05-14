@@ -2,7 +2,7 @@
 # Questo file e' pensato per essere modificato senza toccare il codice JavaScript.
 site:
   title: D&D Reference
-  subtitle: Mostri, incantesimi, classi, oggetti magici, regole e glossario SRD 5.2.1
+  subtitle: Mostri, incantesimi, classi, scheda personaggio, oggetti magici, regole e glossario SRD 5.2.1
   language: it
   default_section: monsters
   enable_favorites: true
@@ -22,6 +22,7 @@ labels:
   monsters: Mostri
   spells: Incantesimi
   classes: Classi
+  character_sheet: Scheda
   magic_items: Oggetti magici
   rules: Regole
   rules_glossary: Glossario

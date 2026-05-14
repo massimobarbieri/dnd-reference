@@ -25,6 +25,7 @@
       monsters: [],
       spells: [],
       classes: [],
+      character_sheet: [],
       magic_items: [],
       rules: [],
       rules_glossary: [],
@@ -47,10 +48,15 @@
       monsters: '',
       spells: '',
       classes: '',
+      character_sheet: '',
       magic_items: '',
       rules: '',
       rules_glossary: '',
     },
+
+    // Scheda personaggio locale.
+    characterSheet: null,
+    characterSheetTab: 'overview',
 
     // Se true mostra solo gli elementi preferiti.
     showOnlyFavorites: false,
@@ -96,6 +102,12 @@
       singular: 'classe',
       titleKey: 'classes',
     },
+    character_sheet: {
+      icon: '🧾',
+      singular: 'scheda',
+      titleKey: 'character_sheet',
+      type: 'tool',
+    },
     magic_items: {
       icon: '🗡️',
       singular: 'oggetto magico',
@@ -131,6 +143,72 @@
     trattenuto: ['trattenuto', 'trattenuta', 'trattenuti', 'trattenute'],
   };
 
+  const CHARACTER_SHEET_STORAGE_KEY = 'dnd-reference:character-sheet';
+
+  const ABILITY_META = [
+    ['str', 'Forza', 'FOR'],
+    ['dex', 'Destrezza', 'DES'],
+    ['con', 'Costituzione', 'COS'],
+    ['int', 'Intelligenza', 'INT'],
+    ['wis', 'Saggezza', 'SAG'],
+    ['cha', 'Carisma', 'CAR'],
+  ];
+
+  const CHARACTER_SHEET_TABS = [
+    ['overview', 'Principale'],
+    ['combat', 'Combattimento'],
+    ['spells', 'Incantesimi'],
+    ['inventory', 'Inventario'],
+    ['notes', 'Note'],
+  ];
+
+  const CHARACTER_SHEET_SCHEMA_VERSION = 1;
+
+  const DEFAULT_CHARACTER_SHEET = {
+    schemaVersion: CHARACTER_SHEET_SCHEMA_VERSION,
+    name: '',
+    classId: '',
+    level: 1,
+    ancestry: '',
+    background: '',
+    alignment: '',
+    xp: 0,
+    abilities: {
+      str: 10,
+      dex: 10,
+      con: 10,
+      int: 10,
+      wis: 10,
+      cha: 10,
+    },
+    savingThrows: {
+      str: false,
+      dex: false,
+      con: false,
+      int: false,
+      wis: false,
+      cha: false,
+    },
+    armorClass: 10,
+    currentHp: 0,
+    maxHp: 0,
+    tempHp: 0,
+    hitDice: '1d8',
+    speed: 9,
+    initiativeBonus: 0,
+    spellcastingAbility: 'int',
+    preparedSpells: [],
+    magicItems: [],
+    equipment: '',
+    coins: {
+      pp: 0,
+      mo: 0,
+      ma: 0,
+      mr: 0,
+    },
+    notes: '',
+  };
+
   /*
    * Riferimenti alle tre viste principali dell’interfaccia.
    * Ogni vista viene mostrata o nascosta in base alla rotta corrente.
@@ -154,6 +232,7 @@
    */
   async function init() {
     showLoading();
+    appState.characterSheet = loadCharacterSheet();
     renderRollTray();
     document.addEventListener('click', handleRollCommand);
     document.addEventListener('submit', handleRollSubmit);
@@ -185,6 +264,7 @@
       // Normalizza i dati per evitare errori se un file non contiene un array.
       appState.data.monsters = normalizeArray(monsters);
       appState.data.spells = normalizeArray(spells);
+      appState.data.character_sheet = [appState.characterSheet];
 
       // Gli oggetti magici vengono anche normalizzati nella rarità.
       appState.data.magic_items = normalizeArray(magicItems).map(normalizeMagicItem);
@@ -228,6 +308,101 @@
    */
   function normalizeArray(value) {
     return Array.isArray(value) ? value : [];
+  }
+
+  /*
+   * Crea una copia profonda semplice per dati JSON-safe.
+   */
+  function cloneJson(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  /*
+   * Legge la scheda personaggio locale e la riallinea al modello corrente.
+   */
+  function loadCharacterSheet() {
+    try {
+      return normalizeCharacterSheet(JSON.parse(localStorage.getItem(CHARACTER_SHEET_STORAGE_KEY) || '{}'));
+    } catch {
+      return normalizeCharacterSheet({});
+    }
+  }
+
+  /*
+   * Normalizza una scheda parziale mantenendo compatibilita con campi nuovi.
+   */
+  function normalizeCharacterSheet(sheet) {
+    const base = cloneJson(DEFAULT_CHARACTER_SHEET);
+    const value = sheet && typeof sheet === 'object' ? sheet : {};
+    const migrated = migrateCharacterSheet(value);
+
+    return {
+      ...base,
+      ...migrated,
+      schemaVersion: CHARACTER_SHEET_SCHEMA_VERSION,
+      abilities: {
+        ...base.abilities,
+        ...(migrated.abilities || {}),
+      },
+      savingThrows: {
+        ...base.savingThrows,
+        ...(migrated.savingThrows || {}),
+      },
+      preparedSpells: Array.isArray(migrated.preparedSpells) ? migrated.preparedSpells : [],
+      magicItems: Array.isArray(migrated.magicItems) ? migrated.magicItems : [],
+      coins: {
+        ...base.coins,
+        ...(migrated.coins || {}),
+      },
+    };
+  }
+
+  /*
+   * Migra schede esportate o salvate con versioni precedenti.
+   */
+  function migrateCharacterSheet(value) {
+    const sheet = { ...value };
+
+    if (!Number.isFinite(Number(sheet.schemaVersion))) {
+      sheet.schemaVersion = 0;
+    }
+
+    if (sheet.schemaVersion < 1) {
+      sheet.magicItems = normalizeLegacyMagicItems(sheet.magicItems);
+    }
+
+    return sheet;
+  }
+
+  /*
+   * Riallinea vecchie liste di oggetti magici a una forma stabile.
+   */
+  function normalizeLegacyMagicItems(items) {
+    if (!Array.isArray(items)) return [];
+
+    return items
+      .map((item) => {
+        if (typeof item === 'string') {
+          return { id: item, name: item, summary: '' };
+        }
+
+        if (!item || typeof item !== 'object' || !item.id) return null;
+
+        return {
+          id: String(item.id),
+          name: item.name ? String(item.name) : String(item.id),
+          summary: item.summary ? String(item.summary) : '',
+        };
+      })
+      .filter(Boolean);
+  }
+
+  /*
+   * Salva la scheda nel localStorage namespaced dell'app.
+   */
+  function saveCharacterSheet() {
+    localStorage.setItem(CHARACTER_SHEET_STORAGE_KEY, JSON.stringify(appState.characterSheet));
+    appState.data.character_sheet = [appState.characterSheet];
   }
 
   /*
@@ -408,6 +583,11 @@
       return;
     }
 
+    if (route.section === 'character_sheet') {
+      renderCharacterSheet(route.id || appState.characterSheetTab);
+      return;
+    }
+
     if (route.id) {
       renderDetail(route.section, route.id);
     } else {
@@ -452,20 +632,31 @@
     views.home.innerHTML = `
       <div class="home-grid">
         ${Object.keys(SECTION_META)
-          .map((section) => sectionHomeCard(section, labels[section], appState.data[section].length))
+          .map((section) => sectionHomeCard(section, labels[section], homeCardSubtitle(section)))
           .join('')}
       </div>
     `;
   }
 
   /*
+   * Sottotitolo della card home: conteggio per liste, stato per strumenti.
+   */
+  function homeCardSubtitle(section) {
+    if (SECTION_META[section]?.type === 'tool') {
+      return appState.characterSheet.name || 'Strumento locale';
+    }
+
+    return `${appState.data[section].length} elementi disponibili`;
+  }
+
+  /*
    * Crea una card della home per una sezione.
    */
-  function sectionHomeCard(section, label, count) {
+  function sectionHomeCard(section, label, subtitle) {
     return `
       <a class="home-card" href="#/${section}">
         <strong>${SECTION_META[section].icon} ${escapeHtml(label)}</strong>
-        <span>${count} elementi disponibili</span>
+        <span>${escapeHtml(subtitle)}</span>
       </a>
     `;
   }
@@ -912,6 +1103,796 @@
       renderDetail(section, id);
     });
 
+    bindDetailSheetActions(section, item);
+  }
+
+  /*
+   * Collega le azioni "usa nella scheda" presenti nelle pagine dettaglio.
+   */
+  function bindDetailSheetActions(section, item) {
+    views.detail.querySelector('[data-sheet-use-class]')?.addEventListener('click', () => {
+      appState.characterSheet.classId = item.id;
+      appState.characterSheet.spellcastingAbility = classDefaultSpellcastingAbility(item.id);
+      saveCharacterSheet();
+      location.hash = '#/character_sheet/overview';
+    });
+
+    views.detail.querySelector('[data-sheet-add-detail-spell]')?.addEventListener('click', () => {
+      addSpellToCharacterSheet(item.id);
+      location.hash = '#/character_sheet/spells';
+    });
+
+    views.detail.querySelector('[data-sheet-add-magic-item]')?.addEventListener('click', () => {
+      addMagicItemToCharacterSheet(item);
+      location.hash = '#/character_sheet/inventory';
+    });
+  }
+
+  /*
+   * Azioni contestuali disponibili dalle schede del reference.
+   */
+  function renderSheetActions(section, item) {
+    if (section === 'classes') {
+      return `
+        <div class="sheet-actions">
+          <button class="button button--primary" type="button" data-sheet-use-class="${escapeAttr(item.id)}">Usa per scheda</button>
+          <a class="button button--ghost" href="#/character_sheet">Apri scheda</a>
+        </div>
+      `;
+    }
+
+    if (section === 'spells') {
+      return `
+        <div class="sheet-actions">
+          <button class="button button--primary" type="button" data-sheet-add-detail-spell="${escapeAttr(item.id)}">Aggiungi alla scheda</button>
+          <a class="button button--ghost" href="#/character_sheet/spells">Incantesimi scheda</a>
+        </div>
+      `;
+    }
+
+    if (section === 'magic_items') {
+      return `
+        <div class="sheet-actions">
+          <button class="button button--primary" type="button" data-sheet-add-magic-item="${escapeAttr(item.id)}">Aggiungi all'inventario</button>
+          <a class="button button--ghost" href="#/character_sheet/inventory">Inventario scheda</a>
+        </div>
+      `;
+    }
+
+    return '';
+  }
+
+  /*
+   * Renderizza la scheda personaggio nativa.
+   */
+  function renderCharacterSheet(tab = 'overview') {
+    const validTab = CHARACTER_SHEET_TABS.some(([id]) => id === tab) ? tab : 'overview';
+    appState.characterSheetTab = validTab;
+
+    setView('detail');
+
+    views.detail.innerHTML = `
+      <nav class="detail-nav" aria-label="Navigazione scheda personaggio">
+        <a class="button" href="#/">Home</a>
+        <div class="toolbar-row">
+          <button class="button button--ghost" type="button" data-sheet-export>Esporta</button>
+          <button class="button button--ghost" type="button" data-sheet-import>Importa</button>
+          <button class="button button--ghost" type="button" data-sheet-reset>Nuova</button>
+          <input id="character-sheet-import" class="visually-hidden" type="file" accept="application/json,.json">
+        </div>
+      </nav>
+
+      <article class="detail-card detail-card--flat character-sheet">
+        ${renderCharacterSheetHeader()}
+        ${renderCharacterSheetTabs(validTab)}
+        ${renderCharacterSheetTab(validTab)}
+      </article>
+    `;
+
+    bindCharacterSheetEvents();
+  }
+
+  /*
+   * Header della scheda con riepilogo derivato.
+   */
+  function renderCharacterSheetHeader() {
+    const sheet = appState.characterSheet;
+    const className = characterSheetClassName();
+    const level = characterLevel();
+
+    return `
+      <header class="detail-header character-sheet-header">
+        <div>
+          <h2 class="detail-title">${escapeHtml(sheet.name || 'Scheda personaggio')}</h2>
+          <p class="detail-kicker">${escapeHtml([className, level ? `livello ${level}` : null, sheet.ancestry].filter(Boolean).join(' · '))}</p>
+        </div>
+        <div class="sheet-badges" aria-label="Riepilogo personaggio">
+          <span>BC ${escapeHtml(String(characterProficiencyBonus()))}</span>
+          <span>CA ${escapeHtml(String(Number(sheet.armorClass) || 10))}</span>
+          <span>PF ${escapeHtml(String(Number(sheet.currentHp) || 0))}/${escapeHtml(String(Number(sheet.maxHp) || 0))}</span>
+        </div>
+      </header>
+    `;
+  }
+
+  /*
+   * Navigazione interna della scheda.
+   */
+  function renderCharacterSheetTabs(activeTab) {
+    return `
+      <div class="sheet-tabs" role="tablist" aria-label="Sezioni scheda">
+        ${CHARACTER_SHEET_TABS.map(([id, label]) => `
+          <a
+            class="sheet-tab${id === activeTab ? ' is-active' : ''}"
+            href="#/character_sheet/${id}"
+            role="tab"
+            aria-selected="${id === activeTab}"
+          >${escapeHtml(label)}</a>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  /*
+   * Contenuto della tab attiva.
+   */
+  function renderCharacterSheetTab(tab) {
+    if (tab === 'combat') return renderCharacterSheetCombat();
+    if (tab === 'spells') return renderCharacterSheetSpells();
+    if (tab === 'inventory') return renderCharacterSheetInventory();
+    if (tab === 'notes') return renderCharacterSheetNotes();
+    return renderCharacterSheetOverview();
+  }
+
+  /*
+   * Tab principale: identita e caratteristiche.
+   */
+  function renderCharacterSheetOverview() {
+    const sheet = appState.characterSheet;
+
+    return `
+      <section class="sheet-grid">
+        <div class="sheet-panel">
+          <h3>Identita</h3>
+          <div class="sheet-form-grid">
+            ${sheetField('name', 'Nome', sheet.name)}
+            ${sheetSelect('classId', 'Classe', sheet.classId, characterClassOptions())}
+            ${sheetNumberField('level', 'Livello', sheet.level, 1, 20)}
+            ${sheetField('ancestry', 'Specie', sheet.ancestry)}
+            ${sheetField('background', 'Background', sheet.background)}
+            ${sheetField('alignment', 'Allineamento', sheet.alignment)}
+            ${sheetNumberField('xp', 'PE', sheet.xp, 0)}
+          </div>
+        </div>
+
+        <div class="sheet-panel">
+          <h3>Caratteristiche</h3>
+          <div class="ability-grid">
+            ${ABILITY_META.map(([key, label, short]) => renderAbilityCard(key, label, short)).join('')}
+          </div>
+        </div>
+
+        <div class="sheet-panel sheet-panel--wide">
+          <h3>Progressione classe</h3>
+          ${renderCharacterClassProgression()}
+        </div>
+      </section>
+    `;
+  }
+
+  /*
+   * Tab combattimento.
+   */
+  function renderCharacterSheetCombat() {
+    const sheet = appState.characterSheet;
+    const initiative = abilityModifier(sheet.abilities.dex) + (Number(sheet.initiativeBonus) || 0);
+
+    return `
+      <section class="sheet-grid">
+        <div class="sheet-panel">
+          <h3>Difesa e punti ferita</h3>
+          <div class="sheet-form-grid sheet-form-grid--compact">
+            ${sheetNumberField('armorClass', 'Classe Armatura', sheet.armorClass, 0)}
+            ${sheetNumberField('currentHp', 'PF attuali', sheet.currentHp, 0)}
+            ${sheetNumberField('maxHp', 'PF massimi', sheet.maxHp, 0)}
+            ${sheetNumberField('tempHp', 'PF temporanei', sheet.tempHp, 0)}
+            ${sheetField('hitDice', 'Dadi Vita', sheet.hitDice)}
+            ${sheetNumberField('speed', 'Velocita (m)', sheet.speed, 0)}
+            ${sheetNumberField('initiativeBonus', 'Bonus iniziativa extra', sheet.initiativeBonus)}
+          </div>
+        </div>
+
+        <div class="sheet-panel">
+          <h3>Tiri rapidi</h3>
+          <div class="quick-dice sheet-rolls">
+            <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, initiative))}">Iniziativa ${escapeHtml(formatSigned(initiative))}</button>
+            ${ABILITY_META.map(([key, label]) => {
+              const modifier = abilityModifier(sheet.abilities[key]);
+              return `<button type="button" data-dice-roll="${escapeAttr(rollFormula(20, modifier))}">${escapeHtml(label)} ${escapeHtml(formatSigned(modifier))}</button>`;
+            }).join('')}
+          </div>
+        </div>
+
+        <div class="sheet-panel sheet-panel--wide">
+          <h3>Tiri salvezza</h3>
+          <div class="save-grid">
+            ${ABILITY_META.map(([key, label]) => renderSavingThrowControl(key, label)).join('')}
+          </div>
+        </div>
+      </section>
+    `;
+  }
+
+  /*
+   * Tab incantesimi con catalogo SRD.
+   */
+  function renderCharacterSheetSpells() {
+    const sheet = appState.characterSheet;
+    const spellOptions = characterSpellOptions();
+    const dc = 8 + characterProficiencyBonus() + abilityModifier(sheet.abilities[sheet.spellcastingAbility]);
+    const attack = characterProficiencyBonus() + abilityModifier(sheet.abilities[sheet.spellcastingAbility]);
+
+    return `
+      <section class="sheet-grid">
+        <div class="sheet-panel">
+          <h3>Incantatore</h3>
+          <div class="sheet-form-grid sheet-form-grid--compact">
+            ${sheetSelect('spellcastingAbility', 'Caratteristica', sheet.spellcastingAbility, abilityOptions())}
+            <div class="sheet-derived"><span>CD incantesimi</span><strong>${escapeHtml(String(dc))}</strong></div>
+            <div class="sheet-derived"><span>Attacco incantesimo</span><strong>${escapeHtml(formatSigned(attack))}</strong></div>
+          </div>
+        </div>
+
+        <div class="sheet-panel">
+          <h3>Aggiungi incantesimo</h3>
+          <div class="sheet-inline-form">
+            <label class="sheet-field">
+              <span>Catalogo SRD</span>
+              <select data-sheet-add-spell>
+                <option value="">Scegli incantesimo</option>
+                ${spellOptions.map((spell) => `<option value="${escapeAttr(spell.id)}">${escapeHtml(spellOptionLabel(spell))}</option>`).join('')}
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="sheet-panel sheet-panel--wide">
+          <h3>Incantesimi preparati</h3>
+          ${renderPreparedSpells()}
+        </div>
+      </section>
+    `;
+  }
+
+  /*
+   * Tab inventario.
+   */
+  function renderCharacterSheetInventory() {
+    const sheet = appState.characterSheet;
+
+    return `
+      <section class="sheet-grid">
+        <div class="sheet-panel">
+          <h3>Monete</h3>
+          <div class="coin-grid">
+            ${Object.entries({ pp: 'PP', mo: 'MO', ma: 'MA', mr: 'MR' }).map(([key, label]) => `
+              <label class="sheet-field">
+                <span>${label}</span>
+                <input type="number" min="0" value="${escapeAttr(String(sheet.coins[key] ?? 0))}" data-sheet-coin="${escapeAttr(key)}">
+              </label>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="sheet-panel sheet-panel--wide">
+          <h3>Oggetti magici</h3>
+          ${renderCharacterSheetMagicItems()}
+        </div>
+
+        <div class="sheet-panel sheet-panel--wide">
+          <h3>Equipaggiamento libero</h3>
+          ${sheetTextArea('equipment', 'Armi, armature, oggetti, tesori...', sheet.equipment)}
+        </div>
+      </section>
+    `;
+  }
+
+  /*
+   * Tab note.
+   */
+  function renderCharacterSheetNotes() {
+    const sheet = appState.characterSheet;
+
+    return `
+      <section class="sheet-grid">
+        <div class="sheet-panel sheet-panel--wide">
+          <h3>Diario e note</h3>
+          ${sheetTextArea('notes', 'Appunti di sessione, PNG, luoghi, obiettivi...', sheet.notes)}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderAbilityCard(key, label, short) {
+    const value = Number(appState.characterSheet.abilities[key]) || 10;
+    const modifier = abilityModifier(value);
+
+    return `
+      <div class="ability-card">
+        <label>
+          <span>${escapeHtml(label)}</span>
+          <input type="number" min="1" max="30" value="${escapeAttr(String(value))}" data-sheet-ability="${escapeAttr(key)}">
+        </label>
+        <strong>${escapeHtml(short)}</strong>
+        <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, modifier))}">${escapeHtml(formatSigned(modifier))}</button>
+      </div>
+    `;
+  }
+
+  function renderSavingThrowControl(key, label) {
+    const sheet = appState.characterSheet;
+    const modifier = abilityModifier(sheet.abilities[key]) + (sheet.savingThrows[key] ? characterProficiencyBonus() : 0);
+
+    return `
+      <label class="save-control">
+        <input type="checkbox" ${sheet.savingThrows[key] ? 'checked' : ''} data-sheet-save="${escapeAttr(key)}">
+        <span>${escapeHtml(label)}</span>
+        <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, modifier))}">${escapeHtml(formatSigned(modifier))}</button>
+      </label>
+    `;
+  }
+
+  function renderPreparedSpells() {
+    const spells = appState.characterSheet.preparedSpells
+      .map((id) => appState.data.spells.find((spell) => spell.id === id))
+      .filter(Boolean)
+      .sort((a, b) => Number(a.livello) - Number(b.livello) || String(a.nome).localeCompare(String(b.nome), 'it'));
+
+    if (!spells.length) {
+      return '<p class="sheet-empty">Nessun incantesimo preparato.</p>';
+    }
+
+    return `
+      <div class="prepared-spell-list">
+        ${spells.map((spell) => `
+          <article class="prepared-spell">
+            <div>
+              <a href="#/spells/${encodeURIComponent(spell.id)}">${escapeHtml(spell.nome)}</a>
+              <span>${escapeHtml([spellLevel(spell), spell.scuola].filter(Boolean).join(' · '))}</span>
+            </div>
+            <button class="button button--ghost" type="button" data-sheet-remove-spell="${escapeAttr(spell.id)}">Rimuovi</button>
+          </article>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function renderCharacterSheetMagicItems() {
+    const items = appState.characterSheet.magicItems
+      .map((entry) => {
+        const source = appState.data.magic_items.find((item) => item.id === entry.id);
+        return {
+          id: entry.id,
+          name: source?.nome || entry.name || entry.id,
+          summary: entry.summary || [source?.tipo_base || source?.tipo, source?.rarita, source?.richiede_sintonia ? 'richiede sintonia' : null]
+            .filter(Boolean)
+            .join(' · '),
+        };
+      })
+      .sort((a, b) => String(a.name).localeCompare(String(b.name), 'it'));
+
+    if (!items.length) {
+      return '<p class="sheet-empty">Nessun oggetto magico collegato.</p>';
+    }
+
+    return `
+      <div class="sheet-item-list">
+        ${items.map((item) => `
+          <article class="sheet-item">
+            <div>
+              <a href="#/magic_items/${encodeURIComponent(item.id)}">${escapeHtml(item.name)}</a>
+              ${item.summary ? `<span>${escapeHtml(item.summary)}</span>` : ''}
+            </div>
+            <button class="button button--ghost" type="button" data-sheet-remove-magic-item="${escapeAttr(item.id)}">Rimuovi</button>
+          </article>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function renderCharacterClassProgression() {
+    const classEntry = characterClassEntry();
+
+    if (!classEntry) {
+      return '<p class="sheet-empty">Scegli una classe per vedere progressione e privilegi disponibili.</p>';
+    }
+
+    const level = characterLevel();
+    const progression = classProgressionSection(classEntry);
+    const currentRow = classProgressionRow(classEntry, level);
+    const nextRow = level < 20 ? classProgressionRow(classEntry, level + 1) : null;
+    const featureNames = splitClassFeatures(currentRow?.['Privilegi di classe']);
+    const resourceRows = classProgressionResources(currentRow);
+    const subclassRows = classSubclassRows(classEntry, level);
+
+    return `
+      <div class="sheet-class-summary">
+        <div class="sheet-class-heading">
+          <div>
+            <strong>${escapeHtml(classEntry.nome.replace(/^Classe:\s*/i, ''))}</strong>
+            <span>${escapeHtml(`Livello ${level}`)}</span>
+          </div>
+          <a class="button button--ghost" href="#/classes/${encodeURIComponent(classEntry.id)}">Apri classe</a>
+        </div>
+
+        ${currentRow ? `
+          <div class="sheet-class-stats">
+            <div class="sheet-derived">
+              <span>Bonus competenza</span>
+              <strong>${escapeHtml(currentRow['Bonus di competenza'] || formatSigned(characterProficiencyBonus()))}</strong>
+            </div>
+            ${resourceRows.map(([label, value]) => `
+              <div class="sheet-derived">
+                <span>${escapeHtml(label)}</span>
+                <strong>${escapeHtml(value)}</strong>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+
+        <div class="sheet-class-block">
+          <h4>Privilegi del livello</h4>
+          ${featureNames.length ? `
+            <ul class="sheet-chip-list">
+              ${featureNames.map((feature) => `<li>${escapeHtml(feature)}</li>`).join('')}
+            </ul>
+          ` : '<p class="sheet-empty">Nessun nuovo privilegio indicato per questo livello.</p>'}
+        </div>
+
+        ${subclassRows.length ? `
+          <div class="sheet-class-block">
+            <h4>Sottoclasse SRD sbloccata</h4>
+            <div class="sheet-item-list">
+              ${subclassRows.map((row) => `
+                <article class="sheet-item">
+                  <div>
+                    <strong>${escapeHtml(row.Privilegio || 'Privilegio')}</strong>
+                    <span>${escapeHtml(`Livello ${row.Livello}${row.Riepilogo ? ` · ${row.Riepilogo}` : ''}`)}</span>
+                  </div>
+                </article>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${nextRow ? `
+          <div class="sheet-class-block">
+            <h4>Prossimo livello</h4>
+            <p>${escapeHtml(nextLevelSummary(nextRow))}</p>
+          </div>
+        ` : ''}
+
+        ${!progression ? '<p class="sheet-empty">Progressione non disponibile nei dati locali.</p>' : ''}
+      </div>
+    `;
+  }
+
+  function sheetField(key, label, value) {
+    return `
+      <label class="sheet-field">
+        <span>${escapeHtml(label)}</span>
+        <input type="text" value="${escapeAttr(value || '')}" data-sheet-field="${escapeAttr(key)}">
+      </label>
+    `;
+  }
+
+  function sheetNumberField(key, label, value, min, max) {
+    return `
+      <label class="sheet-field">
+        <span>${escapeHtml(label)}</span>
+        <input
+          type="number"
+          value="${escapeAttr(String(value ?? 0))}"
+          ${min !== undefined ? `min="${escapeAttr(String(min))}"` : ''}
+          ${max !== undefined ? `max="${escapeAttr(String(max))}"` : ''}
+          data-sheet-number="${escapeAttr(key)}"
+        >
+      </label>
+    `;
+  }
+
+  function sheetSelect(key, label, value, options) {
+    return `
+      <label class="sheet-field">
+        <span>${escapeHtml(label)}</span>
+        <select data-sheet-field="${escapeAttr(key)}">
+          ${options.map((option) => `
+            <option value="${escapeAttr(option.value)}"${option.value === value ? ' selected' : ''}>${escapeHtml(option.label)}</option>
+          `).join('')}
+        </select>
+      </label>
+    `;
+  }
+
+  function sheetTextArea(key, placeholder, value) {
+    return `
+      <label class="sheet-field sheet-field--wide">
+        <span class="visually-hidden">${escapeHtml(placeholder)}</span>
+        <textarea data-sheet-field="${escapeAttr(key)}" placeholder="${escapeAttr(placeholder)}">${escapeHtml(value || '')}</textarea>
+      </label>
+    `;
+  }
+
+  function bindCharacterSheetEvents() {
+    views.detail.querySelectorAll('[data-sheet-field]').forEach((node) => {
+      node.addEventListener('input', (event) => {
+        appState.characterSheet[event.currentTarget.dataset.sheetField] = event.currentTarget.value;
+        saveCharacterSheet();
+      });
+
+      node.addEventListener('change', () => renderCharacterSheet(appState.characterSheetTab));
+    });
+
+    views.detail.querySelectorAll('[data-sheet-number]').forEach((node) => {
+      node.addEventListener('input', (event) => {
+        appState.characterSheet[event.currentTarget.dataset.sheetNumber] = Number(event.currentTarget.value) || 0;
+        saveCharacterSheet();
+      });
+
+      node.addEventListener('change', () => renderCharacterSheet(appState.characterSheetTab));
+    });
+
+    views.detail.querySelectorAll('[data-sheet-ability]').forEach((node) => {
+      node.addEventListener('input', (event) => {
+        appState.characterSheet.abilities[event.currentTarget.dataset.sheetAbility] = Number(event.currentTarget.value) || 0;
+        saveCharacterSheet();
+      });
+
+      node.addEventListener('change', () => renderCharacterSheet(appState.characterSheetTab));
+    });
+
+    views.detail.querySelectorAll('[data-sheet-save]').forEach((node) => {
+      node.addEventListener('change', (event) => {
+        appState.characterSheet.savingThrows[event.currentTarget.dataset.sheetSave] = event.currentTarget.checked;
+        saveCharacterSheet();
+        renderCharacterSheet(appState.characterSheetTab);
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-coin]').forEach((node) => {
+      node.addEventListener('input', (event) => {
+        appState.characterSheet.coins[event.currentTarget.dataset.sheetCoin] = Number(event.currentTarget.value) || 0;
+        saveCharacterSheet();
+      });
+    });
+
+    views.detail.querySelector('[data-sheet-add-spell]')?.addEventListener('change', (event) => {
+      const id = event.currentTarget.value;
+      if (id) {
+        addSpellToCharacterSheet(id);
+        renderCharacterSheet('spells');
+      }
+    });
+
+    views.detail.querySelectorAll('[data-sheet-remove-spell]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        const id = event.currentTarget.dataset.sheetRemoveSpell;
+        appState.characterSheet.preparedSpells = appState.characterSheet.preparedSpells.filter((spellId) => spellId !== id);
+        saveCharacterSheet();
+        renderCharacterSheet('spells');
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-remove-magic-item]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        const id = event.currentTarget.dataset.sheetRemoveMagicItem;
+        appState.characterSheet.magicItems = appState.characterSheet.magicItems.filter((item) => item.id !== id);
+        saveCharacterSheet();
+        renderCharacterSheet('inventory');
+      });
+    });
+
+    views.detail.querySelector('[data-sheet-export]')?.addEventListener('click', exportCharacterSheet);
+    views.detail.querySelector('[data-sheet-import]')?.addEventListener('click', () => {
+      views.detail.querySelector('#character-sheet-import')?.click();
+    });
+    views.detail.querySelector('#character-sheet-import')?.addEventListener('change', importCharacterSheet);
+    views.detail.querySelector('[data-sheet-reset]')?.addEventListener('click', () => {
+      if (!confirm('Creare una nuova scheda vuota?')) return;
+      appState.characterSheet = normalizeCharacterSheet({});
+      saveCharacterSheet();
+      renderCharacterSheet('overview');
+    });
+  }
+
+  function exportCharacterSheet() {
+    const blob = new Blob([JSON.stringify(appState.characterSheet, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${fileSafeName(appState.characterSheet.name || 'personaggio')}-dnd-reference.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importCharacterSheet(event) {
+    const [file] = event.currentTarget.files || [];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+      try {
+        appState.characterSheet = normalizeCharacterSheet(JSON.parse(reader.result));
+        saveCharacterSheet();
+        renderCharacterSheet('overview');
+      } catch {
+        alert('File scheda non valido.');
+      }
+    });
+    reader.readAsText(file);
+    event.currentTarget.value = '';
+  }
+
+  function characterClassOptions() {
+    return [
+      { value: '', label: 'Nessuna classe' },
+      ...appState.data.classes.map((entry) => ({ value: entry.id, label: entry.nome.replace(/^Classe:\s*/i, '') })),
+    ];
+  }
+
+  function characterClassEntry() {
+    return appState.data.classes.find((entry) => entry.id === appState.characterSheet.classId);
+  }
+
+  function classProgressionSection(classEntry) {
+    return classEntry?.sezioni?.find((section) => section.titolo === 'Progressione di classe') || null;
+  }
+
+  function classProgressionRow(classEntry, level) {
+    const progression = classProgressionSection(classEntry);
+    return progression?.righe?.find((row) => Number(row.Livello) === Number(level)) || null;
+  }
+
+  function classProgressionResources(row) {
+    if (!row) return [];
+
+    return Object.entries(row)
+      .filter(([label, value]) => {
+        const text = String(value || '').trim();
+        return (
+          !['Livello', 'Bonus di competenza', 'Privilegi di classe'].includes(label) &&
+          text !== '' &&
+          text !== '-'
+        );
+      })
+      .slice(0, 10);
+  }
+
+  function splitClassFeatures(value) {
+    const text = String(value || '').trim();
+    if (!text || text === '-') return [];
+
+    return text
+      .split(',')
+      .map((feature) => feature.trim())
+      .filter(Boolean);
+  }
+
+  function classSubclassRows(classEntry, level) {
+    const subclass = classEntry?.sezioni?.find((section) => String(section.titolo || '').startsWith('Sottoclasse '));
+
+    return (subclass?.righe || [])
+      .filter((row) => Number(row.Livello) <= Number(level))
+      .sort((a, b) => Number(a.Livello) - Number(b.Livello));
+  }
+
+  function nextLevelSummary(row) {
+    const features = splitClassFeatures(row?.['Privilegi di classe']);
+    const prefix = `Livello ${row?.Livello || ''}`;
+
+    if (!features.length) return `${prefix}: nessun nuovo privilegio indicato.`;
+    return `${prefix}: ${features.join(', ')}.`;
+  }
+
+  /*
+   * Aggiunge un incantesimo alla scheda evitando duplicati.
+   */
+  function addSpellToCharacterSheet(id) {
+    if (!id || appState.characterSheet.preparedSpells.includes(id)) return false;
+
+    appState.characterSheet.preparedSpells.push(id);
+    saveCharacterSheet();
+    return true;
+  }
+
+  /*
+   * Collega un oggetto magico alla scheda evitando duplicati.
+   */
+  function addMagicItemToCharacterSheet(item) {
+    if (!item?.id || appState.characterSheet.magicItems.some((entry) => entry.id === item.id)) return false;
+
+    const summary = [item.tipo_base || item.tipo, item.rarita, item.richiede_sintonia ? 'richiede sintonia' : null]
+      .filter(Boolean)
+      .join(' · ');
+
+    appState.characterSheet.magicItems.push({
+      id: item.id,
+      name: item.nome,
+      summary,
+    });
+    saveCharacterSheet();
+    return true;
+  }
+
+  /*
+   * Caratteristica da incantatore predefinita per classe, quando nota.
+   */
+  function classDefaultSpellcastingAbility(classId) {
+    const defaults = {
+      classe_bardo: 'cha',
+      classe_chierico: 'wis',
+      classe_druido: 'wis',
+      classe_mago: 'int',
+      classe_paladino: 'cha',
+      classe_ranger: 'wis',
+      classe_stregone: 'cha',
+      classe_warlock: 'cha',
+    };
+
+    return defaults[classId] || appState.characterSheet.spellcastingAbility || 'int';
+  }
+
+  function abilityOptions() {
+    return ABILITY_META.map(([value, label]) => ({ value, label }));
+  }
+
+  function characterSpellOptions() {
+    const className = characterSheetClassName().toLowerCase();
+
+    return appState.data.spells
+      .filter((spell) => !className || spell.classi?.includes(className))
+      .sort((a, b) => Number(a.livello) - Number(b.livello) || String(a.nome).localeCompare(String(b.nome), 'it'));
+  }
+
+  function spellOptionLabel(spell) {
+    return [spell.nome, spellLevel(spell), spell.scuola].filter(Boolean).join(' · ');
+  }
+
+  function characterSheetClassName() {
+    const classEntry = appState.data.classes.find((entry) => entry.id === appState.characterSheet.classId);
+    return classEntry ? classEntry.nome.replace(/^Classe:\s*/i, '') : '';
+  }
+
+  function characterLevel() {
+    return Math.min(20, Math.max(1, Number(appState.characterSheet.level) || 1));
+  }
+
+  function characterProficiencyBonus() {
+    const level = characterLevel();
+    if (level >= 17) return 6;
+    if (level >= 13) return 5;
+    if (level >= 9) return 4;
+    if (level >= 5) return 3;
+    return 2;
+  }
+
+  function abilityModifier(score) {
+    return Math.floor(((Number(score) || 10) - 10) / 2);
+  }
+
+  function formatSigned(value) {
+    const number = Number(value) || 0;
+    return number >= 0 ? `+${number}` : String(number);
+  }
+
+  function rollFormula(faces, modifier) {
+    const value = Number(modifier) || 0;
+    if (!value) return `1d${faces}`;
+    return `1d${faces} ${value > 0 ? '+' : '-'} ${Math.abs(value)}`;
+  }
+
+  function fileSafeName(value) {
+    return normalizeText(value).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'personaggio';
   }
 
   /*
@@ -1144,6 +2125,7 @@
         spell,
         [spellLevel(spell), spell.scuola].filter(Boolean).join(' · ')
       )}
+      ${renderSheetActions('spells', spell)}
 
       ${compactMeta([
         ['Livello', spellLevel(spell)],
@@ -1216,6 +2198,7 @@
         item,
         [item.tipo_base || item.tipo, item.rarita].filter(Boolean).join(' · ')
       )}
+      ${renderSheetActions('magic_items', item)}
 
       ${compactMeta([
         ['Tipo', item.tipo],
@@ -1263,6 +2246,7 @@
         rule,
         [rule.categoria, rule.pagine_sorgente ? `pag. ${rule.pagine_sorgente}` : null].filter(Boolean).join(' · ')
       )}
+      ${renderSheetActions('classes', rule)}
 
       ${compactMeta([
         ['Capitolo', rule.capitolo],
