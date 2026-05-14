@@ -183,8 +183,16 @@
     ['notes', 'Note'],
   ];
 
+  /*
+   * Versione del formato salvato in localStorage/esportazione.
+   * Incrementare quando si aggiungono campi persistenti alla scheda.
+   */
   const CHARACTER_SHEET_SCHEMA_VERSION = 7;
 
+  /*
+   * Modello canonico della scheda. Tutte le importazioni e i salvataggi
+   * parziali vengono riallineati a questa forma tramite normalizeCharacterSheet.
+   */
   const DEFAULT_CHARACTER_SHEET = {
     schemaVersion: CHARACTER_SHEET_SCHEMA_VERSION,
     name: '',
@@ -370,6 +378,8 @@
 
   /*
    * Normalizza una scheda parziale mantenendo compatibilita con campi nuovi.
+   * I sotto-oggetti vengono sempre ricostruiti per evitare riferimenti o shape
+   * vecchie provenienti da localStorage/import JSON.
    */
   function normalizeCharacterSheet(sheet) {
     const base = cloneJson(DEFAULT_CHARACTER_SHEET);
@@ -405,6 +415,8 @@
 
   /*
    * Migra schede esportate o salvate con versioni precedenti.
+   * Ogni blocco deve essere idempotente: puo essere richiamato anche su dati
+   * gia normalizzati senza duplicare o perdere informazioni.
    */
   function migrateCharacterSheet(value) {
     const sheet = { ...value };
@@ -491,6 +503,10 @@
       .filter(Boolean);
   }
 
+  /*
+   * Le risorse sono contatori manuali: usiamo `used` invece di `remaining`
+   * cosi il valore massimo puo cambiare senza perdere lo storico consumato.
+   */
   function normalizeLegacyResources(resources) {
     if (!Array.isArray(resources)) return [];
 
@@ -511,6 +527,10 @@
       .filter(Boolean);
   }
 
+  /*
+   * Stato operativo del personaggio durante la sessione.
+   * I limiti numerici rispecchiano SRD: indebolimento 0-6, TS morte 0-3.
+   */
   function normalizeCharacterStatus(status) {
     const source = status && typeof status === 'object' ? status : {};
 
@@ -1634,6 +1654,10 @@
     `;
   }
 
+  /*
+   * I chip non salvano una lista separata: derivano dalla classe selezionata
+   * e marcano direttamente la competenza skill come scelta manuale.
+   */
   function renderClassSkillSuggestions() {
     const suggestions = classSkillOptions(characterClassEntry());
 
@@ -1676,6 +1700,10 @@
     `;
   }
 
+  /*
+   * Risorse consumabili generiche, usabili per privilegi di classe, talenti
+   * o regole homebrew senza codificare una logica diversa per ogni classe.
+   */
   function renderCharacterResources() {
     const resources = appState.characterSheet.resources;
 
@@ -1724,6 +1752,10 @@
     `;
   }
 
+  /*
+   * Stato di combattimento e condizioni. Le condizioni sono id del glossario,
+   * cosi possono linkare alla relativa pagina regola e restano stabili.
+   */
   function renderCharacterStatus() {
     const status = appState.characterSheet.status;
     const conditions = characterConditionOptions();
@@ -2107,6 +2139,10 @@
     `;
   }
 
+  /*
+   * Collega gli eventi dopo ogni render della scheda. La vista viene spesso
+   * ridisegnata interamente, quindi i listener non devono essere conservati.
+   */
   function bindCharacterSheetEvents() {
     views.detail.querySelectorAll('[data-sheet-field]').forEach((node) => {
       node.addEventListener('input', (event) => {
@@ -2493,6 +2529,10 @@
     return String(entry?.summary || '').toLowerCase().includes('richiede sintonia');
   }
 
+  /*
+   * Applica i tratti strutturati della classe SRD alla scheda.
+   * Non blocca l'utente: i valori importati restano modificabili manualmente.
+   */
   function applyClassToCharacterSheet(classEntry) {
     const traits = classTraitsMap(classEntry);
 
@@ -2515,6 +2555,10 @@
     );
   }
 
+  /*
+   * Le sezioni "Tratti del..." sono gia righe chiave/valore nei dati.
+   * Convertirle in mappa evita parsing fragile del markdown originale.
+   */
   function classTraitsMap(classEntry) {
     const traits = classEntry?.sezioni?.find((section) => String(section.titolo || '').startsWith('Tratti '));
 
@@ -2545,6 +2589,10 @@
     return `Competenze abilita ${className}: ${text}`;
   }
 
+  /*
+   * Estrae le abilita nominate nella riga "Abilita" della classe.
+   * Serve solo come suggerimento: le scelte finali restano nello stato scheda.
+   */
   function classSkillOptions(classEntry) {
     const text = normalizeText(classTraitsMap(classEntry).Abilita || '');
     if (!text) return [];
