@@ -162,7 +162,7 @@
     ['notes', 'Note'],
   ];
 
-  const CHARACTER_SHEET_SCHEMA_VERSION = 1;
+  const CHARACTER_SHEET_SCHEMA_VERSION = 3;
 
   const DEFAULT_CHARACTER_SHEET = {
     schemaVersion: CHARACTER_SHEET_SCHEMA_VERSION,
@@ -196,9 +196,11 @@
     hitDice: '1d8',
     speed: 9,
     initiativeBonus: 0,
+    attacks: [],
     spellcastingAbility: 'int',
     preparedSpells: [],
     magicItems: [],
+    attunedMagicItems: [],
     equipment: '',
     coins: {
       pp: 0,
@@ -348,8 +350,10 @@
         ...base.savingThrows,
         ...(migrated.savingThrows || {}),
       },
+      attacks: normalizeLegacyAttacks(migrated.attacks),
       preparedSpells: Array.isArray(migrated.preparedSpells) ? migrated.preparedSpells : [],
       magicItems: Array.isArray(migrated.magicItems) ? migrated.magicItems : [],
+      attunedMagicItems: normalizeIdList(migrated.attunedMagicItems),
       coins: {
         ...base.coins,
         ...(migrated.coins || {}),
@@ -369,6 +373,14 @@
 
     if (sheet.schemaVersion < 1) {
       sheet.magicItems = normalizeLegacyMagicItems(sheet.magicItems);
+    }
+
+    if (sheet.schemaVersion < 2) {
+      sheet.attacks = normalizeLegacyAttacks(sheet.attacks);
+    }
+
+    if (sheet.schemaVersion < 3) {
+      sheet.attunedMagicItems = normalizeIdList(sheet.attunedMagicItems);
     }
 
     return sheet;
@@ -395,6 +407,35 @@
         };
       })
       .filter(Boolean);
+  }
+
+  /*
+   * Riallinea vecchi attacchi a una forma calcolabile.
+   */
+  function normalizeLegacyAttacks(attacks) {
+    if (!Array.isArray(attacks)) return [];
+
+    return attacks
+      .map((attack, index) => {
+        if (!attack || typeof attack !== 'object') return null;
+
+        return {
+          id: attack.id ? String(attack.id) : `attack-${index + 1}`,
+          name: attack.name ? String(attack.name) : 'Attacco',
+          ability: ABILITY_META.some(([key]) => key === attack.ability) ? attack.ability : 'str',
+          proficient: attack.proficient !== false,
+          bonus: Number(attack.bonus) || 0,
+          damage: attack.damage ? String(attack.damage) : '',
+          damageType: attack.damageType ? String(attack.damageType) : '',
+          notes: attack.notes ? String(attack.notes) : '',
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function normalizeIdList(value) {
+    if (!Array.isArray(value)) return [];
+    return Array.from(new Set(value.map((id) => String(id)).filter(Boolean)));
   }
 
   /*
@@ -1319,6 +1360,11 @@
             ${ABILITY_META.map(([key, label]) => renderSavingThrowControl(key, label)).join('')}
           </div>
         </div>
+
+        <div class="sheet-panel sheet-panel--wide">
+          <h3>Attacchi</h3>
+          ${renderCharacterAttacks()}
+        </div>
       </section>
     `;
   }
@@ -1341,6 +1387,11 @@
             <div class="sheet-derived"><span>CD incantesimi</span><strong>${escapeHtml(String(dc))}</strong></div>
             <div class="sheet-derived"><span>Attacco incantesimo</span><strong>${escapeHtml(formatSigned(attack))}</strong></div>
           </div>
+        </div>
+
+        <div class="sheet-panel">
+          <h3>Slot disponibili</h3>
+          ${renderCharacterSpellSlots()}
         </div>
 
         <div class="sheet-panel">
@@ -1386,6 +1437,7 @@
 
         <div class="sheet-panel sheet-panel--wide">
           <h3>Oggetti magici</h3>
+          ${renderCharacterAttunementSummary()}
           ${renderCharacterSheetMagicItems()}
         </div>
 
@@ -1442,6 +1494,86 @@
     `;
   }
 
+  function renderCharacterAttacks() {
+    const attacks = appState.characterSheet.attacks;
+
+    return `
+      <form class="sheet-attack-form" data-sheet-add-attack>
+        <label class="sheet-field">
+          <span>Nome</span>
+          <input type="text" name="name" placeholder="Spada lunga">
+        </label>
+        <label class="sheet-field">
+          <span>Caratteristica</span>
+          <select name="ability">
+            ${abilityOptions().map((option) => `
+              <option value="${escapeAttr(option.value)}">${escapeHtml(option.label)}</option>
+            `).join('')}
+          </select>
+        </label>
+        <label class="sheet-field">
+          <span>Danni</span>
+          <input type="text" name="damage" placeholder="1d8+3">
+        </label>
+        <label class="sheet-field">
+          <span>Tipo</span>
+          <input type="text" name="damageType" placeholder="taglienti">
+        </label>
+        <label class="sheet-check">
+          <input type="checkbox" name="proficient" checked>
+          <span>Competente</span>
+        </label>
+        <button class="button button--primary" type="submit">Aggiungi</button>
+      </form>
+
+      ${attacks.length ? `
+        <div class="sheet-attack-list">
+          ${attacks.map((attack) => renderCharacterAttack(attack)).join('')}
+        </div>
+      ` : '<p class="sheet-empty">Nessun attacco salvato.</p>'}
+    `;
+  }
+
+  function renderCharacterAttack(attack) {
+    const ability = ABILITY_META.find(([key]) => key === attack.ability)?.[2] || 'CAR';
+    const attackBonus = characterAttackBonus(attack);
+    const damage = String(attack.damage || '').trim();
+
+    return `
+      <article class="sheet-attack">
+        <div class="sheet-attack-main">
+          <strong>${escapeHtml(attack.name || 'Attacco')}</strong>
+          <span>${escapeHtml([ability, attack.proficient ? 'competente' : null, attack.damageType].filter(Boolean).join(' · '))}</span>
+          ${attack.notes ? `<p>${escapeHtml(attack.notes)}</p>` : ''}
+        </div>
+        <div class="sheet-attack-actions">
+          <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, attackBonus))}">Colpire ${escapeHtml(formatSigned(attackBonus))}</button>
+          ${damage ? `<button type="button" data-dice-roll="${escapeAttr(damage)}">Danni ${escapeHtml(damage)}</button>` : ''}
+          <button class="button button--ghost" type="button" data-sheet-remove-attack="${escapeAttr(attack.id)}">Rimuovi</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderCharacterSpellSlots() {
+    const slots = characterSpellSlots();
+
+    if (!slots.length) {
+      return '<p class="sheet-empty">Nessuno slot indicato per classe e livello correnti.</p>';
+    }
+
+    return `
+      <div class="sheet-slot-grid">
+        ${slots.map(([label, value]) => `
+          <div class="sheet-slot">
+            <span>${escapeHtml(label.replace(/^Slot\s+/i, 'Liv. '))}</span>
+            <strong>${escapeHtml(value)}</strong>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
   function renderPreparedSpells() {
     const spells = appState.characterSheet.preparedSpells
       .map((id) => appState.data.spells.find((spell) => spell.id === id))
@@ -1477,6 +1609,7 @@
           summary: entry.summary || [source?.tipo_base || source?.tipo, source?.rarita, source?.richiede_sintonia ? 'richiede sintonia' : null]
             .filter(Boolean)
             .join(' · '),
+          requiresAttunement: magicItemRequiresAttunement(entry, source),
         };
       })
       .sort((a, b) => String(a.name).localeCompare(String(b.name), 'it'));
@@ -1493,9 +1626,34 @@
               <a href="#/magic_items/${encodeURIComponent(item.id)}">${escapeHtml(item.name)}</a>
               ${item.summary ? `<span>${escapeHtml(item.summary)}</span>` : ''}
             </div>
-            <button class="button button--ghost" type="button" data-sheet-remove-magic-item="${escapeAttr(item.id)}">Rimuovi</button>
+            <div class="sheet-item-actions">
+              ${item.requiresAttunement ? `
+                <label class="sheet-check sheet-check--compact">
+                  <input type="checkbox" ${appState.characterSheet.attunedMagicItems.includes(item.id) ? 'checked' : ''} data-sheet-toggle-attunement="${escapeAttr(item.id)}">
+                  <span>Sintonia</span>
+                </label>
+              ` : ''}
+              <button class="button button--ghost" type="button" data-sheet-remove-magic-item="${escapeAttr(item.id)}">Rimuovi</button>
+            </div>
           </article>
         `).join('')}
+      </div>
+    `;
+  }
+
+  function renderCharacterAttunementSummary() {
+    const attunedItems = appState.characterSheet.attunedMagicItems
+      .map((id) => appState.data.magic_items.find((item) => item.id === id))
+      .filter(Boolean);
+    const count = attunedItems.length;
+
+    return `
+      <div class="sheet-attunement">
+        <div class="sheet-attunement-meter">
+          <span>Sintonia</span>
+          <strong>${escapeHtml(String(count))}/3</strong>
+        </div>
+        <p>${escapeHtml(count ? attunedItems.map((item) => item.nome).join(', ') : 'Nessun oggetto in sintonia.')}</p>
       </div>
     `;
   }
@@ -1659,6 +1817,37 @@
       });
     });
 
+    views.detail.querySelector('[data-sheet-add-attack]')?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const data = new FormData(form);
+      const name = String(data.get('name') || '').trim();
+
+      if (!name) return;
+
+      appState.characterSheet.attacks.push({
+        id: `attack-${Date.now().toString(36)}`,
+        name,
+        ability: String(data.get('ability') || 'str'),
+        proficient: data.get('proficient') === 'on',
+        bonus: 0,
+        damage: String(data.get('damage') || '').trim(),
+        damageType: String(data.get('damageType') || '').trim(),
+        notes: '',
+      });
+      saveCharacterSheet();
+      renderCharacterSheet('combat');
+    });
+
+    views.detail.querySelectorAll('[data-sheet-remove-attack]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        const id = event.currentTarget.dataset.sheetRemoveAttack;
+        appState.characterSheet.attacks = appState.characterSheet.attacks.filter((attack) => attack.id !== id);
+        saveCharacterSheet();
+        renderCharacterSheet('combat');
+      });
+    });
+
     views.detail.querySelectorAll('[data-sheet-coin]').forEach((node) => {
       node.addEventListener('input', (event) => {
         appState.characterSheet.coins[event.currentTarget.dataset.sheetCoin] = Number(event.currentTarget.value) || 0;
@@ -1687,6 +1876,20 @@
       node.addEventListener('click', (event) => {
         const id = event.currentTarget.dataset.sheetRemoveMagicItem;
         appState.characterSheet.magicItems = appState.characterSheet.magicItems.filter((item) => item.id !== id);
+        appState.characterSheet.attunedMagicItems = appState.characterSheet.attunedMagicItems.filter((itemId) => itemId !== id);
+        saveCharacterSheet();
+        renderCharacterSheet('inventory');
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-toggle-attunement]').forEach((node) => {
+      node.addEventListener('change', (event) => {
+        const id = event.currentTarget.dataset.sheetToggleAttunement;
+        if (event.currentTarget.checked) {
+          appState.characterSheet.attunedMagicItems = normalizeIdList([...appState.characterSheet.attunedMagicItems, id]);
+        } else {
+          appState.characterSheet.attunedMagicItems = appState.characterSheet.attunedMagicItems.filter((itemId) => itemId !== id);
+        }
         saveCharacterSheet();
         renderCharacterSheet('inventory');
       });
@@ -1768,6 +1971,18 @@
       .slice(0, 10);
   }
 
+  function characterSpellSlots() {
+    const row = classProgressionRow(characterClassEntry(), characterLevel());
+
+    if (!row) return [];
+
+    return Object.entries(row)
+      .filter(([label, value]) => {
+        const text = String(value || '').trim();
+        return /^Slot\s+/i.test(label) && text !== '' && text !== '-';
+      });
+  }
+
   function splitClassFeatures(value) {
     const text = String(value || '').trim();
     if (!text || text === '-') return [];
@@ -1792,6 +2007,13 @@
 
     if (!features.length) return `${prefix}: nessun nuovo privilegio indicato.`;
     return `${prefix}: ${features.join(', ')}.`;
+  }
+
+  function characterAttackBonus(attack) {
+    const ability = ABILITY_META.some(([key]) => key === attack.ability) ? attack.ability : 'str';
+    const proficiency = attack.proficient ? characterProficiencyBonus() : 0;
+
+    return abilityModifier(appState.characterSheet.abilities[ability]) + proficiency + (Number(attack.bonus) || 0);
   }
 
   /*
@@ -1822,6 +2044,11 @@
     });
     saveCharacterSheet();
     return true;
+  }
+
+  function magicItemRequiresAttunement(entry, source) {
+    if (source?.richiede_sintonia) return true;
+    return String(entry?.summary || '').toLowerCase().includes('richiede sintonia');
   }
 
   /*

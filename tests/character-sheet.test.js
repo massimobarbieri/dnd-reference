@@ -11,13 +11,19 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   "character_sheet: {",
   "type: 'tool'",
   "const CHARACTER_SHEET_STORAGE_KEY = 'dnd-reference:character-sheet';",
-  'const CHARACTER_SHEET_SCHEMA_VERSION = 1;',
+  'const CHARACTER_SHEET_SCHEMA_VERSION = 3;',
   'schemaVersion: CHARACTER_SHEET_SCHEMA_VERSION',
   'function migrateCharacterSheet(value)',
   'function normalizeLegacyMagicItems(items)',
+  'function normalizeLegacyAttacks(attacks)',
+  'function normalizeIdList(value)',
   'function renderCharacterSheet(tab =',
+  'function renderCharacterAttacks()',
+  'function renderCharacterAttack(attack)',
   'function renderCharacterSheetSpells()',
+  'function renderCharacterSpellSlots()',
   'function renderCharacterSheetMagicItems()',
+  'function renderCharacterAttunementSummary()',
   'function renderCharacterClassProgression()',
   'function classProgressionRow(classEntry, level)',
   'function exportCharacterSheet()',
@@ -25,12 +31,20 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'function renderSheetActions(section, item)',
   'function addSpellToCharacterSheet(id)',
   'function addMagicItemToCharacterSheet(item)',
+  'function magicItemRequiresAttunement(entry, source)',
+  'function characterAttackBonus(attack)',
+  'function characterSpellSlots()',
   'function classDefaultSpellcastingAbility(classId)',
+  'attacks: []',
   'magicItems: []',
+  'attunedMagicItems: []',
+  'data-sheet-add-attack',
+  'data-sheet-remove-attack',
   'data-sheet-use-class',
   'data-sheet-add-detail-spell',
   'data-sheet-add-magic-item',
   'data-sheet-remove-magic-item',
+  'data-sheet-toggle-attunement',
   'data-sheet-add-spell',
   'data-dice-roll="${escapeAttr(rollFormula(20, modifier))}"',
 ].forEach((token) => assert.ok(appSource.includes(token), `${token} deve essere presente in app.js`));
@@ -39,6 +53,12 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   '.character-sheet',
   '.sheet-tabs',
   '.sheet-actions',
+  '.sheet-attack-form',
+  '.sheet-attack',
+  '.sheet-attunement',
+  '.sheet-item-actions',
+  '.sheet-slot-grid',
+  '.sheet-slot',
   '.ability-grid',
   '.sheet-class-summary',
   '.sheet-chip-list',
@@ -49,7 +69,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
 ].forEach((token) => assert.ok(cssSource.includes(token), `${token} deve essere presente nel CSS`));
 
 assert.match(configSource, /character_sheet: Scheda/);
-assert.match(indexSource, /20260514-character-sheet-mobile/);
+assert.match(indexSource, /20260514-character-sheet-attunement/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd5'/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd-theme'/);
 
