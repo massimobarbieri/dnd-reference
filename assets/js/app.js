@@ -24,6 +24,7 @@
     data: {
       monsters: [],
       spells: [],
+      classes: [],
       magic_items: [],
       rules: [],
       rules_glossary: [],
@@ -45,6 +46,7 @@
     filters: {
       monsters: '',
       spells: '',
+      classes: '',
       magic_items: '',
       rules: '',
       rules_glossary: '',
@@ -88,6 +90,11 @@
       icon: '✨',
       singular: 'incantesimo',
       titleKey: 'spells',
+    },
+    classes: {
+      icon: '🧙',
+      singular: 'classe',
+      titleKey: 'classes',
     },
     magic_items: {
       icon: '🗡️',
@@ -181,7 +188,8 @@
 
       // Gli oggetti magici vengono anche normalizzati nella rarità.
       appState.data.magic_items = normalizeArray(magicItems).map(normalizeMagicItem);
-      appState.data.rules = normalizeArray(rules);
+      appState.data.classes = normalizeArray(rules).filter(isClassRule);
+      appState.data.rules = normalizeArray(rules).filter((rule) => !isClassRule(rule));
       appState.data.rules_glossary = normalizeArray(rulesGlossary);
 
       // Converte il piccolo YAML delle immagini in una Map.
@@ -200,28 +208,8 @@
    */
   async function fetchJson(path) {
     const response = await fetch(path, { cache: 'no-store' });
-    if (!response.ok) {
-      const fallbackPath = fallbackDataPath(path);
-      if (fallbackPath) {
-        const fallbackResponse = await fetch(fallbackPath, { cache: 'no-store' });
-        if (fallbackResponse.ok) return fallbackResponse.json();
-      }
-
-      throw new Error(`Errore caricamento JSON: ${path}`);
-    }
+    if (!response.ok) throw new Error(`Errore caricamento JSON: ${path}`);
     return response.json();
-  }
-
-  /*
-   * Su alcuni hosting il submodule data non viene materializzato nei file
-   * pubblicati. In quel caso i JSON locali rispondono 404 e si usa il repo
-   * dati come sorgente di fallback.
-   */
-  function fallbackDataPath(path) {
-    const base = appState.config?.paths?.data_fallback_base;
-    if (!base || !String(path).startsWith('data/')) return '';
-
-    return `${String(base).replace(/\/?$/, '/')}${String(path).replace(/^data\//, '')}`;
   }
 
   /*
@@ -240,6 +228,14 @@
    */
   function normalizeArray(value) {
     return Array.isArray(value) ? value : [];
+  }
+
+  /*
+   * Le classi sono mantenute nei dati regole SRD, ma nell'app hanno una
+   * sezione principale dedicata.
+   */
+  function isClassRule(rule) {
+    return String(rule?.id || '').startsWith('classe_');
   }
 
   /*
@@ -398,6 +394,11 @@
 
     if (!route.section) {
       renderHome();
+      return;
+    }
+
+    if (route.section === 'rules' && route.id && isClassRule({ id: route.id })) {
+      location.hash = `#/classes/${encodeURIComponent(route.id)}`;
       return;
     }
 
@@ -603,6 +604,7 @@
     const labels = {
       monsters: 'Tutti i GS',
       spells: 'Tutti i livelli',
+      classes: 'Tutte le classi',
       magic_items: 'Tutte le rarità',
       rules: 'Tutte le categorie',
       rules_glossary: 'Tutti i descrittori',
@@ -649,6 +651,10 @@
         }));
     }
 
+    if (section === 'classes') {
+      return [];
+    }
+
     if (section === 'rules_glossary') {
       return uniqueValues(appState.data.rules_glossary, 'descrittore')
         .sort((a, b) => a.localeCompare(b, 'it'))
@@ -682,6 +688,10 @@
 
     if (section === 'rules') {
       return String(item.categoria || '') === filter;
+    }
+
+    if (section === 'classes') {
+      return true;
     }
 
     if (section === 'rules_glossary') {
@@ -757,7 +767,7 @@
       ].join(' ');
     }
 
-    if (section === 'rules') {
+    if (section === 'rules' || section === 'classes') {
       return [
         item.nome,
         item.capitolo,
@@ -841,7 +851,7 @@
       ].filter(Boolean).join(' · ');
     }
 
-    if (section === 'rules') {
+    if (section === 'rules' || section === 'classes') {
       return [
         item.categoria,
         item.pagine_sorgente ? `pag. ${item.pagine_sorgente}` : null,
@@ -1018,6 +1028,7 @@
   function renderDetailContent(section, item) {
     if (section === 'monsters') return renderMonster(item);
     if (section === 'spells') return renderSpell(item);
+    if (section === 'classes') return renderClass(item);
     if (section === 'rules') return renderRule(item);
     if (section === 'rules_glossary') return renderGlossaryEntry(item);
     return renderMagicItem(item);
@@ -1243,6 +1254,28 @@
   }
 
   /*
+   * Renderizza una classe come scheda autonoma.
+   */
+  function renderClass(rule) {
+    return `
+      ${renderHeader(
+        'classes',
+        rule,
+        [rule.categoria, rule.pagine_sorgente ? `pag. ${rule.pagine_sorgente}` : null].filter(Boolean).join(' · ')
+      )}
+
+      ${compactMeta([
+        ['Capitolo', rule.capitolo],
+        ['Pagine SRD', rule.pagine_sorgente],
+      ])}
+
+      <div class="description">${formatInline(rule.descrizione || '')}</div>
+
+      ${renderSections('Dettagli', rule.sezioni)}
+    `;
+  }
+
+  /*
    * Renderizza una voce del glossario delle regole.
    */
   function renderGlossaryEntry(entry) {
@@ -1453,7 +1486,7 @@
     const entries = Array.isArray(section.voci) ? section.voci : [];
     const columns = Array.isArray(section.colonne) ? section.colonne : [];
     const body = [
-      rows.length ? renderTableRows(rows, columns) : '',
+      rows.length ? renderSectionRows(section, rows, columns) : '',
       blocks.length ? blocks.map(renderEntry).filter(Boolean).join('') : '',
       entries.length ? entries.map(renderEntry).filter(Boolean).join('') : '',
       section.descrizione ? `<div class="description">${formatInline(section.descrizione)}</div>` : '',
@@ -1470,6 +1503,88 @@
   }
 
   /*
+   * Alcune sezioni tabellari hanno un rendering specifico, ad esempio le
+   * liste incantesimi delle classi raggruppate per livello.
+   */
+  function renderSectionRows(section, rows, columns) {
+    if (isClassSpellListSection(section)) {
+      return renderClassSpellListTables(rows, columns);
+    }
+
+    return renderTableRows(rows, columns);
+  }
+
+  /*
+   * Riconosce le liste incantesimi delle classi SRD.
+   */
+  function isClassSpellListSection(section) {
+    return (
+      String(section?.titolo || '').startsWith('Lista degli incantesimi da ') &&
+      Array.isArray(section?.colonne) &&
+      section.colonne.includes('Livello') &&
+      section.colonne.includes('Incantesimo')
+    );
+  }
+
+  /*
+   * Divide una lista incantesimi di classe in tabelle piu piccole, una per
+   * ciascun livello di incantesimo.
+   */
+  function renderClassSpellListTables(rows, columns) {
+    const visibleRows = rows.filter((row) => row && Object.keys(row).length);
+    const tableColumns = columns.filter((column) => column !== 'Livello');
+    const groups = groupRowsBySpellLevel(visibleRows);
+
+    if (!groups.length) return '';
+
+    return `
+      <div class="spell-level-groups">
+        ${groups.map((group) => `
+          <section class="spell-level-group">
+            <h5>${escapeHtml(spellLevelTableHeading(group.level))}</h5>
+            ${renderMatrixRows(group.rows, tableColumns, 'data-table-spell-list')}
+          </section>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  /*
+   * Mantiene l'ordine originale dei livelli cosi come arriva dai dati SRD.
+   */
+  function groupRowsBySpellLevel(rows) {
+    const groups = [];
+    const byLevel = new Map();
+
+    rows.forEach((row) => {
+      const level = String(row.Livello || '').trim();
+
+      if (!byLevel.has(level)) {
+        const group = { level, rows: [] };
+        byLevel.set(level, group);
+        groups.push(group);
+      }
+
+      byLevel.get(level).rows.push(row);
+    });
+
+    return groups;
+  }
+
+  /*
+   * Titolo leggibile per il gruppo di livello nella lista incantesimi.
+   */
+  function spellLevelTableHeading(level) {
+    const text = String(level || '').trim();
+    if (normalizeText(text) === 'trucchetto') return 'Trucchetti';
+
+    const number = Number(text);
+    if (Number.isFinite(number)) return `${number}° livello`;
+
+    return text || 'Livello non indicato';
+  }
+
+  /*
    * Renderizza righe chiave/valore come tabella responsive.
    */
   function renderTableRows(rows, columns = []) {
@@ -1482,7 +1597,7 @@
     }
 
     return `
-      <div class="table-wrap">
+      <div class="table-wrap" tabindex="0" aria-label="Tabella scorrevole">
         <table class="data-table data-table-key-value">
           <tbody>
             ${visibleRows
@@ -1527,10 +1642,12 @@
    * Renderizza tabelle multi-colonna, usate per progressioni di classe
    * e altre matrici che nel PDF hanno intestazioni proprie.
    */
-  function renderMatrixRows(rows, columns) {
+  function renderMatrixRows(rows, columns, tableClass = '') {
+    const className = ['data-table', 'data-table-matrix', tableClass].filter(Boolean).join(' ');
+
     return `
-      <div class="table-wrap table-wrap-wide">
-        <table class="data-table data-table-matrix" data-column-count="${columns.length}">
+      <div class="table-wrap table-wrap-wide" tabindex="0" aria-label="Tabella scorrevole">
+        <table class="${escapeAttr(className)}" data-column-count="${columns.length}">
           <thead>
             <tr>
               ${columns.map((column) => `<th scope="col">${formatInline(displayTableColumn(column), { dice: false })}</th>`).join('')}
@@ -1544,7 +1661,7 @@
                     .map((column, index) => {
                       const tag = index === 0 ? 'th scope="row"' : 'td';
                       const closeTag = index === 0 ? 'th' : 'td';
-                      return `<${tag}>${formatInline(row[column] ?? '', { dice: false })}</${closeTag}>`;
+                      return `<${tag}>${renderTableCell(row[column] ?? '', column)}</${closeTag}>`;
                     })
                     .join('')}
                 </tr>
@@ -1554,6 +1671,36 @@
         </table>
       </div>
     `;
+  }
+
+  /*
+   * Le tabelle di classe contengono liste incantesimi: la cella Incantesimo
+   * diventa un link diretto alla scheda quando il nome esiste nel catalogo.
+   */
+  function renderTableCell(value, column) {
+    if (normalizeText(column) !== 'incantesimo') {
+      return formatInline(value, { dice: false });
+    }
+
+    const spell = spellByName(value);
+
+    if (!spell) {
+      return formatInline(value, { dice: false });
+    }
+
+    return `<a class="table-spell-link" href="#/spells/${encodeURIComponent(spell.id)}">${escapeHtml(value)}</a>`;
+  }
+
+  /*
+   * Lookup tollerante ad accenti e maiuscole per i nomi incantesimo presenti
+   * nelle tabelle SRD.
+   */
+  function spellByName(name) {
+    const normalizedName = normalizeText(name).trim();
+
+    if (!normalizedName) return null;
+
+    return appState.data.spells.find((spell) => normalizeText(spell.nome).trim() === normalizedName) || null;
   }
 
   function displayTableColumn(column) {

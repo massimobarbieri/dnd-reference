@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#251a12">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://5e.tools data:; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'self';">
   <title>D&D Reference</title>
-  <link rel="stylesheet" href="assets/css/styles.css?v=20260513-json-fallback">
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260514-classes-section">
 </head>
 <body>
   <a class="skip-link" href="#app">Salta al contenuto</a>
@@ -21,7 +21,7 @@
       <h1 id="site-title">D&D Reference</h1>
 
       <!-- Sottotitolo aggiornabile via JavaScript -->
-      <p id="site-subtitle" class="subtitle">Mostri, incantesimi, oggetti magici, regole e glossario</p>
+      <p id="site-subtitle" class="subtitle">Mostri, incantesimi, classi, oggetti magici, regole e glossario</p>
     </div>
   </header>
 
@@ -50,11 +50,10 @@
 
       <!-- Suggerimento per avviare correttamente il sito in locale -->
       <p>
-        Non aprire direttamente <code>index.html</code> con <code>file://</code>: il browser non puo caricare correttamente config e JSON locali.
+        I dati locali non sono disponibili oppure il sito non e servito via HTTP.
       </p>
       <p>
-        Avvia il sito dalla cartella del progetto con un server locale, ad esempio:
-        <code>python3 -m http.server 8080</code>.
+        Apri la <a href="fallback.html">pagina locale di fallback</a> per le istruzioni di ripristino.
       </p>
     </div>
   </template>
@@ -63,6 +62,6 @@
   <script src="assets/js/dice-roller.js" defer></script>
 
   <!-- Script principale dell’app, caricato dopo il parsing dell’HTML -->
-  <script src="assets/js/app.js?v=20260513-json-fallback" defer></script>
+  <script src="assets/js/app.js?v=20260514-classes-section" defer></script>
 </body>
 </html>

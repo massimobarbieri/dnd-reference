@@ -552,9 +552,18 @@ h1 {
 /* Tabelle generate dalle sezioni JSON */
 .table-wrap {
   overflow-x: auto;
+  max-width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(255,255,255,.35);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+}
+
+.table-wrap:focus-visible {
+  outline: 2px solid rgba(138,63,35,.68);
+  outline-offset: 2px;
 }
 
 .table-wrap-wide {
@@ -630,6 +639,76 @@ h1 {
 
 .data-table-matrix tbody th {
   color: var(--accent);
+}
+
+.spell-level-groups {
+  display: grid;
+  gap: .75rem;
+}
+
+.spell-level-group {
+  min-width: 0;
+}
+
+.spell-level-group h5 {
+  margin: .2rem 0 .32rem;
+  color: var(--accent);
+  font-size: .86rem;
+  line-height: 1.2;
+}
+
+.data-table-spell-list {
+  width: 100%;
+  min-width: 100%;
+  table-layout: auto;
+}
+
+.data-table-spell-list th,
+.data-table-spell-list td {
+  min-width: 0;
+  white-space: normal;
+}
+
+.data-table-spell-list thead th:first-child,
+.data-table-spell-list tbody th {
+  position: static;
+  background: transparent;
+  box-shadow: none;
+}
+
+.data-table-spell-list th:nth-child(1),
+.data-table-spell-list td:nth-child(1) {
+  width: 52%;
+}
+
+.data-table-spell-list th:nth-child(2),
+.data-table-spell-list td:nth-child(2) {
+  width: 30%;
+}
+
+.data-table-spell-list th:nth-child(3),
+.data-table-spell-list td:nth-child(3) {
+  width: 18%;
+  white-space: nowrap;
+}
+
+.table-spell-link {
+  color: var(--accent);
+  font-weight: 760;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: .16em;
+}
+
+.table-spell-link:hover,
+.table-spell-link:focus-visible {
+  color: #5f2d1a;
+}
+
+.table-spell-link:focus-visible {
+  outline: 2px solid rgba(138,63,35,.68);
+  outline-offset: 2px;
+  border-radius: .16rem;
 }
 
 /* Descrizione lunga */
@@ -1057,6 +1136,10 @@ code {
     margin-top: .62rem;
   }
 
+  .subsection {
+    min-width: 0;
+  }
+
   .roll-tray {
     top: calc(.75rem + env(safe-area-inset-top));
     right: 0;
@@ -1162,5 +1245,60 @@ code {
   .data-table th,
   .data-table td {
     padding: .36rem .42rem;
+  }
+
+  .table-wrap {
+    margin-inline: -.7rem;
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+  }
+
+  .table-wrap-wide {
+    background:
+      linear-gradient(90deg, rgba(255,250,242,.95), rgba(255,250,242,0)) left / 1rem 100% no-repeat,
+      linear-gradient(270deg, rgba(138,63,35,.16), rgba(138,63,35,0)) right / 1.25rem 100% no-repeat,
+      rgba(255,255,255,.35);
+  }
+
+  .data-table-matrix {
+    min-width: max(38rem, calc(var(--table-columns, 4) * 6.6rem));
+  }
+
+  .data-table-matrix th,
+  .data-table-matrix td {
+    min-width: 5.6rem;
+    white-space: normal;
+  }
+
+  .data-table-matrix thead th,
+  .data-table-matrix tbody th {
+    white-space: nowrap;
+  }
+
+  .data-table-matrix thead th:first-child,
+  .data-table-matrix tbody th {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: #fffaf2;
+    box-shadow: 1px 0 0 rgba(217,199,179,.75);
+  }
+
+  .data-table-matrix thead th:first-child {
+    z-index: 2;
+    background: #f4e4d5;
+  }
+
+  .spell-level-groups {
+    gap: .62rem;
+  }
+
+  .spell-level-group h5 {
+    padding-inline: .7rem;
+  }
+
+  .data-table-spell-list {
+    min-width: 100%;
   }
 }
