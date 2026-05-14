@@ -1045,6 +1045,58 @@ h1 {
   min-height: 5.5rem;
 }
 
+.sheet-resource-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) 7rem minmax(0, 1fr) auto;
+  gap: .45rem;
+  align-items: end;
+  margin-bottom: .65rem;
+}
+
+.sheet-resource-list {
+  display: grid;
+  gap: .45rem;
+}
+
+.sheet-resource {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .6rem;
+  align-items: center;
+  border-bottom: 1px solid rgba(217,199,179,.62);
+  padding: .45rem 0;
+}
+
+.sheet-resource-main {
+  min-width: 0;
+}
+
+.sheet-resource-main strong,
+.sheet-resource-main span {
+  display: block;
+}
+
+.sheet-resource-main strong {
+  color: var(--accent);
+  font-size: .94rem;
+}
+
+.sheet-resource-main span {
+  color: var(--muted);
+  font-size: .82rem;
+}
+
+.sheet-resource-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .3rem;
+}
+
+.sheet-resource-actions button {
+  min-height: 1.9rem;
+}
+
 .sheet-rolls button {
   min-height: 1.9rem;
   font-size: .86rem;
@@ -1792,6 +1844,19 @@ code {
 
   .sheet-field textarea {
     min-height: 9rem;
+  }
+
+  .sheet-resource-form {
+    grid-template-columns: 1fr;
+  }
+
+  .sheet-resource {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .sheet-resource-actions {
+    justify-content: flex-start;
   }
 
   .sheet-attack-form {

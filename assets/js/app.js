@@ -183,7 +183,7 @@
     ['notes', 'Note'],
   ];
 
-  const CHARACTER_SHEET_SCHEMA_VERSION = 5;
+  const CHARACTER_SHEET_SCHEMA_VERSION = 6;
 
   const DEFAULT_CHARACTER_SHEET = {
     schemaVersion: CHARACTER_SHEET_SCHEMA_VERSION,
@@ -224,6 +224,7 @@
     hitDice: '1d8',
     speed: 9,
     initiativeBonus: 0,
+    resources: [],
     attacks: [],
     spellcastingAbility: 'int',
     preparedSpells: [],
@@ -380,6 +381,7 @@
       },
       skillProficiencies: normalizeSkillProficiencies(migrated.skillProficiencies),
       proficiencies: normalizeProficiencies(migrated.proficiencies),
+      resources: normalizeLegacyResources(migrated.resources),
       attacks: normalizeLegacyAttacks(migrated.attacks),
       preparedSpells: Array.isArray(migrated.preparedSpells) ? migrated.preparedSpells : [],
       magicItems: Array.isArray(migrated.magicItems) ? migrated.magicItems : [],
@@ -419,6 +421,10 @@
 
     if (sheet.schemaVersion < 5) {
       sheet.proficiencies = normalizeProficiencies(sheet.proficiencies);
+    }
+
+    if (sheet.schemaVersion < 6) {
+      sheet.resources = normalizeLegacyResources(sheet.resources);
     }
 
     return sheet;
@@ -466,6 +472,26 @@
           damage: attack.damage ? String(attack.damage) : '',
           damageType: attack.damageType ? String(attack.damageType) : '',
           notes: attack.notes ? String(attack.notes) : '',
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function normalizeLegacyResources(resources) {
+    if (!Array.isArray(resources)) return [];
+
+    return resources
+      .map((resource, index) => {
+        if (!resource || typeof resource !== 'object') return null;
+        const max = Math.max(0, Number(resource.max) || 0);
+        const used = Math.min(max, Math.max(0, Number(resource.used) || 0));
+
+        return {
+          id: resource.id ? String(resource.id) : `resource-${index + 1}`,
+          name: resource.name ? String(resource.name) : 'Risorsa',
+          max,
+          used,
+          recovery: resource.recovery ? String(resource.recovery) : '',
         };
       })
       .filter(Boolean);
@@ -1429,6 +1455,11 @@
         </div>
 
         <div class="sheet-panel sheet-panel--wide">
+          <h3>Risorse</h3>
+          ${renderCharacterResources()}
+        </div>
+
+        <div class="sheet-panel sheet-panel--wide">
           <h3>Attacchi</h3>
           ${renderCharacterAttacks()}
         </div>
@@ -1609,6 +1640,54 @@
         </select>
         <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, modifier))}">${escapeHtml(formatSigned(modifier))}</button>
       </div>
+    `;
+  }
+
+  function renderCharacterResources() {
+    const resources = appState.characterSheet.resources;
+
+    return `
+      <form class="sheet-resource-form" data-sheet-add-resource>
+        <label class="sheet-field">
+          <span>Nome</span>
+          <input type="text" name="name" placeholder="Azione Impetuosa">
+        </label>
+        <label class="sheet-field">
+          <span>Massimo</span>
+          <input type="number" name="max" min="0" value="1">
+        </label>
+        <label class="sheet-field">
+          <span>Recupero</span>
+          <input type="text" name="recovery" placeholder="Riposo breve">
+        </label>
+        <button class="button button--primary" type="submit">Aggiungi</button>
+      </form>
+
+      ${resources.length ? `
+        <div class="sheet-resource-list">
+          ${resources.map((resource) => renderCharacterResource(resource)).join('')}
+        </div>
+      ` : '<p class="sheet-empty">Nessuna risorsa tracciata.</p>'}
+    `;
+  }
+
+  function renderCharacterResource(resource) {
+    const max = Math.max(0, Number(resource.max) || 0);
+    const used = Math.min(max, Math.max(0, Number(resource.used) || 0));
+    const remaining = Math.max(0, max - used);
+
+    return `
+      <article class="sheet-resource">
+        <div class="sheet-resource-main">
+          <strong>${escapeHtml(resource.name || 'Risorsa')}</strong>
+          <span>${escapeHtml([`${remaining}/${max} disponibili`, resource.recovery].filter(Boolean).join(' · '))}</span>
+        </div>
+        <div class="sheet-resource-actions">
+          <button type="button" data-sheet-resource-delta="-1" data-sheet-resource-id="${escapeAttr(resource.id)}">Recupera</button>
+          <button type="button" data-sheet-resource-delta="1" data-sheet-resource-id="${escapeAttr(resource.id)}">Usa</button>
+          <button class="button button--ghost" type="button" data-sheet-remove-resource="${escapeAttr(resource.id)}">Rimuovi</button>
+        </div>
+      </article>
     `;
   }
 
@@ -1977,6 +2056,49 @@
       node.addEventListener('input', (event) => {
         appState.characterSheet.proficiencies[event.currentTarget.dataset.sheetProficiency] = event.currentTarget.value;
         saveCharacterSheet();
+      });
+    });
+
+    views.detail.querySelector('[data-sheet-add-resource]')?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const data = new FormData(form);
+      const name = String(data.get('name') || '').trim();
+
+      if (!name) return;
+
+      appState.characterSheet.resources.push({
+        id: `resource-${Date.now().toString(36)}`,
+        name,
+        max: Math.max(0, Number(data.get('max')) || 0),
+        used: 0,
+        recovery: String(data.get('recovery') || '').trim(),
+      });
+      saveCharacterSheet();
+      renderCharacterSheet('combat');
+    });
+
+    views.detail.querySelectorAll('[data-sheet-resource-delta]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        const id = event.currentTarget.dataset.sheetResourceId;
+        const delta = Number(event.currentTarget.dataset.sheetResourceDelta) || 0;
+        const resource = appState.characterSheet.resources.find((entry) => entry.id === id);
+
+        if (!resource) return;
+
+        const max = Math.max(0, Number(resource.max) || 0);
+        resource.used = Math.min(max, Math.max(0, (Number(resource.used) || 0) + delta));
+        saveCharacterSheet();
+        renderCharacterSheet('combat');
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-remove-resource]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        const id = event.currentTarget.dataset.sheetRemoveResource;
+        appState.characterSheet.resources = appState.characterSheet.resources.filter((resource) => resource.id !== id);
+        saveCharacterSheet();
+        renderCharacterSheet('combat');
       });
     });
 
