@@ -1212,6 +1212,14 @@ h1 {
   grid-template-columns: minmax(0, 1.2fr) 7rem minmax(0, 1fr) auto;
   gap: .45rem;
   align-items: end;
+  margin-bottom: .45rem;
+}
+
+.sheet-resource-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+  justify-content: flex-end;
   margin-bottom: .65rem;
 }
 
@@ -2055,13 +2063,36 @@ code {
     grid-template-columns: 1fr;
   }
 
+  .sheet-resource-toolbar,
+  .sheet-resource-toolbar .button {
+    width: 100%;
+  }
+
   .sheet-resource {
     grid-template-columns: 1fr;
     align-items: start;
+    border: 1px solid rgba(217,199,179,.7);
+    border-radius: 8px;
+    background: rgba(255,250,242,.58);
+    padding: .55rem;
   }
 
   .sheet-resource-actions {
-    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    justify-content: stretch;
+    width: 100%;
+  }
+
+  .sheet-resource-actions button {
+    width: 100%;
+    min-height: 2.15rem;
+    padding-inline: .35rem;
+  }
+
+  .quick-dice.sheet-rolls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .sheet-attack-form {

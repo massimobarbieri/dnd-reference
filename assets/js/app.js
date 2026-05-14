@@ -149,6 +149,7 @@
   const CHARACTER_SHEET_STORAGE_KEY = 'dnd-reference:character-sheet';
   const CHARACTER_SHEETS_STORAGE_KEY = 'dnd-reference:character-sheets';
   const ACTIVE_CHARACTER_SHEET_STORAGE_KEY = 'dnd-reference:active-character-sheet';
+  const APP_STORAGE_PREFIX = 'dnd-reference:';
 
   const ABILITY_META = [
     ['str', 'Forza', 'FOR'],
@@ -1494,11 +1495,14 @@
                 <button class="button button--ghost" type="button" data-sheet-import>Importa</button>
                 <button class="button button--ghost" type="button" data-sheet-export-archive>Esporta archivio</button>
                 <button class="button button--ghost" type="button" data-sheet-import-archive>Importa archivio</button>
+                <button class="button button--ghost" type="button" data-app-export-backup>Esporta backup app</button>
+                <button class="button button--ghost" type="button" data-app-import-backup>Importa backup app</button>
                 <button class="button button--ghost sheet-danger-action" type="button" data-sheet-delete>Elimina</button>
               </div>
             </details>
             <input id="character-sheet-import" class="visually-hidden" type="file" accept="application/json,.json">
             <input id="character-sheet-archive-import" class="visually-hidden" type="file" accept="application/json,.json">
+            <input id="app-backup-import" class="visually-hidden" type="file" accept="application/json,.json">
           </div>
         </div>
       </nav>
@@ -1902,6 +1906,11 @@
         </label>
         <button class="button button--primary" type="submit">Aggiungi</button>
       </form>
+
+      <div class="sheet-resource-toolbar" aria-label="Riposo e recupero risorse">
+        <button class="button button--ghost" type="button" data-sheet-reset-resources="short">Riposo breve</button>
+        <button class="button button--ghost" type="button" data-sheet-reset-resources="long">Riposo lungo</button>
+      </div>
 
       ${resources.length ? `
         <div class="sheet-resource-list">
@@ -2472,6 +2481,14 @@
       });
     });
 
+    views.detail.querySelectorAll('[data-sheet-reset-resources]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        resetCharacterResources(event.currentTarget.dataset.sheetResetResources);
+        saveCharacterSheet();
+        renderCharacterSheet('combat');
+      });
+    });
+
     views.detail.querySelectorAll('[data-sheet-remove-resource]').forEach((node) => {
       node.addEventListener('click', (event) => {
         const id = event.currentTarget.dataset.sheetRemoveResource;
@@ -2569,6 +2586,11 @@
       views.detail.querySelector('#character-sheet-archive-import')?.click();
     });
     views.detail.querySelector('#character-sheet-archive-import')?.addEventListener('change', importCharacterSheetArchive);
+    views.detail.querySelector('[data-app-export-backup]')?.addEventListener('click', exportAppBackup);
+    views.detail.querySelector('[data-app-import-backup]')?.addEventListener('click', () => {
+      views.detail.querySelector('#app-backup-import')?.click();
+    });
+    views.detail.querySelector('#app-backup-import')?.addEventListener('change', importAppBackup);
     views.detail.querySelectorAll('[data-sheet-import-archive-mode]').forEach((node) => {
       node.addEventListener('click', (event) => {
         applyCharacterSheetArchiveImport(event.currentTarget.dataset.sheetImportArchiveMode);
@@ -2680,6 +2702,98 @@
     appState.activeCharacterSheetId = appState.characterSheet.id;
     saveCharacterSheet();
     renderCharacterSheet('overview');
+  }
+
+  function exportAppBackup() {
+    saveCharacterSheet();
+    const storage = {};
+
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (key?.startsWith(APP_STORAGE_PREFIX)) {
+        storage[key] = localStorage.getItem(key);
+      }
+    }
+
+    const backup = {
+      kind: 'dnd-reference:app-backup',
+      schemaVersion: 1,
+      exportedAt: new Date().toISOString(),
+      storage,
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `dnd-reference-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importAppBackup(event) {
+    const [file] = event.currentTarget.files || [];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+      try {
+        const backup = normalizeAppBackup(JSON.parse(reader.result));
+        if (!confirm(`Importare backup app con ${Object.keys(backup.storage).length} voci locali? I dati dnd-reference attuali saranno sostituiti.`)) {
+          return;
+        }
+        restoreAppBackup(backup);
+        renderRoute();
+      } catch {
+        alert('Backup app non valido.');
+      }
+    });
+    reader.readAsText(file);
+    event.currentTarget.value = '';
+  }
+
+  function normalizeAppBackup(value) {
+    if (!value || typeof value !== 'object' || value.kind !== 'dnd-reference:app-backup') {
+      throw new Error('Backup app non valido');
+    }
+
+    const rawStorage = value.storage && typeof value.storage === 'object' ? value.storage : null;
+    if (!rawStorage) throw new Error('Backup app senza storage');
+
+    const storage = Object.fromEntries(Object.entries(rawStorage)
+      .filter(([key, storedValue]) => key.startsWith(APP_STORAGE_PREFIX) && typeof storedValue === 'string'));
+
+    if (!Object.keys(storage).length) throw new Error('Backup app vuoto');
+
+    return { storage };
+  }
+
+  function restoreAppBackup(backup) {
+    const keys = [];
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (key?.startsWith(APP_STORAGE_PREFIX)) keys.push(key);
+    }
+
+    keys.forEach((key) => localStorage.removeItem(key));
+    Object.entries(backup.storage).forEach(([key, value]) => localStorage.setItem(key, value));
+    appState.favorites = loadFavorites();
+    loadCharacterSheetArchive();
+  }
+
+  function resetCharacterResources(restType) {
+    const longRest = restType === 'long';
+
+    appState.characterSheet.resources = appState.characterSheet.resources.map((resource) => {
+      const recovery = normalizeText(resource.recovery);
+      const resetsOnShortRest = recovery.includes('riposo breve');
+      const resetsOnLongRest = longRest && (recovery.includes('riposo lungo') || recovery.includes('riposo breve') || !recovery);
+
+      if (resetsOnShortRest || resetsOnLongRest) {
+        return { ...resource, used: 0 };
+      }
+
+      return resource;
+    });
   }
 
   function characterClassOptions() {

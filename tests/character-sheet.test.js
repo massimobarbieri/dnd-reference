@@ -13,6 +13,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   "const CHARACTER_SHEET_STORAGE_KEY = 'dnd-reference:character-sheet';",
   "const CHARACTER_SHEETS_STORAGE_KEY = 'dnd-reference:character-sheets';",
   "const ACTIVE_CHARACTER_SHEET_STORAGE_KEY = 'dnd-reference:active-character-sheet';",
+  "const APP_STORAGE_PREFIX = 'dnd-reference:';",
   'const CHARACTER_SHEET_SCHEMA_VERSION = 8;',
   'const SKILL_META = [',
   "id: ''",
@@ -55,6 +56,11 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'function exportCharacterSheetArchive()',
   'function importCharacterSheetArchive(event)',
   'function applyCharacterSheetArchiveImport(mode)',
+  'function exportAppBackup()',
+  'function importAppBackup(event)',
+  'function normalizeAppBackup(value)',
+  'function restoreAppBackup(backup)',
+  'function resetCharacterResources(restType)',
   'function renderSheetActions(section, item)',
   'function switchCharacterSheet(id)',
   'function createNewCharacterSheet()',
@@ -100,6 +106,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'data-sheet-proficiency',
   'data-sheet-add-resource',
   'data-sheet-resource-delta',
+  'data-sheet-reset-resources',
   'data-sheet-remove-resource',
   'data-sheet-status-check',
   'data-sheet-status-number',
@@ -115,6 +122,9 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'data-sheet-import-archive',
   'data-sheet-import-archive-mode',
   'data-sheet-import-archive-cancel',
+  'data-app-export-backup',
+  'data-app-import-backup',
+  'app-backup-import',
   'character-sheet-archive-import',
   'data-sheet-delete',
   'data-sheet-use-class',
@@ -144,6 +154,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   '.sheet-status',
   '.sheet-condition',
   '.sheet-resource-form',
+  '.sheet-resource-toolbar',
   '.sheet-resource',
   '.sheet-attack-form',
   '.sheet-attack',
@@ -161,7 +172,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
 ].forEach((token) => assert.ok(cssSource.includes(token), `${token} deve essere presente nel CSS`));
 
 assert.match(configSource, /character_sheet: Scheda/);
-assert.match(indexSource, /20260514-character-sheet-archive-ui-resources/);
+assert.match(indexSource, /20260514-app-backup-rest-mobile/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd5'/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd-theme'/);
 
