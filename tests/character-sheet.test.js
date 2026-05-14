@@ -20,6 +20,8 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'function loadCharacterSheetArchive()',
   'function readJsonStorage(key, fallback)',
   'function normalizeCharacterSheetArchive(value)',
+  'function mergeCharacterSheetArchives(currentSheets, importedSheets)',
+  'function chooseCharacterSheetArchiveImportMode(archive)',
   'function migrateCharacterSheet(value)',
   'function uniqueCharacterSheets(sheets)',
   'function createCharacterSheetId()',
@@ -62,6 +64,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'function addMagicItemToCharacterSheet(item)',
   'function magicItemRequiresAttunement(entry, source)',
   'function applyClassToCharacterSheet(classEntry)',
+  'function syncCharacterSheetClassResources(classEntry =',
   'function classTraitsMap(classEntry)',
   'function classHitDice(value)',
   'function classSavingThrows(value)',
@@ -95,6 +98,8 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'data-sheet-status-check',
   'data-sheet-status-number',
   'data-sheet-status-field',
+  'syncCharacterSheetClassResources();',
+  'Scrivi "unisci"',
   'data-sheet-add-condition',
   'data-sheet-remove-condition',
   'data-sheet-switch-character',
@@ -145,7 +150,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
 ].forEach((token) => assert.ok(cssSource.includes(token), `${token} deve essere presente nel CSS`));
 
 assert.match(configSource, /character_sheet: Scheda/);
-assert.match(indexSource, /20260514-character-sheet-archive-resources/);
+assert.match(indexSource, /20260514-character-sheet-safe-import-level-sync/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd5'/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd-theme'/);
 

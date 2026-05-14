@@ -417,6 +417,39 @@
     };
   }
 
+  function mergeCharacterSheetArchives(currentSheets, importedSheets) {
+    const byId = new Map();
+
+    currentSheets.forEach((sheet) => {
+      if (sheet?.id) byId.set(sheet.id, sheet);
+    });
+
+    importedSheets.forEach((sheet) => {
+      if (!sheet?.id || byId.has(sheet.id)) return;
+      byId.set(sheet.id, sheet);
+    });
+
+    return uniqueCharacterSheets([...byId.values()].map(normalizeCharacterSheet));
+  }
+
+  /*
+   * L'import archivio puo sostituire molte schede: chiediamo un comando
+   * esplicito per evitare perdite accidentali da un click sbagliato.
+   */
+  function chooseCharacterSheetArchiveImportMode(archive) {
+    const localCount = appState.characterSheets.length;
+    const importCount = archive.sheets.length;
+    const choice = prompt(
+      `Archivio con ${importCount} schede. Schede locali attuali: ${localCount}.\n` +
+      'Scrivi "unisci" per aggiungere solo le schede mancanti oppure "sostituisci" per rimpiazzare tutto.'
+    );
+
+    if (choice === null) return '';
+
+    const mode = normalizeText(choice).trim();
+    return ['unisci', 'sostituisci'].includes(mode) ? mode : '';
+  }
+
   /*
    * Normalizza una scheda parziale mantenendo compatibilita con campi nuovi.
    * I sotto-oggetti vengono sempre ricostruiti per evitare riferimenti o shape
@@ -2283,7 +2316,14 @@
         saveCharacterSheet();
       });
 
-      node.addEventListener('change', () => renderCharacterSheet(appState.characterSheetTab));
+      node.addEventListener('change', (event) => {
+        if (event.currentTarget.dataset.sheetField === 'classId') {
+          const classEntry = characterClassEntry();
+          if (classEntry) applyClassToCharacterSheet(classEntry);
+          saveCharacterSheet();
+        }
+        renderCharacterSheet(appState.characterSheetTab);
+      });
     });
 
     views.detail.querySelectorAll('[data-sheet-number]').forEach((node) => {
@@ -2292,7 +2332,13 @@
         saveCharacterSheet();
       });
 
-      node.addEventListener('change', () => renderCharacterSheet(appState.characterSheetTab));
+      node.addEventListener('change', (event) => {
+        if (event.currentTarget.dataset.sheetNumber === 'level') {
+          syncCharacterSheetClassResources();
+          saveCharacterSheet();
+        }
+        renderCharacterSheet(appState.characterSheetTab);
+      });
     });
 
     views.detail.querySelectorAll('[data-sheet-ability]').forEach((node) => {
@@ -2589,7 +2635,16 @@
     reader.addEventListener('load', () => {
       try {
         const archive = normalizeCharacterSheetArchive(JSON.parse(reader.result));
-        appState.characterSheets = archive.sheets;
+        const mode = chooseCharacterSheetArchiveImportMode(archive);
+        if (!mode) {
+          alert('Import archivio annullato.');
+          return;
+        }
+
+        saveCharacterSheet();
+        appState.characterSheets = mode === 'unisci'
+          ? mergeCharacterSheetArchives(appState.characterSheets, archive.sheets)
+          : archive.sheets;
         appState.activeCharacterSheetId = archive.activeCharacterSheetId;
         appState.characterSheet = appState.characterSheets.find((sheet) => sheet.id === appState.activeCharacterSheetId) || appState.characterSheets[0];
         appState.activeCharacterSheetId = appState.characterSheet.id;
@@ -2744,14 +2799,21 @@
       armor: traits.Armature || appState.characterSheet.proficiencies.armor,
       tools: traits.Strumenti || appState.characterSheet.proficiencies.tools,
     };
-    appState.characterSheet.resources = mergeCharacterResources(
-      appState.characterSheet.resources,
-      classSuggestedResources(classEntry)
-    );
+    syncCharacterSheetClassResources(classEntry);
     appState.characterSheet.notes = mergeSheetNote(
       appState.characterSheet.notes,
       classSkillSuggestion(classEntry, traits.Abilita)
     );
+  }
+
+  function syncCharacterSheetClassResources(classEntry = characterClassEntry()) {
+    if (!classEntry) return false;
+
+    appState.characterSheet.resources = mergeCharacterResources(
+      appState.characterSheet.resources,
+      classSuggestedResources(classEntry)
+    );
+    return true;
   }
 
   /*
