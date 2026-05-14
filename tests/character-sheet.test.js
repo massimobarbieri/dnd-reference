@@ -21,7 +21,6 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'function readJsonStorage(key, fallback)',
   'function normalizeCharacterSheetArchive(value)',
   'function mergeCharacterSheetArchives(currentSheets, importedSheets)',
-  'function chooseCharacterSheetArchiveImportMode(archive)',
   'function migrateCharacterSheet(value)',
   'function uniqueCharacterSheets(sheets)',
   'function createCharacterSheetId()',
@@ -55,6 +54,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'function importCharacterSheet(event)',
   'function exportCharacterSheetArchive()',
   'function importCharacterSheetArchive(event)',
+  'function applyCharacterSheetArchiveImport(mode)',
   'function renderSheetActions(section, item)',
   'function switchCharacterSheet(id)',
   'function createNewCharacterSheet()',
@@ -71,8 +71,14 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'function classSkillSuggestion(classEntry, value)',
   'function classSuggestedResources(classEntry)',
   'function resourceFromClassFeature(feature)',
+  'function classResourcesFromProgressionRow(row)',
+  'function resourceFromProgressionValue(row, column, name, recovery)',
   'function createClassResource(name, max, recovery)',
   'function mergeCharacterResources(current, suggested)',
+  "'Ire', 'Ira'",
+  "'Imposizione delle mani'",
+  "'Concentrazione', 'Punti concentrazione'",
+  "'Slot incantesimo', 'Slot patto'",
   'function classSkillOptions(classEntry)',
   'function mergeSheetNote(current, note)',
   'function characterAttackBonus(attack)',
@@ -99,13 +105,16 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'data-sheet-status-number',
   'data-sheet-status-field',
   'syncCharacterSheetClassResources();',
-  'Scrivi "unisci"',
+  'Import archivio schede',
+  'Unisci',
   'data-sheet-add-condition',
   'data-sheet-remove-condition',
   'data-sheet-switch-character',
   'data-sheet-duplicate',
   'data-sheet-export-archive',
   'data-sheet-import-archive',
+  'data-sheet-import-archive-mode',
+  'data-sheet-import-archive-cancel',
   'character-sheet-archive-import',
   'data-sheet-delete',
   'data-sheet-use-class',
@@ -123,6 +132,8 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   '.sheet-character-picker',
   '.sheet-character-select',
   '.sheet-more-actions',
+  '.sheet-archive-confirm',
+  '.sheet-archive-actions',
   '.sheet-danger-action',
   '.sheet-tabs',
   '.sheet-actions',
@@ -150,7 +161,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
 ].forEach((token) => assert.ok(cssSource.includes(token), `${token} deve essere presente nel CSS`));
 
 assert.match(configSource, /character_sheet: Scheda/);
-assert.match(indexSource, /20260514-character-sheet-safe-import-level-sync/);
+assert.match(indexSource, /20260514-character-sheet-archive-ui-resources/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd5'/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd-theme'/);
 

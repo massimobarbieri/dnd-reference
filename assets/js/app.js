@@ -59,6 +59,7 @@
     activeCharacterSheetId: '',
     characterSheet: null,
     characterSheetTab: 'overview',
+    pendingCharacterSheetArchive: null,
 
     // Se true mostra solo gli elementi preferiti.
     showOnlyFavorites: false,
@@ -430,24 +431,6 @@
     });
 
     return uniqueCharacterSheets([...byId.values()].map(normalizeCharacterSheet));
-  }
-
-  /*
-   * L'import archivio puo sostituire molte schede: chiediamo un comando
-   * esplicito per evitare perdite accidentali da un click sbagliato.
-   */
-  function chooseCharacterSheetArchiveImportMode(archive) {
-    const localCount = appState.characterSheets.length;
-    const importCount = archive.sheets.length;
-    const choice = prompt(
-      `Archivio con ${importCount} schede. Schede locali attuali: ${localCount}.\n` +
-      'Scrivi "unisci" per aggiungere solo le schede mancanti oppure "sostituisci" per rimpiazzare tutto.'
-    );
-
-    if (choice === null) return '';
-
-    const mode = normalizeText(choice).trim();
-    return ['unisci', 'sostituisci'].includes(mode) ? mode : '';
   }
 
   /*
@@ -1521,6 +1504,7 @@
       </nav>
 
       <article class="detail-card detail-card--flat character-sheet">
+        ${renderCharacterSheetArchiveImportPrompt()}
         ${renderCharacterSheetHeader()}
         ${renderCharacterSheetTabs(validTab)}
         ${renderCharacterSheetTab(validTab)}
@@ -1528,6 +1512,35 @@
     `;
 
     bindCharacterSheetEvents();
+  }
+
+  function renderCharacterSheetArchiveImportPrompt() {
+    const archive = appState.pendingCharacterSheetArchive;
+    if (!archive) return '';
+
+    const names = archive.sheets
+      .slice(0, 4)
+      .map((sheet) => sheet.name || 'Scheda personaggio')
+      .join(', ');
+    const extra = archive.sheets.length > 4 ? ` e altre ${archive.sheets.length - 4}` : '';
+
+    return `
+      <section class="sheet-archive-confirm" role="status" aria-live="polite">
+        <div>
+          <strong>Import archivio schede</strong>
+          <p>
+            File con ${escapeHtml(String(archive.sheets.length))} schede:
+            ${escapeHtml(names || 'nessun nome')}${escapeHtml(extra)}.
+            Schede locali attuali: ${escapeHtml(String(appState.characterSheets.length))}.
+          </p>
+        </div>
+        <div class="sheet-archive-actions">
+          <button class="button" type="button" data-sheet-import-archive-mode="unisci">Unisci</button>
+          <button class="button button--ghost" type="button" data-sheet-import-archive-mode="sostituisci">Sostituisci</button>
+          <button class="button button--ghost" type="button" data-sheet-import-archive-cancel>Annulla</button>
+        </div>
+      </section>
+    `;
   }
 
   /*
@@ -2556,6 +2569,15 @@
       views.detail.querySelector('#character-sheet-archive-import')?.click();
     });
     views.detail.querySelector('#character-sheet-archive-import')?.addEventListener('change', importCharacterSheetArchive);
+    views.detail.querySelectorAll('[data-sheet-import-archive-mode]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        applyCharacterSheetArchiveImport(event.currentTarget.dataset.sheetImportArchiveMode);
+      });
+    });
+    views.detail.querySelector('[data-sheet-import-archive-cancel]')?.addEventListener('click', () => {
+      appState.pendingCharacterSheetArchive = null;
+      renderCharacterSheet(appState.characterSheetTab);
+    });
     views.detail.querySelector('[data-sheet-switch-character]')?.addEventListener('change', (event) => {
       if (switchCharacterSheet(event.currentTarget.value)) renderCharacterSheet(appState.characterSheetTab);
     });
@@ -2634,28 +2656,30 @@
     const reader = new FileReader();
     reader.addEventListener('load', () => {
       try {
-        const archive = normalizeCharacterSheetArchive(JSON.parse(reader.result));
-        const mode = chooseCharacterSheetArchiveImportMode(archive);
-        if (!mode) {
-          alert('Import archivio annullato.');
-          return;
-        }
-
-        saveCharacterSheet();
-        appState.characterSheets = mode === 'unisci'
-          ? mergeCharacterSheetArchives(appState.characterSheets, archive.sheets)
-          : archive.sheets;
-        appState.activeCharacterSheetId = archive.activeCharacterSheetId;
-        appState.characterSheet = appState.characterSheets.find((sheet) => sheet.id === appState.activeCharacterSheetId) || appState.characterSheets[0];
-        appState.activeCharacterSheetId = appState.characterSheet.id;
-        saveCharacterSheet();
-        renderCharacterSheet('overview');
+        appState.pendingCharacterSheetArchive = normalizeCharacterSheetArchive(JSON.parse(reader.result));
+        renderCharacterSheet(appState.characterSheetTab);
       } catch {
         alert('Archivio schede non valido.');
       }
     });
     reader.readAsText(file);
     event.currentTarget.value = '';
+  }
+
+  function applyCharacterSheetArchiveImport(mode) {
+    const archive = appState.pendingCharacterSheetArchive;
+    if (!archive || !['unisci', 'sostituisci'].includes(mode)) return;
+
+    saveCharacterSheet();
+    appState.characterSheets = mode === 'unisci'
+      ? mergeCharacterSheetArchives(appState.characterSheets, archive.sheets)
+      : archive.sheets;
+    appState.pendingCharacterSheetArchive = null;
+    appState.activeCharacterSheetId = archive.activeCharacterSheetId;
+    appState.characterSheet = appState.characterSheets.find((sheet) => sheet.id === appState.activeCharacterSheetId) || appState.characterSheets[0];
+    appState.activeCharacterSheetId = appState.characterSheet.id;
+    saveCharacterSheet();
+    renderCharacterSheet('overview');
   }
 
   function characterClassOptions() {
@@ -2857,12 +2881,15 @@
   function classSuggestedResources(classEntry) {
     const progression = classProgressionSection(classEntry);
     const level = characterLevel();
-
-    return (progression?.righe || [])
+    const currentRow = classProgressionRow(classEntry, level);
+    const featureResources = (progression?.righe || [])
       .filter((row) => Number(row.Livello) <= level)
       .flatMap((row) => String(row['Privilegi di Classe'] || row['Privilegi di classe'] || '').split(','))
       .map(resourceFromClassFeature)
       .filter(Boolean);
+    const rowResources = classResourcesFromProgressionRow(currentRow);
+
+    return [...featureResources, ...rowResources];
   }
 
   function resourceFromClassFeature(feature) {
@@ -2890,8 +2917,39 @@
     if (text.includes('fonte di magia')) {
       return createClassResource('Punti stregoneria', Math.max(1, characterLevel()), 'Riposo lungo');
     }
+    if (text.includes('imposizione delle mani')) {
+      return createClassResource('Imposizione delle mani', characterLevel() * 5, 'Riposo lungo');
+    }
+    if (text.includes('indomabile')) {
+      const max = text.includes('tre utilizzi') ? 3 : text.includes('due utilizzi') ? 2 : 1;
+      return createClassResource('Indomabile', max, 'Riposo lungo');
+    }
+    if (text.includes('recupero arcano')) {
+      return createClassResource('Recupero arcano', 1, 'Riposo lungo');
+    }
 
     return null;
+  }
+
+  function classResourcesFromProgressionRow(row) {
+    if (!row) return [];
+
+    return [
+      resourceFromProgressionValue(row, 'Ire', 'Ira', 'Riposo lungo'),
+      resourceFromProgressionValue(row, 'Recuperare energie', 'Recuperare energie', 'Riposo breve o lungo'),
+      resourceFromProgressionValue(row, 'Incanalare divinità', 'Incanalare divinita', 'Riposo breve o lungo'),
+      resourceFromProgressionValue(row, 'Forma selvatica', 'Forma selvatica', 'Riposo breve o lungo'),
+      resourceFromProgressionValue(row, 'Concentrazione', 'Punti concentrazione', 'Riposo breve o lungo'),
+      resourceFromProgressionValue(row, 'Nemico prescelto', 'Nemico prescelto', 'Riposo lungo'),
+      resourceFromProgressionValue(row, 'Punti stregoneria', 'Punti stregoneria', 'Riposo lungo'),
+      resourceFromProgressionValue(row, 'Slot incantesimo', 'Slot patto', 'Riposo breve o lungo'),
+    ].filter(Boolean);
+  }
+
+  function resourceFromProgressionValue(row, column, name, recovery) {
+    const max = Number(row[column]);
+    if (!Number.isFinite(max) || max <= 0) return null;
+    return createClassResource(name, max, recovery);
   }
 
   function createClassResource(name, max, recovery) {
