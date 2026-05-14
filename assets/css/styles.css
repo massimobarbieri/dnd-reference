@@ -1230,7 +1230,7 @@ h1 {
 
 .sheet-resource {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(9rem, 1fr) minmax(14rem, 1.4fr) auto;
   gap: .6rem;
   align-items: center;
   border-bottom: 1px solid rgba(217,199,179,.62);
@@ -1254,6 +1254,38 @@ h1 {
 .sheet-resource-main span {
   color: var(--muted);
   font-size: .82rem;
+}
+
+.sheet-resource-edit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4.8rem minmax(0, 1fr);
+  gap: .35rem;
+  min-width: 0;
+}
+
+.sheet-resource-edit label {
+  display: grid;
+  gap: .12rem;
+  min-width: 0;
+}
+
+.sheet-resource-edit label span {
+  color: var(--accent);
+  font-size: .68rem;
+  font-weight: 780;
+}
+
+.sheet-resource-edit input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255,250,242,.78);
+  color: var(--ink);
+  font: inherit;
+  font-size: .86rem;
+  min-height: 2rem;
+  padding: 0 .45rem;
 }
 
 .sheet-resource-actions {
@@ -1416,6 +1448,10 @@ h1 {
   color: var(--accent);
   font-size: 1.18rem;
   line-height: 1.1;
+}
+
+.sheet-spell-picker select {
+  min-width: 0;
 }
 
 .sheet-class-summary {
@@ -2077,6 +2113,16 @@ code {
     padding: .55rem;
   }
 
+  .sheet-resource-edit {
+    grid-template-columns: minmax(0, 1fr) 4.5rem;
+    width: 100%;
+  }
+
+  .sheet-resource-edit label:first-child,
+  .sheet-resource-edit label:last-child {
+    grid-column: 1 / -1;
+  }
+
   .sheet-resource-actions {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2093,6 +2139,36 @@ code {
   .quick-dice.sheet-rolls {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sheet-spell-grid {
+    gap: .5rem;
+  }
+
+  .sheet-spell-summary .sheet-form-grid--compact {
+    grid-template-columns: 1fr;
+  }
+
+  .sheet-slot-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .28rem;
+  }
+
+  .sheet-slot {
+    padding: .34rem .38rem;
+  }
+
+  .sheet-slot strong {
+    font-size: 1rem;
+  }
+
+  .sheet-spell-picker .sheet-inline-form,
+  .sheet-spell-picker .sheet-field {
+    min-width: 0;
+  }
+
+  .sheet-spell-picker select {
+    width: 100%;
   }
 
   .sheet-attack-form {
@@ -2144,11 +2220,16 @@ code {
   .sheet-item {
     grid-template-columns: 1fr;
     align-items: start;
+    border: 1px solid rgba(217,199,179,.7);
+    border-radius: 8px;
+    background: rgba(255,250,242,.58);
+    padding: .55rem;
   }
 
   .prepared-spell .button,
   .sheet-item .button {
-    justify-self: start;
+    justify-self: stretch;
+    width: 100%;
   }
 
   .roll-tray {

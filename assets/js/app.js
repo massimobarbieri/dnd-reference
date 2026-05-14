@@ -1741,8 +1741,8 @@
     const attack = characterProficiencyBonus() + abilityModifier(sheet.abilities[sheet.spellcastingAbility]);
 
     return `
-      <section class="sheet-grid">
-        <div class="sheet-panel">
+      <section class="sheet-grid sheet-spell-grid">
+        <div class="sheet-panel sheet-spell-summary">
           <h3>Incantatore</h3>
           <div class="sheet-form-grid sheet-form-grid--compact">
             ${sheetSelect('spellcastingAbility', 'Caratteristica', sheet.spellcastingAbility, abilityOptions())}
@@ -1751,12 +1751,12 @@
           </div>
         </div>
 
-        <div class="sheet-panel">
+        <div class="sheet-panel sheet-spell-slots">
           <h3>Slot disponibili</h3>
           ${renderCharacterSpellSlots()}
         </div>
 
-        <div class="sheet-panel">
+        <div class="sheet-panel sheet-spell-picker">
           <h3>Aggiungi incantesimo</h3>
           <div class="sheet-inline-form">
             <label class="sheet-field">
@@ -1958,6 +1958,20 @@
         <div class="sheet-resource-main">
           <strong>${escapeHtml(resource.name || 'Risorsa')}</strong>
           <span>${escapeHtml([`${remaining}/${max} disponibili`, resource.recovery].filter(Boolean).join(' · '))}</span>
+        </div>
+        <div class="sheet-resource-edit">
+          <label>
+            <span>Nome</span>
+            <input type="text" value="${escapeAttr(resource.name || '')}" data-sheet-resource-field="name" data-sheet-resource-id="${escapeAttr(resource.id)}">
+          </label>
+          <label>
+            <span>Max</span>
+            <input type="number" min="0" value="${escapeAttr(String(max))}" data-sheet-resource-field="max" data-sheet-resource-id="${escapeAttr(resource.id)}">
+          </label>
+          <label>
+            <span>Recupero</span>
+            <input type="text" value="${escapeAttr(resource.recovery || '')}" data-sheet-resource-field="recovery" data-sheet-resource-id="${escapeAttr(resource.id)}">
+          </label>
         </div>
         <div class="sheet-resource-actions">
           <button type="button" data-sheet-resource-delta="-1" data-sheet-resource-id="${escapeAttr(resource.id)}">Recupera</button>
@@ -2507,6 +2521,26 @@
         saveCharacterSheet();
         renderCharacterSheet('combat');
       });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-resource-field]').forEach((node) => {
+      node.addEventListener('input', (event) => {
+        const id = event.currentTarget.dataset.sheetResourceId;
+        const field = event.currentTarget.dataset.sheetResourceField;
+        const resource = appState.characterSheet.resources.find((entry) => entry.id === id);
+
+        if (!resource) return;
+
+        if (field === 'max') {
+          resource.max = Math.max(0, Number(event.currentTarget.value) || 0);
+          resource.used = Math.min(resource.max, Math.max(0, Number(resource.used) || 0));
+        } else if (field === 'name' || field === 'recovery') {
+          resource[field] = event.currentTarget.value;
+        }
+        saveCharacterSheet();
+      });
+
+      node.addEventListener('change', () => renderCharacterSheet('combat'));
     });
 
     views.detail.querySelectorAll('[data-sheet-reset-resources]').forEach((node) => {

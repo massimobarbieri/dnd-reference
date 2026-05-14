@@ -107,6 +107,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'data-sheet-suggest-skill',
   'data-sheet-proficiency',
   'data-sheet-add-resource',
+  'data-sheet-resource-field',
   'data-sheet-resource-delta',
   'data-sheet-reset-resources',
   'data-sheet-remove-resource',
@@ -160,7 +161,10 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   '.sheet-condition',
   '.sheet-resource-form',
   '.sheet-resource-toolbar',
+  '.sheet-resource-edit',
   '.sheet-resource',
+  '.sheet-spell-grid',
+  '.sheet-spell-picker',
   '.sheet-attack-form',
   '.sheet-attack',
   '.sheet-attunement',
@@ -177,7 +181,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
 ].forEach((token) => assert.ok(cssSource.includes(token), `${token} deve essere presente nel CSS`));
 
 assert.match(configSource, /character_sheet: Scheda/);
-assert.match(indexSource, /20260514-backup-import-ui-tests/);
+assert.match(indexSource, /20260514-resource-editor-spell-mobile/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd5'/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd-theme'/);
 

@@ -22,6 +22,6 @@ assert.equal(classRules.length, 12);
 ].forEach((token) => assert.ok(appSource.includes(token), `${token} deve essere presente in app.js`));
 
 assert.match(configSource, /classes: Classi/);
-assert.match(indexSource, /20260514-backup-import-ui-tests/);
+assert.match(indexSource, /20260514-resource-editor-spell-mobile/);
 
 console.log('Sezione classi OK');
