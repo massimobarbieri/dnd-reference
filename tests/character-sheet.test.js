@@ -33,6 +33,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'function normalizeLegacyResources(resources)',
   'function normalizeCharacterStatus(status)',
   'function renderCharacterSheet(tab =',
+  'function renderAppBackupImportPrompt()',
   'function renderCharacterStatus()',
   'function renderCharacterConditions()',
   'function sheetStatusTextArea(key, placeholder, value)',
@@ -58,6 +59,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'function applyCharacterSheetArchiveImport(mode)',
   'function exportAppBackup()',
   'function importAppBackup(event)',
+  'function applyAppBackupImport()',
   'function normalizeAppBackup(value)',
   'function restoreAppBackup(backup)',
   'function resetCharacterResources(restType)',
@@ -124,6 +126,8 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'data-sheet-import-archive-cancel',
   'data-app-export-backup',
   'data-app-import-backup',
+  'data-app-import-backup-apply',
+  'data-app-import-backup-cancel',
   'app-backup-import',
   'character-sheet-archive-import',
   'data-sheet-delete',
@@ -134,6 +138,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'data-sheet-toggle-attunement',
   'data-sheet-add-spell',
   'data-dice-roll="${escapeAttr(rollFormula(20, modifier))}"',
+  'window.DndReferenceTest',
 ].forEach((token) => assert.ok(appSource.includes(token), `${token} deve essere presente in app.js`));
 
 [
@@ -172,7 +177,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
 ].forEach((token) => assert.ok(cssSource.includes(token), `${token} deve essere presente nel CSS`));
 
 assert.match(configSource, /character_sheet: Scheda/);
-assert.match(indexSource, /20260514-app-backup-rest-mobile/);
+assert.match(indexSource, /20260514-backup-import-ui-tests/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd5'/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd-theme'/);
 

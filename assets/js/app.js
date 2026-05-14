@@ -60,6 +60,7 @@
     characterSheet: null,
     characterSheetTab: 'overview',
     pendingCharacterSheetArchive: null,
+    pendingAppBackup: null,
 
     // Se true mostra solo gli elementi preferiti.
     showOnlyFavorites: false,
@@ -1509,6 +1510,7 @@
 
       <article class="detail-card detail-card--flat character-sheet">
         ${renderCharacterSheetArchiveImportPrompt()}
+        ${renderAppBackupImportPrompt()}
         ${renderCharacterSheetHeader()}
         ${renderCharacterSheetTabs(validTab)}
         ${renderCharacterSheetTab(validTab)}
@@ -1542,6 +1544,32 @@
           <button class="button" type="button" data-sheet-import-archive-mode="unisci">Unisci</button>
           <button class="button button--ghost" type="button" data-sheet-import-archive-mode="sostituisci">Sostituisci</button>
           <button class="button button--ghost" type="button" data-sheet-import-archive-cancel>Annulla</button>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderAppBackupImportPrompt() {
+    const backup = appState.pendingAppBackup;
+    if (!backup) return '';
+
+    const keys = Object.keys(backup.storage);
+    const names = keys.slice(0, 4).map((key) => key.replace(APP_STORAGE_PREFIX, '')).join(', ');
+    const extra = keys.length > 4 ? ` e altre ${keys.length - 4}` : '';
+
+    return `
+      <section class="sheet-archive-confirm" role="status" aria-live="polite">
+        <div>
+          <strong>Import backup app</strong>
+          <p>
+            Il backup contiene ${escapeHtml(String(keys.length))} voci locali:
+            ${escapeHtml(names || 'nessuna voce')}${escapeHtml(extra)}.
+            Il ripristino sostituira i dati locali D&D Reference.
+          </p>
+        </div>
+        <div class="sheet-archive-actions">
+          <button class="button" type="button" data-app-import-backup-apply>Ripristina backup</button>
+          <button class="button button--ghost" type="button" data-app-import-backup-cancel>Annulla</button>
         </div>
       </section>
     `;
@@ -2591,6 +2619,11 @@
       views.detail.querySelector('#app-backup-import')?.click();
     });
     views.detail.querySelector('#app-backup-import')?.addEventListener('change', importAppBackup);
+    views.detail.querySelector('[data-app-import-backup-apply]')?.addEventListener('click', applyAppBackupImport);
+    views.detail.querySelector('[data-app-import-backup-cancel]')?.addEventListener('click', () => {
+      appState.pendingAppBackup = null;
+      renderCharacterSheet(appState.characterSheetTab);
+    });
     views.detail.querySelectorAll('[data-sheet-import-archive-mode]').forEach((node) => {
       node.addEventListener('click', (event) => {
         applyCharacterSheetArchiveImport(event.currentTarget.dataset.sheetImportArchiveMode);
@@ -2737,18 +2770,22 @@
     const reader = new FileReader();
     reader.addEventListener('load', () => {
       try {
-        const backup = normalizeAppBackup(JSON.parse(reader.result));
-        if (!confirm(`Importare backup app con ${Object.keys(backup.storage).length} voci locali? I dati dnd-reference attuali saranno sostituiti.`)) {
-          return;
-        }
-        restoreAppBackup(backup);
-        renderRoute();
+        appState.pendingAppBackup = normalizeAppBackup(JSON.parse(reader.result));
+        renderCharacterSheet(appState.characterSheetTab);
       } catch {
         alert('Backup app non valido.');
       }
     });
     reader.readAsText(file);
     event.currentTarget.value = '';
+  }
+
+  function applyAppBackupImport() {
+    if (!appState.pendingAppBackup) return;
+
+    restoreAppBackup(appState.pendingAppBackup);
+    appState.pendingAppBackup = null;
+    renderRoute();
   }
 
   function normalizeAppBackup(value) {
@@ -4522,5 +4559,22 @@
   function showError() {
     setView('home');
     views.home.innerHTML = document.querySelector('#error-template').innerHTML;
+  }
+
+  if (window.__DND_REFERENCE_TEST__) {
+    window.DndReferenceTest = {
+      appState,
+      applyAppBackupImport,
+      applyCharacterSheetArchiveImport,
+      loadCharacterSheetArchive,
+      mergeCharacterSheetArchives,
+      normalizeAppBackup,
+      normalizeCharacterSheet,
+      normalizeCharacterSheetArchive,
+      renderCharacterSheet,
+      resetCharacterResources,
+      restoreAppBackup,
+      saveCharacterSheet,
+    };
   }
 })();
