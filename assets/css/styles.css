@@ -1429,6 +1429,12 @@ h1 {
   gap: .35rem;
 }
 
+.sheet-slot-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: .45rem;
+}
+
 .sheet-slot {
   border: 1px solid rgba(138,63,35,.22);
   border-radius: 8px;
@@ -1448,6 +1454,24 @@ h1 {
   color: var(--accent);
   font-size: 1.18rem;
   line-height: 1.1;
+}
+
+.sheet-slot-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .25rem;
+  margin-top: .35rem;
+}
+
+.sheet-slot-actions button {
+  min-height: 1.75rem;
+  border: 1px solid rgba(138,63,35,.28);
+  border-radius: 8px;
+  background: rgba(255,255,255,.54);
+  color: var(--accent);
+  font-size: .76rem;
+  font-weight: 720;
+  padding: 0 .3rem;
 }
 
 .sheet-spell-picker select {
@@ -1500,6 +1524,21 @@ h1 {
   margin: 0;
   color: var(--muted);
   font-size: .9rem;
+}
+
+.sheet-level-summary {
+  display: grid;
+  gap: .55rem;
+  border: 1px solid rgba(138,63,35,.22);
+  border-radius: 8px;
+  background: rgba(255,246,229,.68);
+  padding: .65rem;
+}
+
+.sheet-level-summary h4 {
+  margin: 0 0 .35rem;
+  color: var(--accent);
+  font-size: .88rem;
 }
 
 .sheet-chip-list {
@@ -2150,8 +2189,13 @@ code {
   }
 
   .sheet-slot-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: .28rem;
+  }
+
+  .sheet-slot-toolbar,
+  .sheet-slot-toolbar .button {
+    width: 100%;
   }
 
   .sheet-slot {

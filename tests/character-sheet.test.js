@@ -14,7 +14,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   "const CHARACTER_SHEETS_STORAGE_KEY = 'dnd-reference:character-sheets';",
   "const ACTIVE_CHARACTER_SHEET_STORAGE_KEY = 'dnd-reference:active-character-sheet';",
   "const APP_STORAGE_PREFIX = 'dnd-reference:';",
-  'const CHARACTER_SHEET_SCHEMA_VERSION = 8;',
+  'const CHARACTER_SHEET_SCHEMA_VERSION = 9;',
   'const SKILL_META = [',
   "id: ''",
   'schemaVersion: CHARACTER_SHEET_SCHEMA_VERSION',
@@ -31,6 +31,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'function normalizeSkillProficiencies(value)',
   'function normalizeProficiencies(value)',
   'function normalizeLegacyResources(resources)',
+  'function normalizeSpellSlotsUsed(value)',
   'function normalizeCharacterStatus(status)',
   'function renderCharacterSheet(tab =',
   'function renderAppBackupImportPrompt()',
@@ -48,6 +49,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'function renderCharacterAttack(attack)',
   'function renderCharacterSheetSpells()',
   'function renderCharacterSpellSlots()',
+  'function renderCharacterSpellSlot(label, value)',
   'function renderCharacterSheetMagicItems()',
   'function renderCharacterAttunementSummary()',
   'function renderCharacterClassProgression()',
@@ -89,6 +91,8 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   "'Slot incantesimo', 'Slot patto'",
   'function classSkillOptions(classEntry)',
   'function mergeSheetNote(current, note)',
+  'function renderLevelAdvancementSummary(classEntry, currentRow, nextRow)',
+  'function levelAdvancementItems(row)',
   'function characterAttackBonus(attack)',
   'function characterSpellSlots()',
   'function characterConditionOptions()',
@@ -99,6 +103,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'resources: []',
   'status: {',
   'attacks: []',
+  'spellSlotsUsed: {}',
   'magicItems: []',
   'attunedMagicItems: []',
   'data-sheet-add-attack',
@@ -138,6 +143,8 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'data-sheet-remove-magic-item',
   'data-sheet-toggle-attunement',
   'data-sheet-add-spell',
+  'data-sheet-slot-delta',
+  'data-sheet-reset-spell-slots',
   'data-dice-roll="${escapeAttr(rollFormula(20, modifier))}"',
   'window.DndReferenceTest',
 ].forEach((token) => assert.ok(appSource.includes(token), `${token} deve essere presente in app.js`));
@@ -170,7 +177,10 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   '.sheet-attunement',
   '.sheet-item-actions',
   '.sheet-slot-grid',
+  '.sheet-slot-toolbar',
   '.sheet-slot',
+  '.sheet-slot-actions',
+  '.sheet-level-summary',
   '.ability-grid',
   '.sheet-class-summary',
   '.sheet-chip-list',
@@ -181,7 +191,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
 ].forEach((token) => assert.ok(cssSource.includes(token), `${token} deve essere presente nel CSS`));
 
 assert.match(configSource, /character_sheet: Scheda/);
-assert.match(indexSource, /20260514-resource-editor-spell-mobile/);
+assert.match(indexSource, /20260514-level-summary-spell-slots/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd5'/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd-theme'/);
 

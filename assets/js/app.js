@@ -194,7 +194,7 @@
    * Versione del formato salvato in localStorage/esportazione.
    * Incrementare quando si aggiungono campi persistenti alla scheda.
    */
-  const CHARACTER_SHEET_SCHEMA_VERSION = 8;
+  const CHARACTER_SHEET_SCHEMA_VERSION = 9;
 
   /*
    * Modello canonico della scheda. Tutte le importazioni e i salvataggi
@@ -252,6 +252,7 @@
     resources: [],
     attacks: [],
     spellcastingAbility: 'int',
+    spellSlotsUsed: {},
     preparedSpells: [],
     magicItems: [],
     attunedMagicItems: [],
@@ -463,6 +464,7 @@
       status: normalizeCharacterStatus(migrated.status),
       resources: normalizeLegacyResources(migrated.resources),
       attacks: normalizeLegacyAttacks(migrated.attacks),
+      spellSlotsUsed: normalizeSpellSlotsUsed(migrated.spellSlotsUsed),
       preparedSpells: Array.isArray(migrated.preparedSpells) ? migrated.preparedSpells : [],
       magicItems: Array.isArray(migrated.magicItems) ? migrated.magicItems : [],
       attunedMagicItems: normalizeIdList(migrated.attunedMagicItems),
@@ -517,7 +519,18 @@
       sheet.id = createCharacterSheetId();
     }
 
+    if (sheet.schemaVersion < 9) {
+      sheet.spellSlotsUsed = normalizeSpellSlotsUsed(sheet.spellSlotsUsed);
+    }
+
     return sheet;
+  }
+
+  function normalizeSpellSlotsUsed(value) {
+    const source = value && typeof value === 'object' ? value : {};
+
+    return Object.fromEntries(Object.entries(source)
+      .map(([key, used]) => [String(key), Math.max(0, Number(used) || 0)]));
   }
 
   /*
@@ -2133,14 +2146,31 @@
     }
 
     return `
+      <div class="sheet-slot-toolbar">
+        <button class="button button--ghost" type="button" data-sheet-reset-spell-slots>Riposo lungo</button>
+      </div>
       <div class="sheet-slot-grid">
         ${slots.map(([label, value]) => `
-          <div class="sheet-slot">
-            <span>${escapeHtml(label.replace(/^Slot\s+/i, 'Liv. '))}</span>
-            <strong>${escapeHtml(value)}</strong>
-          </div>
+          ${renderCharacterSpellSlot(label, value)}
         `).join('')}
       </div>
+    `;
+  }
+
+  function renderCharacterSpellSlot(label, value) {
+    const max = Math.max(0, Number(value) || 0);
+    const used = Math.min(max, Math.max(0, Number(appState.characterSheet.spellSlotsUsed[label]) || 0));
+    const remaining = Math.max(0, max - used);
+
+    return `
+          <div class="sheet-slot">
+            <span>${escapeHtml(label.replace(/^Slot\s+/i, 'Liv. '))}</span>
+            <strong>${escapeHtml(`${remaining}/${max}`)}</strong>
+            <div class="sheet-slot-actions">
+              <button type="button" data-sheet-slot-delta="-1" data-sheet-slot-label="${escapeAttr(label)}">Recupera</button>
+              <button type="button" data-sheet-slot-delta="1" data-sheet-slot-label="${escapeAttr(label)}">Usa</button>
+            </div>
+          </div>
     `;
   }
 
@@ -2276,6 +2306,8 @@
             </ul>
           ` : '<p class="sheet-empty">Nessun nuovo privilegio indicato per questo livello.</p>'}
         </div>
+
+        ${renderLevelAdvancementSummary(classEntry, currentRow, nextRow)}
 
         ${subclassRows.length ? `
           <div class="sheet-class-block">
@@ -2615,6 +2647,25 @@
       });
     });
 
+    views.detail.querySelectorAll('[data-sheet-slot-delta]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        const label = event.currentTarget.dataset.sheetSlotLabel;
+        const delta = Number(event.currentTarget.dataset.sheetSlotDelta) || 0;
+        const max = Number(characterSpellSlots().find(([slotLabel]) => slotLabel === label)?.[1]) || 0;
+        const used = Math.min(max, Math.max(0, (Number(appState.characterSheet.spellSlotsUsed[label]) || 0) + delta));
+
+        appState.characterSheet.spellSlotsUsed[label] = used;
+        saveCharacterSheet();
+        renderCharacterSheet('spells');
+      });
+    });
+
+    views.detail.querySelector('[data-sheet-reset-spell-slots]')?.addEventListener('click', () => {
+      appState.characterSheet.spellSlotsUsed = {};
+      saveCharacterSheet();
+      renderCharacterSheet('spells');
+    });
+
     views.detail.querySelectorAll('[data-sheet-remove-magic-item]').forEach((node) => {
       node.addEventListener('click', (event) => {
         const id = event.currentTarget.dataset.sheetRemoveMagicItem;
@@ -2944,6 +2995,51 @@
 
     if (!features.length) return `${prefix}: nessun nuovo privilegio indicato.`;
     return `${prefix}: ${features.join(', ')}.`;
+  }
+
+  function renderLevelAdvancementSummary(classEntry, currentRow, nextRow) {
+    const currentItems = levelAdvancementItems(currentRow);
+    const nextItems = levelAdvancementItems(nextRow);
+
+    if (!currentItems.length && !nextItems.length) return '';
+
+    return `
+      <div class="sheet-level-summary">
+        <div>
+          <h4>Nuovi al livello ${escapeHtml(String(characterLevel()))}</h4>
+          ${currentItems.length ? `
+            <ul class="sheet-chip-list">
+              ${currentItems.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}
+            </ul>
+          ` : '<p class="sheet-empty">Nessun nuovo elemento indicato per questo livello.</p>'}
+        </div>
+        ${nextRow ? `
+          <div>
+            <h4>Da preparare per il livello ${escapeHtml(String(nextRow.Livello || characterLevel() + 1))}</h4>
+            ${nextItems.length ? `
+              <ul class="sheet-chip-list">
+                ${nextItems.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}
+              </ul>
+            ` : '<p class="sheet-empty">Nessun nuovo elemento indicato.</p>'}
+          </div>
+        ` : ''}
+        <a class="button button--ghost" href="#/classes/${encodeURIComponent(classEntry.id)}">Dettaglio progressione</a>
+      </div>
+    `;
+  }
+
+  function levelAdvancementItems(row) {
+    if (!row) return [];
+
+    const features = splitClassFeatures(row['Privilegi di classe']);
+    const trackedValues = Object.entries(row)
+      .filter(([label, value]) => {
+        const text = String(value || '').trim();
+        return !['Livello', 'Bonus di competenza', 'Privilegi di classe'].includes(label) && text && text !== '-';
+      })
+      .map(([label, value]) => `${label}: ${value}`);
+
+    return [...features, ...trackedValues].slice(0, 12);
   }
 
   function characterAttackBonus(attack) {
