@@ -772,6 +772,17 @@ h1 {
   white-space: nowrap;
 }
 
+.sheet-character-select {
+  min-width: min(16rem, 100%);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255,250,242,.86);
+  color: var(--ink);
+  font: inherit;
+  min-height: 2.35rem;
+  padding: 0 .55rem;
+}
+
 .sheet-tab.is-active {
   background: var(--accent);
   border-color: var(--accent);

@@ -11,10 +11,17 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   "character_sheet: {",
   "type: 'tool'",
   "const CHARACTER_SHEET_STORAGE_KEY = 'dnd-reference:character-sheet';",
-  'const CHARACTER_SHEET_SCHEMA_VERSION = 7;',
+  "const CHARACTER_SHEETS_STORAGE_KEY = 'dnd-reference:character-sheets';",
+  "const ACTIVE_CHARACTER_SHEET_STORAGE_KEY = 'dnd-reference:active-character-sheet';",
+  'const CHARACTER_SHEET_SCHEMA_VERSION = 8;',
   'const SKILL_META = [',
+  "id: ''",
   'schemaVersion: CHARACTER_SHEET_SCHEMA_VERSION',
+  'function loadCharacterSheetArchive()',
+  'function readJsonStorage(key, fallback)',
   'function migrateCharacterSheet(value)',
+  'function uniqueCharacterSheets(sheets)',
+  'function createCharacterSheetId()',
   'function normalizeLegacyMagicItems(items)',
   'function normalizeLegacyAttacks(attacks)',
   'function normalizeIdList(value)',
@@ -44,6 +51,10 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'function exportCharacterSheet()',
   'function importCharacterSheet(event)',
   'function renderSheetActions(section, item)',
+  'function switchCharacterSheet(id)',
+  'function createNewCharacterSheet()',
+  'function duplicateCharacterSheet()',
+  'function deleteActiveCharacterSheet()',
   'function addSpellToCharacterSheet(id)',
   'function addMagicItemToCharacterSheet(item)',
   'function magicItemRequiresAttunement(entry, source)',
@@ -79,6 +90,9 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'data-sheet-status-field',
   'data-sheet-add-condition',
   'data-sheet-remove-condition',
+  'data-sheet-switch-character',
+  'data-sheet-duplicate',
+  'data-sheet-delete',
   'data-sheet-use-class',
   'data-sheet-add-detail-spell',
   'data-sheet-add-magic-item',
@@ -90,6 +104,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
 
 [
   '.character-sheet',
+  '.sheet-character-select',
   '.sheet-tabs',
   '.sheet-actions',
   '.skill-grid',
@@ -116,7 +131,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
 ].forEach((token) => assert.ok(cssSource.includes(token), `${token} deve essere presente nel CSS`));
 
 assert.match(configSource, /character_sheet: Scheda/);
-assert.match(indexSource, /20260514-character-sheet-status/);
+assert.match(indexSource, /20260514-character-sheet-multi/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd5'/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd-theme'/);
 

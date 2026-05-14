@@ -54,7 +54,9 @@
       rules_glossary: '',
     },
 
-    // Scheda personaggio locale.
+    // Archivio locale delle schede personaggio.
+    characterSheets: [],
+    activeCharacterSheetId: '',
     characterSheet: null,
     characterSheetTab: 'overview',
 
@@ -144,6 +146,8 @@
   };
 
   const CHARACTER_SHEET_STORAGE_KEY = 'dnd-reference:character-sheet';
+  const CHARACTER_SHEETS_STORAGE_KEY = 'dnd-reference:character-sheets';
+  const ACTIVE_CHARACTER_SHEET_STORAGE_KEY = 'dnd-reference:active-character-sheet';
 
   const ABILITY_META = [
     ['str', 'Forza', 'FOR'],
@@ -187,13 +191,14 @@
    * Versione del formato salvato in localStorage/esportazione.
    * Incrementare quando si aggiungono campi persistenti alla scheda.
    */
-  const CHARACTER_SHEET_SCHEMA_VERSION = 7;
+  const CHARACTER_SHEET_SCHEMA_VERSION = 8;
 
   /*
    * Modello canonico della scheda. Tutte le importazioni e i salvataggi
    * parziali vengono riallineati a questa forma tramite normalizeCharacterSheet.
    */
   const DEFAULT_CHARACTER_SHEET = {
+    id: '',
     schemaVersion: CHARACTER_SHEET_SCHEMA_VERSION,
     name: '',
     classId: '',
@@ -280,7 +285,7 @@
    */
   async function init() {
     showLoading();
-    appState.characterSheet = loadCharacterSheet();
+    loadCharacterSheetArchive();
     renderRollTray();
     document.addEventListener('click', handleRollCommand);
     document.addEventListener('submit', handleRollSubmit);
@@ -366,13 +371,29 @@
   }
 
   /*
-   * Legge la scheda personaggio locale e la riallinea al modello corrente.
+   * Carica l'archivio multi-personaggio. Se esiste solo la vecchia chiave
+   * singola, la migra come prima scheda senza richiedere azioni all'utente.
    */
-  function loadCharacterSheet() {
+  function loadCharacterSheetArchive() {
+    const storedSheets = readJsonStorage(CHARACTER_SHEETS_STORAGE_KEY, null);
+    const legacySheet = readJsonStorage(CHARACTER_SHEET_STORAGE_KEY, null);
+    const rawSheets = Array.isArray(storedSheets) && storedSheets.length
+      ? storedSheets
+      : [legacySheet && typeof legacySheet === 'object' ? legacySheet : {}];
+
+    appState.characterSheets = uniqueCharacterSheets(rawSheets.map(normalizeCharacterSheet));
+    appState.activeCharacterSheetId = localStorage.getItem(ACTIVE_CHARACTER_SHEET_STORAGE_KEY) || appState.characterSheets[0]?.id || '';
+    appState.characterSheet = appState.characterSheets.find((sheet) => sheet.id === appState.activeCharacterSheetId) || appState.characterSheets[0];
+    appState.activeCharacterSheetId = appState.characterSheet.id;
+    saveCharacterSheet();
+  }
+
+  function readJsonStorage(key, fallback) {
     try {
-      return normalizeCharacterSheet(JSON.parse(localStorage.getItem(CHARACTER_SHEET_STORAGE_KEY) || '{}'));
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
     } catch {
-      return normalizeCharacterSheet({});
+      return fallback;
     }
   }
 
@@ -389,6 +410,7 @@
     return {
       ...base,
       ...migrated,
+      id: migrated.id ? String(migrated.id) : createCharacterSheetId(),
       schemaVersion: CHARACTER_SHEET_SCHEMA_VERSION,
       abilities: {
         ...base.abilities,
@@ -451,6 +473,10 @@
 
     if (sheet.schemaVersion < 7) {
       sheet.status = normalizeCharacterStatus(sheet.status);
+    }
+
+    if (sheet.schemaVersion < 8 && !sheet.id) {
+      sheet.id = createCharacterSheetId();
     }
 
     return sheet;
@@ -545,6 +571,21 @@
     };
   }
 
+  function uniqueCharacterSheets(sheets) {
+    const seen = new Set();
+
+    return sheets.map((sheet) => {
+      let id = sheet.id || createCharacterSheetId();
+      while (seen.has(id)) id = createCharacterSheetId();
+      seen.add(id);
+      return { ...sheet, id };
+    });
+  }
+
+  function createCharacterSheetId() {
+    return `sheet-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
   function normalizeIdList(value) {
     if (!Array.isArray(value)) return [];
     return Array.from(new Set(value.map((id) => String(id)).filter(Boolean)));
@@ -571,11 +612,63 @@
   }
 
   /*
-   * Salva la scheda nel localStorage namespaced dell'app.
+   * Salva archivio e scheda attiva. La vecchia chiave singola resta aggiornata
+   * per compatibilita con esportazioni/manual debug precedenti.
    */
   function saveCharacterSheet() {
+    const index = appState.characterSheets.findIndex((sheet) => sheet.id === appState.characterSheet.id);
+    if (index >= 0) {
+      appState.characterSheets[index] = appState.characterSheet;
+    } else {
+      appState.characterSheets.push(appState.characterSheet);
+    }
+
+    appState.activeCharacterSheetId = appState.characterSheet.id;
+    localStorage.setItem(CHARACTER_SHEETS_STORAGE_KEY, JSON.stringify(appState.characterSheets));
+    localStorage.setItem(ACTIVE_CHARACTER_SHEET_STORAGE_KEY, appState.activeCharacterSheetId);
     localStorage.setItem(CHARACTER_SHEET_STORAGE_KEY, JSON.stringify(appState.characterSheet));
     appState.data.character_sheet = [appState.characterSheet];
+  }
+
+  function switchCharacterSheet(id) {
+    const next = appState.characterSheets.find((sheet) => sheet.id === id);
+    if (!next) return false;
+
+    saveCharacterSheet();
+    appState.characterSheet = next;
+    appState.activeCharacterSheetId = next.id;
+    saveCharacterSheet();
+    return true;
+  }
+
+  function createNewCharacterSheet() {
+    saveCharacterSheet();
+    appState.characterSheet = normalizeCharacterSheet({ name: 'Nuovo personaggio' });
+    appState.characterSheets.push(appState.characterSheet);
+    saveCharacterSheet();
+  }
+
+  function duplicateCharacterSheet() {
+    const copy = normalizeCharacterSheet({
+      ...cloneJson(appState.characterSheet),
+      id: createCharacterSheetId(),
+      name: `${appState.characterSheet.name || 'Personaggio'} copia`,
+    });
+
+    saveCharacterSheet();
+    appState.characterSheet = copy;
+    appState.characterSheets.push(copy);
+    saveCharacterSheet();
+  }
+
+  function deleteActiveCharacterSheet() {
+    if (appState.characterSheets.length <= 1) return false;
+
+    const currentId = appState.characterSheet.id;
+    appState.characterSheets = appState.characterSheets.filter((sheet) => sheet.id !== currentId);
+    appState.characterSheet = appState.characterSheets[0];
+    saveCharacterSheet();
+    return true;
   }
 
   /*
@@ -1347,9 +1440,16 @@
       <nav class="detail-nav" aria-label="Navigazione scheda personaggio">
         <a class="button" href="#/">Home</a>
         <div class="toolbar-row">
+          <select class="sheet-character-select" data-sheet-switch-character aria-label="Personaggio attivo">
+            ${appState.characterSheets.map((sheet) => `
+              <option value="${escapeAttr(sheet.id)}"${sheet.id === appState.characterSheet.id ? ' selected' : ''}>${escapeHtml(sheet.name || 'Scheda personaggio')}</option>
+            `).join('')}
+          </select>
           <button class="button button--ghost" type="button" data-sheet-export>Esporta</button>
           <button class="button button--ghost" type="button" data-sheet-import>Importa</button>
           <button class="button button--ghost" type="button" data-sheet-reset>Nuova</button>
+          <button class="button button--ghost" type="button" data-sheet-duplicate>Duplica</button>
+          <button class="button button--ghost" type="button" data-sheet-delete>Elimina</button>
           <input id="character-sheet-import" class="visually-hidden" type="file" accept="application/json,.json">
         </div>
       </nav>
@@ -2372,10 +2472,24 @@
       views.detail.querySelector('#character-sheet-import')?.click();
     });
     views.detail.querySelector('#character-sheet-import')?.addEventListener('change', importCharacterSheet);
+    views.detail.querySelector('[data-sheet-switch-character]')?.addEventListener('change', (event) => {
+      if (switchCharacterSheet(event.currentTarget.value)) renderCharacterSheet(appState.characterSheetTab);
+    });
     views.detail.querySelector('[data-sheet-reset]')?.addEventListener('click', () => {
-      if (!confirm('Creare una nuova scheda vuota?')) return;
-      appState.characterSheet = normalizeCharacterSheet({});
-      saveCharacterSheet();
+      createNewCharacterSheet();
+      renderCharacterSheet('overview');
+    });
+    views.detail.querySelector('[data-sheet-duplicate]')?.addEventListener('click', () => {
+      duplicateCharacterSheet();
+      renderCharacterSheet('overview');
+    });
+    views.detail.querySelector('[data-sheet-delete]')?.addEventListener('click', () => {
+      if (appState.characterSheets.length <= 1) {
+        alert('Deve restare almeno una scheda.');
+        return;
+      }
+      if (!confirm('Eliminare la scheda personaggio attiva?')) return;
+      deleteActiveCharacterSheet();
       renderCharacterSheet('overview');
     });
   }
@@ -2397,7 +2511,11 @@
     const reader = new FileReader();
     reader.addEventListener('load', () => {
       try {
-        appState.characterSheet = normalizeCharacterSheet(JSON.parse(reader.result));
+        appState.characterSheet = normalizeCharacterSheet({
+          ...JSON.parse(reader.result),
+          id: createCharacterSheetId(),
+        });
+        appState.characterSheets.push(appState.characterSheet);
         saveCharacterSheet();
         renderCharacterSheet('overview');
       } catch {
