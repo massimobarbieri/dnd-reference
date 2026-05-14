@@ -398,6 +398,26 @@
   }
 
   /*
+   * Normalizza un archivio esportato con piu schede. L'import sostituisce
+   * l'archivio locale, quindi qui garantiamo almeno una scheda valida.
+   */
+  function normalizeCharacterSheetArchive(value) {
+    if (!value || typeof value !== 'object' || !Array.isArray(value.sheets)) {
+      throw new Error('Archivio schede non valido');
+    }
+
+    const sheets = uniqueCharacterSheets(value.sheets.map(normalizeCharacterSheet));
+    if (!sheets.length) throw new Error('Archivio schede vuoto');
+
+    const activeCharacterSheetId = String(value.activeCharacterSheetId || '');
+
+    return {
+      activeCharacterSheetId,
+      sheets,
+    };
+  }
+
+  /*
    * Normalizza una scheda parziale mantenendo compatibilita con campi nuovi.
    * I sotto-oggetti vengono sempre ricostruiti per evitare riferimenti o shape
    * vecchie provenienti da localStorage/import JSON.
@@ -1439,18 +1459,31 @@
     views.detail.innerHTML = `
       <nav class="detail-nav" aria-label="Navigazione scheda personaggio">
         <a class="button" href="#/">Home</a>
-        <div class="toolbar-row">
-          <select class="sheet-character-select" data-sheet-switch-character aria-label="Personaggio attivo">
-            ${appState.characterSheets.map((sheet) => `
-              <option value="${escapeAttr(sheet.id)}"${sheet.id === appState.characterSheet.id ? ' selected' : ''}>${escapeHtml(sheet.name || 'Scheda personaggio')}</option>
-            `).join('')}
-          </select>
-          <button class="button button--ghost" type="button" data-sheet-export>Esporta</button>
-          <button class="button button--ghost" type="button" data-sheet-import>Importa</button>
-          <button class="button button--ghost" type="button" data-sheet-reset>Nuova</button>
-          <button class="button button--ghost" type="button" data-sheet-duplicate>Duplica</button>
-          <button class="button button--ghost" type="button" data-sheet-delete>Elimina</button>
-          <input id="character-sheet-import" class="visually-hidden" type="file" accept="application/json,.json">
+        <div class="sheet-manager">
+          <label class="sheet-character-picker">
+            <span>Personaggio</span>
+            <select class="sheet-character-select" data-sheet-switch-character aria-label="Personaggio attivo">
+              ${appState.characterSheets.map((sheet) => `
+                <option value="${escapeAttr(sheet.id)}"${sheet.id === appState.characterSheet.id ? ' selected' : ''}>${escapeHtml(sheet.name || 'Scheda personaggio')}</option>
+              `).join('')}
+            </select>
+          </label>
+          <div class="sheet-manager-actions">
+            <button class="button button--ghost" type="button" data-sheet-reset>Nuova</button>
+            <button class="button button--ghost" type="button" data-sheet-duplicate>Duplica</button>
+            <details class="sheet-more-actions">
+              <summary>Altro</summary>
+              <div>
+                <button class="button button--ghost" type="button" data-sheet-export>Esporta</button>
+                <button class="button button--ghost" type="button" data-sheet-import>Importa</button>
+                <button class="button button--ghost" type="button" data-sheet-export-archive>Esporta archivio</button>
+                <button class="button button--ghost" type="button" data-sheet-import-archive>Importa archivio</button>
+                <button class="button button--ghost sheet-danger-action" type="button" data-sheet-delete>Elimina</button>
+              </div>
+            </details>
+            <input id="character-sheet-import" class="visually-hidden" type="file" accept="application/json,.json">
+            <input id="character-sheet-archive-import" class="visually-hidden" type="file" accept="application/json,.json">
+          </div>
         </div>
       </nav>
 
@@ -2472,6 +2505,11 @@
       views.detail.querySelector('#character-sheet-import')?.click();
     });
     views.detail.querySelector('#character-sheet-import')?.addEventListener('change', importCharacterSheet);
+    views.detail.querySelector('[data-sheet-export-archive]')?.addEventListener('click', exportCharacterSheetArchive);
+    views.detail.querySelector('[data-sheet-import-archive]')?.addEventListener('click', () => {
+      views.detail.querySelector('#character-sheet-archive-import')?.click();
+    });
+    views.detail.querySelector('#character-sheet-archive-import')?.addEventListener('change', importCharacterSheetArchive);
     views.detail.querySelector('[data-sheet-switch-character]')?.addEventListener('change', (event) => {
       if (switchCharacterSheet(event.currentTarget.value)) renderCharacterSheet(appState.characterSheetTab);
     });
@@ -2520,6 +2558,45 @@
         renderCharacterSheet('overview');
       } catch {
         alert('File scheda non valido.');
+      }
+    });
+    reader.readAsText(file);
+    event.currentTarget.value = '';
+  }
+
+  function exportCharacterSheetArchive() {
+    saveCharacterSheet();
+    const archive = {
+      kind: 'dnd-reference:character-sheets',
+      schemaVersion: CHARACTER_SHEET_SCHEMA_VERSION,
+      activeCharacterSheetId: appState.activeCharacterSheetId,
+      sheets: appState.characterSheets,
+    };
+    const blob = new Blob([JSON.stringify(archive, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'dnd-reference-schede-personaggio.json';
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importCharacterSheetArchive(event) {
+    const [file] = event.currentTarget.files || [];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+      try {
+        const archive = normalizeCharacterSheetArchive(JSON.parse(reader.result));
+        appState.characterSheets = archive.sheets;
+        appState.activeCharacterSheetId = archive.activeCharacterSheetId;
+        appState.characterSheet = appState.characterSheets.find((sheet) => sheet.id === appState.activeCharacterSheetId) || appState.characterSheets[0];
+        appState.activeCharacterSheetId = appState.characterSheet.id;
+        saveCharacterSheet();
+        renderCharacterSheet('overview');
+      } catch {
+        alert('Archivio schede non valido.');
       }
     });
     reader.readAsText(file);
@@ -2667,6 +2744,10 @@
       armor: traits.Armature || appState.characterSheet.proficiencies.armor,
       tools: traits.Strumenti || appState.characterSheet.proficiencies.tools,
     };
+    appState.characterSheet.resources = mergeCharacterResources(
+      appState.characterSheet.resources,
+      classSuggestedResources(classEntry)
+    );
     appState.characterSheet.notes = mergeSheetNote(
       appState.characterSheet.notes,
       classSkillSuggestion(classEntry, traits.Abilita)
@@ -2705,6 +2786,80 @@
 
     const className = classEntry.nome.replace(/^Classe:\s*/i, '');
     return `Competenze abilita ${className}: ${text}`;
+  }
+
+  /*
+   * Propone contatori per i privilegi di classe con usi espliciti.
+   * Sono valori iniziali modificabili, non una fonte regole esaustiva.
+   */
+  function classSuggestedResources(classEntry) {
+    const progression = classProgressionSection(classEntry);
+    const level = characterLevel();
+
+    return (progression?.righe || [])
+      .filter((row) => Number(row.Livello) <= level)
+      .flatMap((row) => String(row['Privilegi di Classe'] || row['Privilegi di classe'] || '').split(','))
+      .map(resourceFromClassFeature)
+      .filter(Boolean);
+  }
+
+  function resourceFromClassFeature(feature) {
+    const text = normalizeText(feature);
+    if (!text || text.includes('incremento dei punteggi') || text.includes('talento')) return null;
+
+    if (text.includes('recuperare energie')) {
+      return createClassResource('Recuperare energie', 1, 'Riposo breve o lungo');
+    }
+    if (text.includes('azione impetuosa')) {
+      return createClassResource('Azione impetuosa', text.includes('due utilizzi') ? 2 : 1, 'Riposo breve o lungo');
+    }
+    if (text.includes('ispirazione bardica')) {
+      return createClassResource('Ispirazione bardica', 1, 'Riposo lungo');
+    }
+    if (text.includes('fonte di ispirazione')) {
+      return createClassResource('Ispirazione bardica', 1, 'Riposo breve o lungo');
+    }
+    if (text.includes('forma selvatica')) {
+      return createClassResource('Forma selvatica', 2, 'Riposo breve o lungo');
+    }
+    if (text.includes('incanalare divinita')) {
+      return createClassResource('Incanalare divinita', 1, 'Riposo breve o lungo');
+    }
+    if (text.includes('fonte di magia')) {
+      return createClassResource('Punti stregoneria', Math.max(1, characterLevel()), 'Riposo lungo');
+    }
+
+    return null;
+  }
+
+  function createClassResource(name, max, recovery) {
+    return {
+      id: `resource-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+      name,
+      max,
+      used: 0,
+      recovery,
+    };
+  }
+
+  function mergeCharacterResources(current, suggested) {
+    const resources = normalizeLegacyResources(current);
+    const byName = new Map(resources.map((resource) => [normalizeText(resource.name), resource]));
+
+    suggested.forEach((resource) => {
+      const key = normalizeText(resource.name);
+      if (!key) return;
+      const existing = byName.get(key);
+      if (existing) {
+        existing.max = Math.max(Number(existing.max) || 0, Number(resource.max) || 0);
+        existing.recovery = resource.recovery || existing.recovery;
+        return;
+      }
+      resources.push(resource);
+      byName.set(key, resource);
+    });
+
+    return normalizeLegacyResources(resources);
   }
 
   /*

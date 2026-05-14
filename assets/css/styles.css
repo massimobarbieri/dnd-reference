@@ -772,8 +772,28 @@ h1 {
   white-space: nowrap;
 }
 
-.sheet-character-select {
+.sheet-manager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .45rem;
+  min-width: min(100%, 34rem);
+}
+
+.sheet-character-picker {
+  display: grid;
+  gap: .15rem;
   min-width: min(16rem, 100%);
+}
+
+.sheet-character-picker span {
+  color: var(--accent);
+  font-size: .72rem;
+  font-weight: 780;
+}
+
+.sheet-character-select {
+  width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(255,250,242,.86);
@@ -781,6 +801,64 @@ h1 {
   font: inherit;
   min-height: 2.35rem;
   padding: 0 .55rem;
+}
+
+.sheet-manager-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: .35rem;
+}
+
+.sheet-more-actions {
+  position: relative;
+}
+
+.sheet-more-actions summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.35rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255,250,242,.86);
+  color: var(--accent);
+  cursor: pointer;
+  font-size: .92rem;
+  font-weight: 720;
+  list-style: none;
+  padding: 0 .7rem;
+}
+
+.sheet-more-actions summary::-webkit-details-marker {
+  display: none;
+}
+
+.sheet-more-actions[open] summary {
+  border-color: rgba(138,63,35,.42);
+}
+
+.sheet-more-actions > div {
+  position: absolute;
+  z-index: 5;
+  right: 0;
+  top: calc(100% + .25rem);
+  display: grid;
+  gap: .28rem;
+  min-width: 8.5rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fffaf2;
+  box-shadow: 0 10px 24px rgba(36,22,12,.16);
+  padding: .35rem;
+}
+
+.sheet-more-actions .button {
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.sheet-danger-action {
+  color: #9f2f22;
 }
 
 .sheet-tab.is-active {
@@ -1860,6 +1938,27 @@ code {
     margin-inline: -.7rem;
     padding: 0 .7rem .22rem;
     scroll-snap-type: x proximity;
+  }
+
+  .sheet-manager,
+  .sheet-character-picker,
+  .sheet-manager-actions {
+    width: 100%;
+  }
+
+  .sheet-manager {
+    justify-content: stretch;
+  }
+
+  .sheet-manager-actions .button,
+  .sheet-more-actions,
+  .sheet-more-actions summary {
+    flex: 1 1 auto;
+  }
+
+  .sheet-more-actions > div {
+    left: 0;
+    right: 0;
   }
 
   .sheet-tab {

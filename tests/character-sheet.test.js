@@ -19,6 +19,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'schemaVersion: CHARACTER_SHEET_SCHEMA_VERSION',
   'function loadCharacterSheetArchive()',
   'function readJsonStorage(key, fallback)',
+  'function normalizeCharacterSheetArchive(value)',
   'function migrateCharacterSheet(value)',
   'function uniqueCharacterSheets(sheets)',
   'function createCharacterSheetId()',
@@ -50,6 +51,8 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'function classProgressionRow(classEntry, level)',
   'function exportCharacterSheet()',
   'function importCharacterSheet(event)',
+  'function exportCharacterSheetArchive()',
+  'function importCharacterSheetArchive(event)',
   'function renderSheetActions(section, item)',
   'function switchCharacterSheet(id)',
   'function createNewCharacterSheet()',
@@ -63,6 +66,10 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'function classHitDice(value)',
   'function classSavingThrows(value)',
   'function classSkillSuggestion(classEntry, value)',
+  'function classSuggestedResources(classEntry)',
+  'function resourceFromClassFeature(feature)',
+  'function createClassResource(name, max, recovery)',
+  'function mergeCharacterResources(current, suggested)',
   'function classSkillOptions(classEntry)',
   'function mergeSheetNote(current, note)',
   'function characterAttackBonus(attack)',
@@ -92,6 +99,9 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'data-sheet-remove-condition',
   'data-sheet-switch-character',
   'data-sheet-duplicate',
+  'data-sheet-export-archive',
+  'data-sheet-import-archive',
+  'character-sheet-archive-import',
   'data-sheet-delete',
   'data-sheet-use-class',
   'data-sheet-add-detail-spell',
@@ -104,7 +114,11 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
 
 [
   '.character-sheet',
+  '.sheet-manager',
+  '.sheet-character-picker',
   '.sheet-character-select',
+  '.sheet-more-actions',
+  '.sheet-danger-action',
   '.sheet-tabs',
   '.sheet-actions',
   '.skill-grid',
@@ -131,7 +145,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
 ].forEach((token) => assert.ok(cssSource.includes(token), `${token} deve essere presente nel CSS`));
 
 assert.match(configSource, /character_sheet: Scheda/);
-assert.match(indexSource, /20260514-character-sheet-multi/);
+assert.match(indexSource, /20260514-character-sheet-archive-resources/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd5'/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd-theme'/);
 
