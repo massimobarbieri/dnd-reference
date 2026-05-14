@@ -6,6 +6,7 @@ L'app raccoglie in un'unica interfaccia:
 
 - mostri
 - incantesimi
+- classi
 - oggetti magici
 - regole
 - glossario delle regole
@@ -16,11 +17,12 @@ I dati SRD sono mantenuti nel submodule `data` e vengono caricati dal browser co
 
 - Navigazione per categoria.
 - Ricerca full text nelle schede.
-- Schede dettagliate per mostri, incantesimi, oggetti magici, regole e glossario.
+- Schede dettagliate per mostri, incantesimi, classi, oggetti magici, regole e glossario.
 - Preferiti locali per sezione.
 - Dice roller integrato.
 - Riconoscimento di formule di dado nel testo, per esempio `d20`, `2d6 + 3`, `2d20kh1`, `4d6dl1`.
 - Tabelle SRD renderizzate in formato tabellare, incluse le tabelle multi-colonna estratte dal PDF.
+- Link diretti dagli incantesimi nelle tabelle di classe alle relative schede, con liste divise per livello.
 
 ## Requisiti
 
@@ -57,6 +59,8 @@ http://localhost:8080
 ```
 
 Non aprire `index.html` direttamente con `file://`: l'app carica `config.yml` e i JSON SRD con `fetch()`, quindi deve essere servita via HTTP.
+
+Se i dati non vengono trovati, l'app rimanda alla pagina locale [fallback.html](fallback.html) con le istruzioni per inizializzare il submodule e avviare il server statico.
 
 Su rete locale, altri dispositivi possono collegarsi all'indirizzo IP del computer che sta servendo il progetto, per esempio:
 
@@ -114,6 +118,7 @@ Test utili durante lo sviluppo:
 
 ```bash
 node tests/dice-roller.test.js
+node tests/classes-section.test.js
 node tests/monster-rolls-data.test.js
 node tests/rules-data.test.js
 node tests/rules-glossary-data.test.js
@@ -121,6 +126,7 @@ node tests/rules-list-order.test.js
 node tests/roll-accessibility.test.js
 node tests/roll-tray-markup.test.js
 node tests/glossary-links.test.js
+node tests/table-spell-links.test.js
 ```
 
 ## Sviluppo
