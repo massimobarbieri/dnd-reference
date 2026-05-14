@@ -2129,6 +2129,40 @@
           <span>${escapeHtml([ability, attack.proficient ? 'competente' : null, attack.damageType].filter(Boolean).join(' · '))}</span>
           ${attack.notes ? `<p>${escapeHtml(attack.notes)}</p>` : ''}
         </div>
+        <div class="sheet-attack-edit">
+          <label>
+            <span>Nome</span>
+            <input type="text" value="${escapeAttr(attack.name || '')}" data-sheet-attack-field="name" data-sheet-attack-id="${escapeAttr(attack.id)}">
+          </label>
+          <label>
+            <span>Car.</span>
+            <select data-sheet-attack-field="ability" data-sheet-attack-id="${escapeAttr(attack.id)}">
+              ${abilityOptions().map((option) => `
+                <option value="${escapeAttr(option.value)}"${option.value === attack.ability ? ' selected' : ''}>${escapeHtml(option.label)}</option>
+              `).join('')}
+            </select>
+          </label>
+          <label>
+            <span>Bonus</span>
+            <input type="number" value="${escapeAttr(String(Number(attack.bonus) || 0))}" data-sheet-attack-field="bonus" data-sheet-attack-id="${escapeAttr(attack.id)}">
+          </label>
+          <label>
+            <span>Danni</span>
+            <input type="text" value="${escapeAttr(attack.damage || '')}" data-sheet-attack-field="damage" data-sheet-attack-id="${escapeAttr(attack.id)}">
+          </label>
+          <label>
+            <span>Tipo</span>
+            <input type="text" value="${escapeAttr(attack.damageType || '')}" data-sheet-attack-field="damageType" data-sheet-attack-id="${escapeAttr(attack.id)}">
+          </label>
+          <label class="sheet-check sheet-check--compact">
+            <input type="checkbox" ${attack.proficient ? 'checked' : ''} data-sheet-attack-field="proficient" data-sheet-attack-id="${escapeAttr(attack.id)}">
+            <span>Comp.</span>
+          </label>
+          <label class="sheet-attack-notes">
+            <span>Note</span>
+            <input type="text" value="${escapeAttr(attack.notes || '')}" data-sheet-attack-field="notes" data-sheet-attack-id="${escapeAttr(attack.id)}">
+          </label>
+        </div>
         <div class="sheet-attack-actions">
           <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, attackBonus))}">Colpire ${escapeHtml(formatSigned(attackBonus))}</button>
           ${damage ? `<button type="button" data-dice-roll="${escapeAttr(damage)}">Danni ${escapeHtml(damage)}</button>` : ''}
@@ -2619,6 +2653,31 @@
         const id = event.currentTarget.dataset.sheetRemoveAttack;
         appState.characterSheet.attacks = appState.characterSheet.attacks.filter((attack) => attack.id !== id);
         saveCharacterSheet();
+        renderCharacterSheet('combat');
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-attack-field]').forEach((node) => {
+      const updateAttack = (event) => {
+        const id = event.currentTarget.dataset.sheetAttackId;
+        const field = event.currentTarget.dataset.sheetAttackField;
+        const attack = appState.characterSheet.attacks.find((entry) => entry.id === id);
+
+        if (!attack) return;
+
+        if (field === 'bonus') {
+          attack.bonus = Number(event.currentTarget.value) || 0;
+        } else if (field === 'proficient') {
+          attack.proficient = event.currentTarget.checked;
+        } else if (['name', 'ability', 'damage', 'damageType', 'notes'].includes(field)) {
+          attack[field] = event.currentTarget.value;
+        }
+        saveCharacterSheet();
+      };
+
+      node.addEventListener('input', updateAttack);
+      node.addEventListener('change', (event) => {
+        updateAttack(event);
         renderCharacterSheet('combat');
       });
     });

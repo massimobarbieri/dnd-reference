@@ -1387,7 +1387,7 @@ h1 {
 
 .sheet-attack {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(9rem, 1fr) minmax(18rem, 1.6fr) auto;
   gap: .6rem;
   align-items: center;
   border-bottom: 1px solid rgba(217,199,179,.62);
@@ -1410,6 +1410,47 @@ h1 {
   margin: 0;
   color: var(--muted);
   font-size: .82rem;
+}
+
+.sheet-attack-edit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5.8rem 4.6rem;
+  gap: .35rem;
+  min-width: 0;
+}
+
+.sheet-attack-edit label {
+  display: grid;
+  gap: .12rem;
+  min-width: 0;
+}
+
+.sheet-attack-edit label span {
+  color: var(--accent);
+  font-size: .68rem;
+  font-weight: 780;
+}
+
+.sheet-attack-edit input,
+.sheet-attack-edit select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255,250,242,.78);
+  color: var(--ink);
+  font: inherit;
+  font-size: .86rem;
+  min-height: 2rem;
+  padding: 0 .45rem;
+}
+
+.sheet-attack-edit .sheet-check {
+  min-height: 2rem;
+}
+
+.sheet-attack-notes {
+  grid-column: 1 / -1;
 }
 
 .sheet-attack-actions {
@@ -2234,10 +2275,33 @@ code {
   .sheet-attack {
     grid-template-columns: 1fr;
     align-items: start;
+    border: 1px solid rgba(217,199,179,.7);
+    border-radius: 8px;
+    background: rgba(255,250,242,.58);
+    padding: .55rem;
+  }
+
+  .sheet-attack-edit {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    width: 100%;
+  }
+
+  .sheet-attack-edit label:first-child,
+  .sheet-attack-notes {
+    grid-column: 1 / -1;
   }
 
   .sheet-attack-actions {
-    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    justify-content: stretch;
+    width: 100%;
+  }
+
+  .sheet-attack-actions button {
+    width: 100%;
+    min-height: 2.15rem;
+    padding-inline: .35rem;
   }
 
   .sheet-class-heading {

@@ -107,6 +107,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'magicItems: []',
   'attunedMagicItems: []',
   'data-sheet-add-attack',
+  'data-sheet-attack-field',
   'data-sheet-remove-attack',
   'data-sheet-skill',
   'data-sheet-suggest-skill',
@@ -173,6 +174,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   '.sheet-spell-grid',
   '.sheet-spell-picker',
   '.sheet-attack-form',
+  '.sheet-attack-edit',
   '.sheet-attack',
   '.sheet-attunement',
   '.sheet-item-actions',
@@ -191,7 +193,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
 ].forEach((token) => assert.ok(cssSource.includes(token), `${token} deve essere presente nel CSS`));
 
 assert.match(configSource, /character_sheet: Scheda/);
-assert.match(indexSource, /20260514-level-summary-spell-slots/);
+assert.match(indexSource, /20260514-attack-editor/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd5'/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd-theme'/);
 
