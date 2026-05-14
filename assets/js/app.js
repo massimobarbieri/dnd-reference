@@ -183,7 +183,7 @@
     ['notes', 'Note'],
   ];
 
-  const CHARACTER_SHEET_SCHEMA_VERSION = 6;
+  const CHARACTER_SHEET_SCHEMA_VERSION = 7;
 
   const DEFAULT_CHARACTER_SHEET = {
     schemaVersion: CHARACTER_SHEET_SCHEMA_VERSION,
@@ -224,6 +224,15 @@
     hitDice: '1d8',
     speed: 9,
     initiativeBonus: 0,
+    status: {
+      inspiration: false,
+      concentration: false,
+      exhaustion: 0,
+      deathSaveSuccesses: 0,
+      deathSaveFailures: 0,
+      conditions: [],
+      notes: '',
+    },
     resources: [],
     attacks: [],
     spellcastingAbility: 'int',
@@ -381,6 +390,7 @@
       },
       skillProficiencies: normalizeSkillProficiencies(migrated.skillProficiencies),
       proficiencies: normalizeProficiencies(migrated.proficiencies),
+      status: normalizeCharacterStatus(migrated.status),
       resources: normalizeLegacyResources(migrated.resources),
       attacks: normalizeLegacyAttacks(migrated.attacks),
       preparedSpells: Array.isArray(migrated.preparedSpells) ? migrated.preparedSpells : [],
@@ -425,6 +435,10 @@
 
     if (sheet.schemaVersion < 6) {
       sheet.resources = normalizeLegacyResources(sheet.resources);
+    }
+
+    if (sheet.schemaVersion < 7) {
+      sheet.status = normalizeCharacterStatus(sheet.status);
     }
 
     return sheet;
@@ -495,6 +509,20 @@
         };
       })
       .filter(Boolean);
+  }
+
+  function normalizeCharacterStatus(status) {
+    const source = status && typeof status === 'object' ? status : {};
+
+    return {
+      inspiration: Boolean(source.inspiration),
+      concentration: Boolean(source.concentration),
+      exhaustion: Math.min(6, Math.max(0, Number(source.exhaustion) || 0)),
+      deathSaveSuccesses: Math.min(3, Math.max(0, Number(source.deathSaveSuccesses) || 0)),
+      deathSaveFailures: Math.min(3, Math.max(0, Number(source.deathSaveFailures) || 0)),
+      conditions: normalizeIdList(source.conditions),
+      notes: source.notes ? String(source.notes) : '',
+    };
   }
 
   function normalizeIdList(value) {
@@ -1448,6 +1476,11 @@
         </div>
 
         <div class="sheet-panel sheet-panel--wide">
+          <h3>Stato</h3>
+          ${renderCharacterStatus()}
+        </div>
+
+        <div class="sheet-panel sheet-panel--wide">
           <h3>Tiri salvezza</h3>
           <div class="save-grid">
             ${ABILITY_META.map(([key, label]) => renderSavingThrowControl(key, label)).join('')}
@@ -1688,6 +1721,71 @@
           <button class="button button--ghost" type="button" data-sheet-remove-resource="${escapeAttr(resource.id)}">Rimuovi</button>
         </div>
       </article>
+    `;
+  }
+
+  function renderCharacterStatus() {
+    const status = appState.characterSheet.status;
+    const conditions = characterConditionOptions();
+
+    return `
+      <div class="sheet-status">
+        <label class="sheet-check">
+          <input type="checkbox" ${status.inspiration ? 'checked' : ''} data-sheet-status-check="inspiration">
+          <span>Ispirazione</span>
+        </label>
+        <label class="sheet-check">
+          <input type="checkbox" ${status.concentration ? 'checked' : ''} data-sheet-status-check="concentration">
+          <span>Concentrazione</span>
+        </label>
+        <label class="sheet-field">
+          <span>Indebolimento</span>
+          <input type="number" min="0" max="6" value="${escapeAttr(String(status.exhaustion))}" data-sheet-status-number="exhaustion">
+        </label>
+        <label class="sheet-field">
+          <span>TS morte riusciti</span>
+          <input type="number" min="0" max="3" value="${escapeAttr(String(status.deathSaveSuccesses))}" data-sheet-status-number="deathSaveSuccesses">
+        </label>
+        <label class="sheet-field">
+          <span>TS morte falliti</span>
+          <input type="number" min="0" max="3" value="${escapeAttr(String(status.deathSaveFailures))}" data-sheet-status-number="deathSaveFailures">
+        </label>
+        <label class="sheet-field">
+          <span>Aggiungi condizione</span>
+          <select data-sheet-add-condition>
+            <option value="">Scegli condizione</option>
+            ${conditions
+              .filter((condition) => !status.conditions.includes(condition.id))
+              .map((condition) => `<option value="${escapeAttr(condition.id)}">${escapeHtml(condition.nome)}</option>`)
+              .join('')}
+          </select>
+        </label>
+      </div>
+
+      ${renderCharacterConditions()}
+      ${sheetStatusTextArea('notes', 'Note di stato rapide...', status.notes)}
+    `;
+  }
+
+  function renderCharacterConditions() {
+    const conditions = appState.characterSheet.status.conditions
+      .map((id) => appState.data.rules_glossary.find((entry) => entry.id === id))
+      .filter(Boolean)
+      .sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'it'));
+
+    if (!conditions.length) {
+      return '<p class="sheet-empty">Nessuna condizione attiva.</p>';
+    }
+
+    return `
+      <div class="sheet-condition-list">
+        ${conditions.map((condition) => `
+          <article class="sheet-condition">
+            <a href="#/rules_glossary/${encodeURIComponent(condition.id)}">${escapeHtml(condition.nome)}</a>
+            <button class="button button--ghost" type="button" data-sheet-remove-condition="${escapeAttr(condition.id)}">Rimuovi</button>
+          </article>
+        `).join('')}
+      </div>
     `;
   }
 
@@ -2000,6 +2098,15 @@
     `;
   }
 
+  function sheetStatusTextArea(key, placeholder, value) {
+    return `
+      <label class="sheet-field sheet-field--wide sheet-status-notes">
+        <span class="visually-hidden">${escapeHtml(placeholder)}</span>
+        <textarea data-sheet-status-field="${escapeAttr(key)}" placeholder="${escapeAttr(placeholder)}">${escapeHtml(value || '')}</textarea>
+      </label>
+    `;
+  }
+
   function bindCharacterSheetEvents() {
     views.detail.querySelectorAll('[data-sheet-field]').forEach((node) => {
       node.addEventListener('input', (event) => {
@@ -2056,6 +2163,50 @@
       node.addEventListener('input', (event) => {
         appState.characterSheet.proficiencies[event.currentTarget.dataset.sheetProficiency] = event.currentTarget.value;
         saveCharacterSheet();
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-status-check]').forEach((node) => {
+      node.addEventListener('change', (event) => {
+        appState.characterSheet.status[event.currentTarget.dataset.sheetStatusCheck] = event.currentTarget.checked;
+        saveCharacterSheet();
+        renderCharacterSheet('combat');
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-status-number]').forEach((node) => {
+      node.addEventListener('input', (event) => {
+        const key = event.currentTarget.dataset.sheetStatusNumber;
+        const max = key === 'exhaustion' ? 6 : 3;
+        appState.characterSheet.status[key] = Math.min(max, Math.max(0, Number(event.currentTarget.value) || 0));
+        saveCharacterSheet();
+      });
+
+      node.addEventListener('change', () => renderCharacterSheet('combat'));
+    });
+
+    views.detail.querySelectorAll('[data-sheet-status-field]').forEach((node) => {
+      node.addEventListener('input', (event) => {
+        appState.characterSheet.status[event.currentTarget.dataset.sheetStatusField] = event.currentTarget.value;
+        saveCharacterSheet();
+      });
+    });
+
+    views.detail.querySelector('[data-sheet-add-condition]')?.addEventListener('change', (event) => {
+      const id = event.currentTarget.value;
+      if (!id) return;
+
+      appState.characterSheet.status.conditions = normalizeIdList([...appState.characterSheet.status.conditions, id]);
+      saveCharacterSheet();
+      renderCharacterSheet('combat');
+    });
+
+    views.detail.querySelectorAll('[data-sheet-remove-condition]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        const id = event.currentTarget.dataset.sheetRemoveCondition;
+        appState.characterSheet.status.conditions = appState.characterSheet.status.conditions.filter((conditionId) => conditionId !== id);
+        saveCharacterSheet();
+        renderCharacterSheet('combat');
       });
     });
 
@@ -2254,6 +2405,12 @@
         );
       })
       .slice(0, 10);
+  }
+
+  function characterConditionOptions() {
+    return appState.data.rules_glossary
+      .filter((entry) => normalizeText(entry.descrittore) === 'condizione')
+      .sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'it'));
   }
 
   function characterSpellSlots() {

@@ -22,6 +22,6 @@ assert.equal(classRules.length, 12);
 ].forEach((token) => assert.ok(appSource.includes(token), `${token} deve essere presente in app.js`));
 
 assert.match(configSource, /classes: Classi/);
-assert.match(indexSource, /20260514-character-sheet-resources/);
+assert.match(indexSource, /20260514-character-sheet-status/);
 
 console.log('Sezione classi OK');

@@ -1045,6 +1045,50 @@ h1 {
   min-height: 5.5rem;
 }
 
+.sheet-status {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .45rem;
+  align-items: end;
+}
+
+.sheet-status-notes {
+  margin-top: .55rem;
+}
+
+.sheet-status-notes textarea {
+  min-height: 5rem;
+}
+
+.sheet-condition-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+  margin-top: .55rem;
+}
+
+.sheet-condition {
+  display: flex;
+  align-items: center;
+  gap: .32rem;
+  border: 1px solid rgba(138,63,35,.2);
+  border-radius: 999px;
+  background: rgba(255,250,242,.6);
+  padding: .22rem .28rem .22rem .55rem;
+}
+
+.sheet-condition a {
+  color: var(--accent);
+  font-size: .84rem;
+  font-weight: 780;
+}
+
+.sheet-condition .button {
+  min-height: 1.65rem;
+  padding: 0 .42rem;
+  font-size: .78rem;
+}
+
 .sheet-resource-form {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) 7rem minmax(0, 1fr) auto;
@@ -1844,6 +1888,19 @@ code {
 
   .sheet-field textarea {
     min-height: 9rem;
+  }
+
+  .sheet-status {
+    grid-template-columns: 1fr;
+  }
+
+  .sheet-condition-list {
+    display: grid;
+  }
+
+  .sheet-condition {
+    border-radius: 8px;
+    justify-content: space-between;
   }
 
   .sheet-resource-form {

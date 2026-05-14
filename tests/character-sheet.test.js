@@ -11,7 +11,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   "character_sheet: {",
   "type: 'tool'",
   "const CHARACTER_SHEET_STORAGE_KEY = 'dnd-reference:character-sheet';",
-  'const CHARACTER_SHEET_SCHEMA_VERSION = 6;',
+  'const CHARACTER_SHEET_SCHEMA_VERSION = 7;',
   'const SKILL_META = [',
   'schemaVersion: CHARACTER_SHEET_SCHEMA_VERSION',
   'function migrateCharacterSheet(value)',
@@ -21,7 +21,11 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'function normalizeSkillProficiencies(value)',
   'function normalizeProficiencies(value)',
   'function normalizeLegacyResources(resources)',
+  'function normalizeCharacterStatus(status)',
   'function renderCharacterSheet(tab =',
+  'function renderCharacterStatus()',
+  'function renderCharacterConditions()',
+  'function sheetStatusTextArea(key, placeholder, value)',
   'function renderCharacterResources()',
   'function renderCharacterResource(resource)',
   'function renderSkillProficiencies()',
@@ -52,11 +56,13 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'function mergeSheetNote(current, note)',
   'function characterAttackBonus(attack)',
   'function characterSpellSlots()',
+  'function characterConditionOptions()',
   'function skillProficiencyBonus(rank)',
   'function classDefaultSpellcastingAbility(classId)',
   'skillProficiencies: Object.fromEntries(SKILL_META.map(([key]) => [key, 0]))',
   'proficiencies: {',
   'resources: []',
+  'status: {',
   'attacks: []',
   'magicItems: []',
   'attunedMagicItems: []',
@@ -68,6 +74,11 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'data-sheet-add-resource',
   'data-sheet-resource-delta',
   'data-sheet-remove-resource',
+  'data-sheet-status-check',
+  'data-sheet-status-number',
+  'data-sheet-status-field',
+  'data-sheet-add-condition',
+  'data-sheet-remove-condition',
   'data-sheet-use-class',
   'data-sheet-add-detail-spell',
   'data-sheet-add-magic-item',
@@ -85,6 +96,8 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   '.skill-suggestions',
   '.skill-control',
   '.sheet-proficiency-grid',
+  '.sheet-status',
+  '.sheet-condition',
   '.sheet-resource-form',
   '.sheet-resource',
   '.sheet-attack-form',
@@ -103,7 +116,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
 ].forEach((token) => assert.ok(cssSource.includes(token), `${token} deve essere presente nel CSS`));
 
 assert.match(configSource, /character_sheet: Scheda/);
-assert.match(indexSource, /20260514-character-sheet-resources/);
+assert.match(indexSource, /20260514-character-sheet-status/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd5'/);
 assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd-theme'/);
 
