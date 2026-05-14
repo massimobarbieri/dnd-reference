@@ -154,6 +154,27 @@
     ['cha', 'Carisma', 'CAR'],
   ];
 
+  const SKILL_META = [
+    ['acrobatics', 'Acrobazia', 'dex'],
+    ['animalHandling', 'Addestrare Animali', 'wis'],
+    ['arcana', 'Arcano', 'int'],
+    ['athletics', 'Atletica', 'str'],
+    ['deception', 'Inganno', 'cha'],
+    ['history', 'Storia', 'int'],
+    ['insight', 'Intuizione', 'wis'],
+    ['intimidation', 'Intimidire', 'cha'],
+    ['investigation', 'Indagare', 'int'],
+    ['medicine', 'Medicina', 'wis'],
+    ['nature', 'Natura', 'int'],
+    ['perception', 'Percezione', 'wis'],
+    ['performance', 'Intrattenere', 'cha'],
+    ['persuasion', 'Persuasione', 'cha'],
+    ['religion', 'Religione', 'int'],
+    ['sleightOfHand', 'Rapidita di Mano', 'dex'],
+    ['stealth', 'Furtivita', 'dex'],
+    ['survival', 'Sopravvivenza', 'wis'],
+  ];
+
   const CHARACTER_SHEET_TABS = [
     ['overview', 'Principale'],
     ['combat', 'Combattimento'],
@@ -162,7 +183,7 @@
     ['notes', 'Note'],
   ];
 
-  const CHARACTER_SHEET_SCHEMA_VERSION = 3;
+  const CHARACTER_SHEET_SCHEMA_VERSION = 5;
 
   const DEFAULT_CHARACTER_SHEET = {
     schemaVersion: CHARACTER_SHEET_SCHEMA_VERSION,
@@ -188,6 +209,13 @@
       int: false,
       wis: false,
       cha: false,
+    },
+    skillProficiencies: Object.fromEntries(SKILL_META.map(([key]) => [key, 0])),
+    proficiencies: {
+      weapons: '',
+      armor: '',
+      tools: '',
+      languages: '',
     },
     armorClass: 10,
     currentHp: 0,
@@ -350,6 +378,8 @@
         ...base.savingThrows,
         ...(migrated.savingThrows || {}),
       },
+      skillProficiencies: normalizeSkillProficiencies(migrated.skillProficiencies),
+      proficiencies: normalizeProficiencies(migrated.proficiencies),
       attacks: normalizeLegacyAttacks(migrated.attacks),
       preparedSpells: Array.isArray(migrated.preparedSpells) ? migrated.preparedSpells : [],
       magicItems: Array.isArray(migrated.magicItems) ? migrated.magicItems : [],
@@ -381,6 +411,14 @@
 
     if (sheet.schemaVersion < 3) {
       sheet.attunedMagicItems = normalizeIdList(sheet.attunedMagicItems);
+    }
+
+    if (sheet.schemaVersion < 4) {
+      sheet.skillProficiencies = normalizeSkillProficiencies(sheet.skillProficiencies);
+    }
+
+    if (sheet.schemaVersion < 5) {
+      sheet.proficiencies = normalizeProficiencies(sheet.proficiencies);
     }
 
     return sheet;
@@ -436,6 +474,26 @@
   function normalizeIdList(value) {
     if (!Array.isArray(value)) return [];
     return Array.from(new Set(value.map((id) => String(id)).filter(Boolean)));
+  }
+
+  function normalizeSkillProficiencies(value) {
+    const source = value && typeof value === 'object' ? value : {};
+
+    return Object.fromEntries(SKILL_META.map(([key]) => {
+      const rank = Math.min(2, Math.max(0, Number(source[key]) || 0));
+      return [key, rank];
+    }));
+  }
+
+  function normalizeProficiencies(value) {
+    const source = value && typeof value === 'object' ? value : {};
+
+    return {
+      weapons: source.weapons ? String(source.weapons) : '',
+      armor: source.armor ? String(source.armor) : '',
+      tools: source.tools ? String(source.tools) : '',
+      languages: source.languages ? String(source.languages) : '',
+    };
   }
 
   /*
@@ -1152,8 +1210,7 @@
    */
   function bindDetailSheetActions(section, item) {
     views.detail.querySelector('[data-sheet-use-class]')?.addEventListener('click', () => {
-      appState.characterSheet.classId = item.id;
-      appState.characterSheet.spellcastingAbility = classDefaultSpellcastingAbility(item.id);
+      applyClassToCharacterSheet(item);
       saveCharacterSheet();
       location.hash = '#/character_sheet/overview';
     });
@@ -1311,6 +1368,16 @@
           <div class="ability-grid">
             ${ABILITY_META.map(([key, label, short]) => renderAbilityCard(key, label, short)).join('')}
           </div>
+        </div>
+
+        <div class="sheet-panel sheet-panel--wide">
+          <h3>Competenze abilita</h3>
+          ${renderSkillProficiencies()}
+        </div>
+
+        <div class="sheet-panel sheet-panel--wide">
+          <h3>Altre competenze</h3>
+          ${renderOtherProficiencies()}
         </div>
 
         <div class="sheet-panel sheet-panel--wide">
@@ -1491,6 +1558,70 @@
         <span>${escapeHtml(label)}</span>
         <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, modifier))}">${escapeHtml(formatSigned(modifier))}</button>
       </label>
+    `;
+  }
+
+  function renderSkillProficiencies() {
+    return `
+      ${renderClassSkillSuggestions()}
+      <div class="skill-grid">
+        ${SKILL_META.map(([key, label, ability]) => renderSkillControl(key, label, ability)).join('')}
+      </div>
+    `;
+  }
+
+  function renderClassSkillSuggestions() {
+    const suggestions = classSkillOptions(characterClassEntry());
+
+    if (!suggestions.length) return '';
+
+    return `
+      <div class="skill-suggestions">
+        <span>Abilita suggerite dalla classe</span>
+        <div>
+          ${suggestions.map(([key, label]) => `
+            <button
+              class="${appState.characterSheet.skillProficiencies[key] ? 'is-active' : ''}"
+              type="button"
+              data-sheet-suggest-skill="${escapeAttr(key)}"
+            >${escapeHtml(label)}</button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderSkillControl(key, label, ability) {
+    const rank = Number(appState.characterSheet.skillProficiencies[key]) || 0;
+    const modifier = abilityModifier(appState.characterSheet.abilities[ability]) + skillProficiencyBonus(rank);
+    const abilityShort = ABILITY_META.find(([abilityKey]) => abilityKey === ability)?.[2] || '';
+
+    return `
+      <div class="skill-control">
+        <div>
+          <strong>${escapeHtml(label)}</strong>
+          <span>${escapeHtml(abilityShort)}</span>
+        </div>
+        <select data-sheet-skill="${escapeAttr(key)}" aria-label="Competenza ${escapeAttr(label)}">
+          <option value="0"${rank === 0 ? ' selected' : ''}>-</option>
+          <option value="1"${rank === 1 ? ' selected' : ''}>C</option>
+          <option value="2"${rank === 2 ? ' selected' : ''}>M</option>
+        </select>
+        <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, modifier))}">${escapeHtml(formatSigned(modifier))}</button>
+      </div>
+    `;
+  }
+
+  function renderOtherProficiencies() {
+    const proficiencies = appState.characterSheet.proficiencies;
+
+    return `
+      <div class="sheet-proficiency-grid">
+        ${sheetProficiencyTextArea('weapons', 'Armi', 'Armi semplici, armi da guerra...', proficiencies.weapons)}
+        ${sheetProficiencyTextArea('armor', 'Armature', 'Armature leggere, scudi...', proficiencies.armor)}
+        ${sheetProficiencyTextArea('tools', 'Strumenti', 'Strumenti da artigiano, strumenti musicali...', proficiencies.tools)}
+        ${sheetProficiencyTextArea('languages', 'Lingue', 'Comune, Elfico...', proficiencies.languages)}
+      </div>
     `;
   }
 
@@ -1781,6 +1912,15 @@
     `;
   }
 
+  function sheetProficiencyTextArea(key, label, placeholder, value) {
+    return `
+      <label class="sheet-field sheet-field--wide">
+        <span>${escapeHtml(label)}</span>
+        <textarea data-sheet-proficiency="${escapeAttr(key)}" placeholder="${escapeAttr(placeholder)}">${escapeHtml(value || '')}</textarea>
+      </label>
+    `;
+  }
+
   function bindCharacterSheetEvents() {
     views.detail.querySelectorAll('[data-sheet-field]').forEach((node) => {
       node.addEventListener('input', (event) => {
@@ -1814,6 +1954,29 @@
         appState.characterSheet.savingThrows[event.currentTarget.dataset.sheetSave] = event.currentTarget.checked;
         saveCharacterSheet();
         renderCharacterSheet(appState.characterSheetTab);
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-skill]').forEach((node) => {
+      node.addEventListener('change', (event) => {
+        appState.characterSheet.skillProficiencies[event.currentTarget.dataset.sheetSkill] = Number(event.currentTarget.value) || 0;
+        saveCharacterSheet();
+        renderCharacterSheet(appState.characterSheetTab);
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-suggest-skill]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        appState.characterSheet.skillProficiencies[event.currentTarget.dataset.sheetSuggestSkill] = 1;
+        saveCharacterSheet();
+        renderCharacterSheet(appState.characterSheetTab);
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-proficiency]').forEach((node) => {
+      node.addEventListener('input', (event) => {
+        appState.characterSheet.proficiencies[event.currentTarget.dataset.sheetProficiency] = event.currentTarget.value;
+        saveCharacterSheet();
       });
     });
 
@@ -2051,6 +2214,75 @@
     return String(entry?.summary || '').toLowerCase().includes('richiede sintonia');
   }
 
+  function applyClassToCharacterSheet(classEntry) {
+    const traits = classTraitsMap(classEntry);
+
+    appState.characterSheet.classId = classEntry.id;
+    appState.characterSheet.spellcastingAbility = classDefaultSpellcastingAbility(classEntry.id);
+    appState.characterSheet.hitDice = classHitDice(traits['Dado Vita']) || appState.characterSheet.hitDice;
+    appState.characterSheet.savingThrows = {
+      ...appState.characterSheet.savingThrows,
+      ...classSavingThrows(traits['Tiri salvezza']),
+    };
+    appState.characterSheet.proficiencies = {
+      ...appState.characterSheet.proficiencies,
+      weapons: traits.Armi || appState.characterSheet.proficiencies.weapons,
+      armor: traits.Armature || appState.characterSheet.proficiencies.armor,
+      tools: traits.Strumenti || appState.characterSheet.proficiencies.tools,
+    };
+    appState.characterSheet.notes = mergeSheetNote(
+      appState.characterSheet.notes,
+      classSkillSuggestion(classEntry, traits.Abilita)
+    );
+  }
+
+  function classTraitsMap(classEntry) {
+    const traits = classEntry?.sezioni?.find((section) => String(section.titolo || '').startsWith('Tratti '));
+
+    return Object.fromEntries((traits?.righe || [])
+      .filter((row) => row?.chiave)
+      .map((row) => [row.chiave, String(row.valore || '').replace(/\.$/, '')]));
+  }
+
+  function classHitDice(value) {
+    const match = String(value || '').match(/d\d+/i);
+    return match ? `1${match[0].toLowerCase()}` : '';
+  }
+
+  function classSavingThrows(value) {
+    const text = normalizeText(value);
+
+    return Object.fromEntries(ABILITY_META.map(([key, label]) => [
+      key,
+      text.includes(normalizeText(label)),
+    ]));
+  }
+
+  function classSkillSuggestion(classEntry, value) {
+    const text = String(value || '').trim();
+    if (!text) return '';
+
+    const className = classEntry.nome.replace(/^Classe:\s*/i, '');
+    return `Competenze abilita ${className}: ${text}`;
+  }
+
+  function classSkillOptions(classEntry) {
+    const text = normalizeText(classTraitsMap(classEntry).Abilita || '');
+    if (!text) return [];
+
+    return SKILL_META
+      .filter(([, label]) => text.includes(normalizeText(label)))
+      .map(([key, label]) => [key, label]);
+  }
+
+  function mergeSheetNote(current, note) {
+    if (!note) return current || '';
+
+    const text = String(current || '').trim();
+    if (text.includes(note)) return text;
+    return text ? `${text}\n\n${note}` : note;
+  }
+
   /*
    * Caratteristica da incantatore predefinita per classe, quando nota.
    */
@@ -2101,6 +2333,10 @@
     if (level >= 9) return 4;
     if (level >= 5) return 3;
     return 2;
+  }
+
+  function skillProficiencyBonus(rank) {
+    return characterProficiencyBonus() * Math.min(2, Math.max(0, Number(rank) || 0));
   }
 
   function abilityModifier(score) {
