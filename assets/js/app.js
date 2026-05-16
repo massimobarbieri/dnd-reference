@@ -15,6 +15,13 @@ import {
   normalizeMagicItem,
 } from './data/normalizers.js';
 
+import {
+  fetchJson,
+  fetchText,
+  loadConfig,
+  parseMonsterImages,
+} from './data/loaders.js';
+
 (() => {
   'use strict';
 
@@ -346,24 +353,7 @@ import {
     }
   }
 
-  /*
-   * Scarica un file JSON e lo converte in oggetto JavaScript.
-   */
-  async function fetchJson(path) {
-    const response = await fetch(path, { cache: 'no-store' });
-    if (!response.ok) throw new Error(`Errore caricamento JSON: ${path}`);
-    return response.json();
-  }
 
-  /*
-   * Scarica un file testuale.
-   * Usato per config.yml e monster-images.yml.
-   */
-  async function fetchText(path) {
-    const response = await fetch(path, { cache: 'no-store' });
-    if (!response.ok) throw new Error(`Errore caricamento testo: ${path}`);
-    return response.text();
-  }
 
   /*
    * Crea una copia profonda semplice per dati JSON-safe.
@@ -726,101 +716,6 @@ import {
    */
   function isClassRule(rule) {
     return String(rule?.id || '').startsWith('classe_');
-  }
-
-  /*
-   * Parser YAML minimale per config.yml.
-   *
-   * Supporta una struttura semplice a due livelli:
-   *
-   * site:
-   *   title: Titolo
-   * paths:
-   *   monsters: data/monsters.json
-   *
-   * Non è un parser YAML completo, ma basta per configurazioni semplici.
-   */
-  async function loadConfig() {
-    const text = await fetchText('config.yml');
-    const config = {};
-    let currentBlock = null;
-
-    text.split(/\r?\n/).forEach((rawLine) => {
-      // Rimuove commenti e spazi finali.
-      const line = rawLine.replace(/#.*$/, '').trimEnd();
-
-      // Ignora righe vuote.
-      if (!line.trim()) return;
-
-      // Riconosce blocchi principali: site:, paths:, labels:, ecc.
-      if (!line.startsWith(' ') && line.endsWith(':')) {
-        currentBlock = line.slice(0, -1).trim();
-        config[currentBlock] = {};
-        return;
-      }
-
-      // Riconosce proprietà indentate di due spazi.
-      const match = line.match(/^\s{2}([\w_]+):\s*(.*)$/);
-
-      if (match && currentBlock) {
-        config[currentBlock][match[1]] = parseYamlScalar(match[2]);
-      }
-    });
-
-    return config;
-  }
-
-  /*
-   * Converte valori YAML semplici in tipi JavaScript.
-   * Supporta:
-   * - booleani
-   * - null
-   * - numeri
-   * - stringhe con o senza virgolette
-   */
-  function parseYamlScalar(value) {
-    const trimmed = value.trim();
-
-    if (trimmed === 'true') return true;
-    if (trimmed === 'false') return false;
-    if (trimmed === 'null') return null;
-
-    if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
-      return Number(trimmed);
-    }
-
-    return trimmed.replace(/^['"]|['"]$/g, '');
-  }
-
-  /*
-   * Parser dedicato a monster-images.yml.
-   *
-   * Formato previsto:
-   *
-   * - id: goblin
-   *   nome: Goblin
-   *   immagine: images/goblin.png
-   *
-   * Restituisce una Map:
-   * id -> oggetto con id, nome, immagine.
-   */
-  function parseMonsterImages(yamlText) {
-    const map = new Map();
-    let current = null;
-
-    yamlText.split(/\r?\n/).forEach((line) => {
-      const itemMatch = line.match(/^\s*-\s+id:\s*(.+)$/);
-      const propMatch = line.match(/^\s{2,}([\w_]+):\s*(.*)$/);
-
-      if (itemMatch) {
-        current = { id: itemMatch[1].trim() };
-        map.set(current.id, current);
-      } else if (current && propMatch) {
-        current[propMatch[1]] = propMatch[2].trim();
-      }
-    });
-
-    return map;
   }
 
   /*
