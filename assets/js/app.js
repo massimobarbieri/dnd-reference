@@ -4103,6 +4103,9 @@
       return renderMatrixRows(visibleRows, matrixColumns);
     }
 
+    const keyColumnClass = tableColumnWrapClass(shouldWrapTableColumn(visibleRows, 'chiave'));
+    const valueColumnClass = tableColumnWrapClass(shouldWrapTableColumn(visibleRows, 'valore'));
+
     return `
       <div class="table-wrap" tabindex="0" aria-label="Tabella scorrevole">
         <table class="data-table data-table-key-value">
@@ -4110,8 +4113,8 @@
             ${visibleRows
               .map((row) => `
                 <tr>
-                  <th scope="row">${formatInline(row.chiave || '', { dice: false })}</th>
-                  <td>${formatInline(row.valore || '')}</td>
+                  <th scope="row"${keyColumnClass}>${formatInline(row.chiave || '', { dice: false })}</th>
+                  <td${valueColumnClass}>${formatInline(row.valore || '')}</td>
                 </tr>
               `)
               .join('')}
@@ -4151,13 +4154,14 @@
    */
   function renderMatrixRows(rows, columns, tableClass = '') {
     const className = ['data-table', 'data-table-matrix', tableClass].filter(Boolean).join(' ');
+    const wrapColumns = columns.map((column) => shouldWrapTableColumn(rows, column));
 
     return `
       <div class="table-wrap table-wrap-wide" tabindex="0" aria-label="Tabella scorrevole">
         <table class="${escapeAttr(className)}" data-column-count="${columns.length}">
           <thead>
             <tr>
-              ${columns.map((column) => `<th scope="col">${formatInline(displayTableColumn(column), { dice: false })}</th>`).join('')}
+              ${columns.map((column, index) => `<th scope="col"${tableColumnWrapClass(wrapColumns[index])}>${formatInline(displayTableColumn(column), { dice: false })}</th>`).join('')}
             </tr>
           </thead>
           <tbody>
@@ -4166,7 +4170,8 @@
                 <tr>
                   ${columns
                     .map((column, index) => {
-                      const tag = index === 0 ? 'th scope="row"' : 'td';
+                      const className = tableColumnWrapClass(wrapColumns[index]);
+                      const tag = index === 0 ? `th scope="row"${className}` : `td${className}`;
                       const closeTag = index === 0 ? 'th' : 'td';
                       return `<${tag}>${renderTableCell(row[column] ?? '', column)}</${closeTag}>`;
                     })
@@ -4178,6 +4183,32 @@
         </table>
       </div>
     `;
+  }
+
+
+  /*
+   * Se almeno una cella supera la soglia, tutta la colonna puo andare a capo.
+   * La regola vale per le tabelle di Regole, Classi e Glossario, incluse le
+   * tabelle chiave/valore e quelle multi-colonna.
+   */
+  function shouldWrapTableColumn(rows, column, threshold = 20) {
+    return rows.some((row) => tableCellTextLength(row?.[column]) > threshold);
+  }
+
+  function tableColumnWrapClass(shouldWrap) {
+    return shouldWrap ? ' class="data-table-cell-wrap"' : '';
+  }
+
+  function tableCellTextLength(value) {
+    if (Array.isArray(value)) {
+      return value.map(tableCellTextLength).join(' ').length;
+    }
+
+    if (value && typeof value === 'object') {
+      return Object.values(value).map(tableCellTextLength).join(' ').length;
+    }
+
+    return String(value ?? '').trim().length;
   }
 
   /*
