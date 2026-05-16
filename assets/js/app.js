@@ -1644,13 +1644,17 @@
    */
   function renderMatrixRows(rows, columns, tableClass = '') {
     const className = ['data-table', 'data-table-matrix', tableClass].filter(Boolean).join(' ');
+    const wrapColumns = columns.map((column) => shouldWrapTableColumn(rows, column));
 
     return `
       <div class="table-wrap table-wrap-wide" tabindex="0" aria-label="Tabella scorrevole">
         <table class="${escapeAttr(className)}" data-column-count="${columns.length}">
           <thead>
             <tr>
-              ${columns.map((column) => `<th scope="col">${formatInline(displayTableColumn(column), { dice: false })}</th>`).join('')}
+              ${columns.map((column, index) => {
+                const wrapClass = wrapColumns[index] ? ' class="data-table-cell-wrap"' : '';
+                return `<th scope="col"${wrapClass}>${formatInline(displayTableColumn(column), { dice: false })}</th>`;
+              }).join('')}
             </tr>
           </thead>
           <tbody>
@@ -1659,7 +1663,8 @@
                 <tr>
                   ${columns
                     .map((column, index) => {
-                      const tag = index === 0 ? 'th scope="row"' : 'td';
+                      const cellClass = wrapColumns[index] ? ' class="data-table-cell-wrap"' : '';
+                      const tag = index === 0 ? `th scope="row"${cellClass}` : `td${cellClass}`;
                       const closeTag = index === 0 ? 'th' : 'td';
                       return `<${tag}>${renderTableCell(row[column] ?? '', column)}</${closeTag}>`;
                     })
@@ -1671,6 +1676,26 @@
         </table>
       </div>
     `;
+  }
+
+  /*
+   * Se almeno una cella della colonna supera 20 caratteri, abilita il ritorno
+   * a capo automatico per tutte le celle di quella colonna.
+   */
+  function shouldWrapTableColumn(rows, column) {
+    return rows.some((row) => tableCellTextLength(row?.[column]) > 20);
+  }
+
+  function tableCellTextLength(value) {
+    if (Array.isArray(value)) {
+      return value.map(tableCellTextLength).join(' ').trim().length;
+    }
+
+    if (value && typeof value === 'object') {
+      return Object.values(value).map(tableCellTextLength).join(' ').trim().length;
+    }
+
+    return String(value ?? '').trim().length;
   }
 
   /*

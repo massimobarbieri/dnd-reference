@@ -632,6 +632,13 @@ h1 {
   white-space: nowrap;
 }
 
+.data-table-matrix th.data-table-cell-wrap,
+.data-table-matrix td.data-table-cell-wrap {
+  max-width: 18rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .data-table-matrix th {
   width: auto;
   font-weight: 760;
