@@ -9,6 +9,7 @@
  * - Permette ricerca, filtri e preferiti.
  * - Salva i preferiti nel localStorage del browser.
  */
+import { SECTION_META } from './config/sections.js';
 
 import {
   normalizeArray,
@@ -138,49 +139,6 @@ import {
     randomInt,
     rollDice,
   } = window.DndDiceRoller;
-
-  /*
-   * Metadati delle sezioni.
-   * Servono per icone, etichette e gestione uniforme delle liste.
-   */
-  const SECTION_META = {
-    monsters: {
-      icon: '🐉',
-      singular: 'mostro',
-      titleKey: 'monsters',
-    },
-    spells: {
-      icon: '✨',
-      singular: 'incantesimo',
-      titleKey: 'spells',
-    },
-    classes: {
-      icon: '🧙',
-      singular: 'classe',
-      titleKey: 'classes',
-    },
-    character_sheet: {
-      icon: '🧾',
-      singular: 'scheda',
-      titleKey: 'character_sheet',
-      type: 'tool',
-    },
-    magic_items: {
-      icon: '🗡️',
-      singular: 'oggetto magico',
-      titleKey: 'magic_items',
-    },
-    rules: {
-      icon: '📖',
-      singular: 'regola',
-      titleKey: 'rules',
-    },
-    rules_glossary: {
-      icon: '🔎',
-      singular: 'voce',
-      titleKey: 'rules_glossary',
-    },
-  };
 
   /*
    * Riferimenti alle tre viste principali dell’interfaccia.
