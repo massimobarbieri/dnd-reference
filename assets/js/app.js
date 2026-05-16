@@ -1684,8 +1684,14 @@
    * La regola vale per le tabelle di Regole, Classi e Glossario, incluse le
    * tabelle chiave/valore e quelle multi-colonna.
    */
-  function shouldWrapTableColumn(rows, column, threshold = 20) {
+  function shouldWrapTableColumn(rows, column) {
+    const threshold = getTableWrapThreshold();
     return rows.some((row) => tableCellTextLength(row?.[column]) > threshold);
+  }
+
+  function getTableWrapThreshold() {
+    const threshold = Number(appState.config?.ui?.table_wrap_threshold);
+    return Number.isFinite(threshold) && threshold >= 0 ? threshold : 20;
   }
 
   function tableColumnWrapClass(shouldWrap) {

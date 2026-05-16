@@ -10,6 +10,10 @@ site:
   show_monster_images: true
   image_fallback_text: Immagine non disponibile
 
+ui:
+  # Numero minimo di caratteri oltre il quale una colonna di tabella va a capo automaticamente.
+  table_wrap_threshold: 10
+
 paths:
   monsters: data/srd/5.2.1/json/srd_5_2_1_monsters.json
   spells: data/srd/5.2.1/json/srd_5_2_1_spells.json
