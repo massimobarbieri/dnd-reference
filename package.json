@@ -1,0 +1,17 @@
+{
+  "name": "dnd-reference",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Web app statica per consultare riferimenti D&D SRD 5.2.1",
+  "scripts": {
+    "test": "node tests/dice-roller.test.js && node tests/roll-tray-markup.test.js && node tests/monster-rolls-data.test.js && node tests/roll-accessibility.test.js",
+    "test:dice": "node tests/dice-roller.test.js",
+    "test:roll-tray": "node tests/roll-tray-markup.test.js",
+    "test:monster-rolls": "node tests/monster-rolls-data.test.js",
+    "test:accessibility": "node tests/roll-accessibility.test.js",
+    "serve": "python3 -m http.server 8080"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
