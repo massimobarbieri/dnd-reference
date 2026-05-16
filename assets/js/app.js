@@ -9,6 +9,12 @@
  * - Permette ricerca, filtri e preferiti.
  * - Salva i preferiti nel localStorage del browser.
  */
+
+import {
+  normalizeArray,
+  normalizeMagicItem,
+} from './data/normalizers.js';
+
 (() => {
   'use strict';
 
@@ -357,14 +363,6 @@
     const response = await fetch(path, { cache: 'no-store' });
     if (!response.ok) throw new Error(`Errore caricamento testo: ${path}`);
     return response.text();
-  }
-
-  /*
-   * Garantisce che il valore sia un array.
-   * Se il file caricato è vuoto o malformato, evita crash nelle map/filter.
-   */
-  function normalizeArray(value) {
-    return Array.isArray(value) ? value : [];
   }
 
   /*
@@ -728,44 +726,6 @@
    */
   function isClassRule(rule) {
     return String(rule?.id || '').startsWith('classe_');
-  }
-
-  /*
-   * Normalizza un singolo oggetto magico.
-   */
-  function normalizeMagicItem(item) {
-    return {
-      ...item,
-      rarita: normalizeMagicItemRarity(item.rarita),
-    };
-  }
-
-  /*
-   * Uniforma le rarità degli oggetti magici.
-   * Esempio:
-   * - "raro" diventa "rara"
-   * - "molto raro" diventa "molto rara"
-   * - rarità multiple diventano "rarità variabile"
-   */
-  function normalizeMagicItemRarity(rarity) {
-    const text = String(rarity || '').trim().toLowerCase();
-
-    if (!text) return '';
-
-    if (text.includes(',') || text.includes(' o ') || text.includes('variabile')) {
-      return 'rarità variabile';
-    }
-
-    const canonicalRarities = {
-      raro: 'rara',
-      rara: 'rara',
-      'molto raro': 'molto rara',
-      'molto rara': 'molto rara',
-      leggendario: 'leggendaria',
-      leggendaria: 'leggendaria',
-    };
-
-    return canonicalRarities[text] || text;
   }
 
   /*
