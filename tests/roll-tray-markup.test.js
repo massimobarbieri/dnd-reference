@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 
-const source = fs.readFileSync('assets/js/app.js', 'utf8');
+const source = fs.readFileSync('assets/js/roll-tray.js', 'utf8');
 const bodyStart = source.indexOf('<div id="roll-tray-body" class="roll-tray-body">');
 const resultIndex = source.indexOf('<div class="roll-result', bodyStart);
 const formIndex = source.indexOf('<form id="roll-tray-form"', bodyStart);

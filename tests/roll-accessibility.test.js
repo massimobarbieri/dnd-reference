@@ -2,10 +2,11 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 
 const appSource = fs.readFileSync('assets/js/app.js', 'utf8');
+const rollTraySource = fs.readFileSync('assets/js/roll-tray.js', 'utf8');
 const cssSource = fs.readFileSync('assets/css/styles.css', 'utf8');
 
 assert.match(appSource, /class="dice-inline" type="button"[^>]+aria-label="Tira/);
-assert.match(appSource, /data-quick-roll="1d\$\{faces\}" aria-label="Tira 1d\$\{faces\}"/);
+assert.match(rollTraySource, /data-quick-roll="1d\$\{faces\}" aria-label="Tira 1d\$\{faces\}"/);
 assert.match(appSource, /data-attack-mode="advantage"[^>]+aria-label="Tira per colpire[^"]+con vantaggio" title="Vantaggio"/);
 assert.match(appSource, /data-attack-mode="disadvantage"[^>]+aria-label="Tira per colpire[^"]+con svantaggio" title="Svantaggio"/);
 assert.match(appSource, /isInsideHtmlTag\(fullText,\s*offset \+ prefix\.length\)/);
