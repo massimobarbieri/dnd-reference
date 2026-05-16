@@ -38,15 +38,19 @@ import {
 } from './features/character-sheet/character-sheet-normalizers.js';
 
 import {
-readJsonStorage,
-saveCharacterSheet,
-loadCharacterSheetArchive,
-switchCharacterSheet,
-createNewCharacterSheet,
-duplicateCharacterSheet,
-deleteActiveCharacterSheet,
-normalizeCharacterSheetArchive,
-mergeCharacterSheetArchives
+  readJsonStorage,
+  saveCharacterSheet,
+  loadCharacterSheetArchive,
+  switchCharacterSheet,
+  createNewCharacterSheet,
+  duplicateCharacterSheet,
+  deleteActiveCharacterSheet,
+  normalizeCharacterSheetArchive,
+  mergeCharacterSheetArchives,
+  CHARACTER_SHEET_STORAGE_KEY,
+  CHARACTER_SHEETS_STORAGE_KEY,
+  ACTIVE_CHARACTER_SHEET_STORAGE_KEY,
+  APP_STORAGE_PREFIX,
 } from './features/character-sheet/character-sheet-storage.js';
 
 import {
@@ -177,11 +181,6 @@ import {
       titleKey: 'rules_glossary',
     },
   };
-
-  const CHARACTER_SHEET_STORAGE_KEY = 'dnd-reference:character-sheet';
-  const CHARACTER_SHEETS_STORAGE_KEY = 'dnd-reference:character-sheets';
-  const ACTIVE_CHARACTER_SHEET_STORAGE_KEY = 'dnd-reference:active-character-sheet';
-  const APP_STORAGE_PREFIX = 'dnd-reference:';
 
   /*
    * Riferimenti alle tre viste principali dell’interfaccia.

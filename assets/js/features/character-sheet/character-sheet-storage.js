@@ -120,3 +120,8 @@ export async function normalizeCharacterSheetArchive(value) {
       sheets,
     };
   }
+
+export  const CHARACTER_SHEET_STORAGE_KEY = 'dnd-reference:character-sheet';
+export  const CHARACTER_SHEETS_STORAGE_KEY = 'dnd-reference:character-sheets';
+export  const ACTIVE_CHARACTER_SHEET_STORAGE_KEY = 'dnd-reference:active-character-sheet';
+export  const APP_STORAGE_PREFIX = 'dnd-reference:';
