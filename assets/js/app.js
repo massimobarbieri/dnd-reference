@@ -37,6 +37,18 @@ import {
   cloneJson,
 } from './features/character-sheet/character-sheet-normalizers.js';
 
+import {
+readJsonStorage,
+saveCharacterSheet,
+loadCharacterSheetArchive,
+switchCharacterSheet,
+createNewCharacterSheet,
+duplicateCharacterSheet,
+deleteActiveCharacterSheet,
+normalizeCharacterSheetArchive,
+mergeCharacterSheetArchives
+} from './features/character-sheet/character-sheet-storage.js';
+
 (() => {
   'use strict';
 
@@ -366,148 +378,6 @@ import {
       console.error(error);
       showError();
     }
-  }
-
-  /*
-   * Carica l'archivio multi-personaggio. Se esiste solo la vecchia chiave
-   * singola, la migra come prima scheda senza richiedere azioni all'utente.
-   */
-  function loadCharacterSheetArchive() {
-    const storedSheets = readJsonStorage(CHARACTER_SHEETS_STORAGE_KEY, null);
-    const legacySheet = readJsonStorage(CHARACTER_SHEET_STORAGE_KEY, null);
-    const rawSheets = Array.isArray(storedSheets) && storedSheets.length
-      ? storedSheets
-      : [legacySheet && typeof legacySheet === 'object' ? legacySheet : {}];
-
-    appState.characterSheets = uniqueCharacterSheets(rawSheets.map(normalizeCharacterSheet));
-    appState.activeCharacterSheetId = localStorage.getItem(ACTIVE_CHARACTER_SHEET_STORAGE_KEY) || appState.characterSheets[0]?.id || '';
-    appState.characterSheet = appState.characterSheets.find((sheet) => sheet.id === appState.activeCharacterSheetId) || appState.characterSheets[0];
-    appState.activeCharacterSheetId = appState.characterSheet.id;
-    saveCharacterSheet();
-  }
-
-  function readJsonStorage(key, fallback) {
-    try {
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    } catch {
-      return fallback;
-    }
-  }
-
-
-  function mergeCharacterSheetArchives(currentSheets, importedSheets) {
-    const byId = new Map();
-
-    currentSheets.forEach((sheet) => {
-      if (sheet?.id) byId.set(sheet.id, sheet);
-    });
-
-    importedSheets.forEach((sheet) => {
-      if (!sheet?.id || byId.has(sheet.id)) return;
-      byId.set(sheet.id, sheet);
-    });
-
-    return uniqueCharacterSheets([...byId.values()].map(normalizeCharacterSheet));
-  }
-
-  /*
-   * Normalizza una scheda parziale mantenendo compatibilita con campi nuovi.
-   * I sotto-oggetti vengono sempre ricostruiti per evitare riferimenti o shape
-   * vecchie provenienti da localStorage/import JSON.
-   */
-  function normalizeCharacterSheet(sheet) {
-    const base = cloneJson(DEFAULT_CHARACTER_SHEET);
-    const value = sheet && typeof sheet === 'object' ? sheet : {};
-    const migrated = migrateCharacterSheet(value);
-
-    return {
-      ...base,
-      ...migrated,
-      id: migrated.id ? String(migrated.id) : createCharacterSheetId(),
-      schemaVersion: CHARACTER_SHEET_SCHEMA_VERSION,
-      abilities: {
-        ...base.abilities,
-        ...(migrated.abilities || {}),
-      },
-      savingThrows: {
-        ...base.savingThrows,
-        ...(migrated.savingThrows || {}),
-      },
-      skillProficiencies: normalizeSkillProficiencies(migrated.skillProficiencies),
-      proficiencies: normalizeProficiencies(migrated.proficiencies),
-      status: normalizeCharacterStatus(migrated.status),
-      resources: normalizeLegacyResources(migrated.resources),
-      attacks: normalizeLegacyAttacks(migrated.attacks),
-      spellSlotsUsed: normalizeSpellSlotsUsed(migrated.spellSlotsUsed),
-      preparedSpells: Array.isArray(migrated.preparedSpells) ? migrated.preparedSpells : [],
-      magicItems: Array.isArray(migrated.magicItems) ? migrated.magicItems : [],
-      attunedMagicItems: normalizeIdList(migrated.attunedMagicItems),
-      coins: {
-        ...base.coins,
-        ...(migrated.coins || {}),
-      },
-    };
-  }
-
-  /*
-   * Salva archivio e scheda attiva. La vecchia chiave singola resta aggiornata
-   * per compatibilita con esportazioni/manual debug precedenti.
-   */
-  function saveCharacterSheet() {
-    const index = appState.characterSheets.findIndex((sheet) => sheet.id === appState.characterSheet.id);
-    if (index >= 0) {
-      appState.characterSheets[index] = appState.characterSheet;
-    } else {
-      appState.characterSheets.push(appState.characterSheet);
-    }
-
-    appState.activeCharacterSheetId = appState.characterSheet.id;
-    localStorage.setItem(CHARACTER_SHEETS_STORAGE_KEY, JSON.stringify(appState.characterSheets));
-    localStorage.setItem(ACTIVE_CHARACTER_SHEET_STORAGE_KEY, appState.activeCharacterSheetId);
-    localStorage.setItem(CHARACTER_SHEET_STORAGE_KEY, JSON.stringify(appState.characterSheet));
-    appState.data.character_sheet = [appState.characterSheet];
-  }
-
-  function switchCharacterSheet(id) {
-    const next = appState.characterSheets.find((sheet) => sheet.id === id);
-    if (!next) return false;
-
-    saveCharacterSheet();
-    appState.characterSheet = next;
-    appState.activeCharacterSheetId = next.id;
-    saveCharacterSheet();
-    return true;
-  }
-
-  function createNewCharacterSheet() {
-    saveCharacterSheet();
-    appState.characterSheet = normalizeCharacterSheet({ name: 'Nuovo personaggio' });
-    appState.characterSheets.push(appState.characterSheet);
-    saveCharacterSheet();
-  }
-
-  function duplicateCharacterSheet() {
-    const copy = normalizeCharacterSheet({
-      ...cloneJson(appState.characterSheet),
-      id: createCharacterSheetId(),
-      name: `${appState.characterSheet.name || 'Personaggio'} copia`,
-    });
-
-    saveCharacterSheet();
-    appState.characterSheet = copy;
-    appState.characterSheets.push(copy);
-    saveCharacterSheet();
-  }
-
-  function deleteActiveCharacterSheet() {
-    if (appState.characterSheets.length <= 1) return false;
-
-    const currentId = appState.characterSheet.id;
-    appState.characterSheets = appState.characterSheets.filter((sheet) => sheet.id !== currentId);
-    appState.characterSheet = appState.characterSheets[0];
-    saveCharacterSheet();
-    return true;
   }
 
   /*

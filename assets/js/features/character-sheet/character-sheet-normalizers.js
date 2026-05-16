@@ -1,20 +1,39 @@
 /*
-* Normalizza un archivio esportato con piu schede. L'import sostituisce
-* l'archivio locale, quindi qui garantiamo almeno una scheda valida.
+* Normalizza una scheda parziale mantenendo compatibilita con campi nuovi.
+* I sotto-oggetti vengono sempre ricostruiti per evitare riferimenti o shape
+* vecchie provenienti da localStorage/import JSON.
 */
-export async function normalizeCharacterSheetArchive(value) {
-    if (!value || typeof value !== 'object' || !Array.isArray(value.sheets)) {
-        throw new Error('Archivio schede non valido');
-    }
-
-    const sheets = uniqueCharacterSheets(value.sheets.map(normalizeCharacterSheet));
-    if (!sheets.length) throw new Error('Archivio schede vuoto');
-
-    const activeCharacterSheetId = String(value.activeCharacterSheetId || '');
+export async function normalizeCharacterSheet(sheet) {
+    const base = cloneJson(DEFAULT_CHARACTER_SHEET);
+    const value = sheet && typeof sheet === 'object' ? sheet : {};
+    const migrated = migrateCharacterSheet(value);
 
     return {
-      activeCharacterSheetId,
-      sheets,
+      ...base,
+      ...migrated,
+      id: migrated.id ? String(migrated.id) : createCharacterSheetId(),
+      schemaVersion: CHARACTER_SHEET_SCHEMA_VERSION,
+      abilities: {
+        ...base.abilities,
+        ...(migrated.abilities || {}),
+      },
+      savingThrows: {
+        ...base.savingThrows,
+        ...(migrated.savingThrows || {}),
+      },
+      skillProficiencies: normalizeSkillProficiencies(migrated.skillProficiencies),
+      proficiencies: normalizeProficiencies(migrated.proficiencies),
+      status: normalizeCharacterStatus(migrated.status),
+      resources: normalizeLegacyResources(migrated.resources),
+      attacks: normalizeLegacyAttacks(migrated.attacks),
+      spellSlotsUsed: normalizeSpellSlotsUsed(migrated.spellSlotsUsed),
+      preparedSpells: Array.isArray(migrated.preparedSpells) ? migrated.preparedSpells : [],
+      magicItems: Array.isArray(migrated.magicItems) ? migrated.magicItems : [],
+      attunedMagicItems: normalizeIdList(migrated.attunedMagicItems),
+      coins: {
+        ...base.coins,
+        ...(migrated.coins || {}),
+      },
     };
   }
 
