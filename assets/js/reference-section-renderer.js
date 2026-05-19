@@ -1,4 +1,4 @@
-import { formatDisplayValue } from './display-values.js?v=20260519-origins';
+import { formatDisplayValue } from './display-values.js?v=20260519-entities';
 
 export function createReferenceSectionRenderer({
   appState,

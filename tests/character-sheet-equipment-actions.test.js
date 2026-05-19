@@ -16,6 +16,7 @@ const { pathToFileURL } = require('node:url');
       },
       proficiencies: {
         tools: '',
+        languages: '',
       },
       equipment: '',
       equipmentItems: [],
@@ -101,6 +102,30 @@ const { pathToFileURL } = require('node:url');
   assert.equal(appState.characterSheet.skillProficiencies.religion, 1);
   assert.equal(appState.characterSheet.proficiencies.tools, 'scorte da calligrafo.');
   assert.ok(appState.characterSheet.references.some((entry) => entry.section === 'backgrounds' && entry.id === 'accolito'));
+
+  actions.addEquipmentItemToCharacterSheet({
+    id: 'pugnale',
+    nome: 'Pugnale',
+    tipo: 'arma',
+    categoria: 'Mischia semplice',
+    danni: '1d4 perforanti',
+    proprieta: ['accurata', 'leggera'],
+    padronanza: 'Graffio',
+    peso: '0,5 kg',
+    costo: '2 mo',
+    descrizione: 'Mischia semplice; danni 1d4 perforanti.',
+  });
+  assert.ok(appState.characterSheet.equipmentItems.some((entry) => entry.name === 'Pugnale'));
+  assert.ok(appState.characterSheet.attacks.some((entry) => entry.name === 'Pugnale'));
+  assert.ok(appState.characterSheet.references.some((entry) => entry.section === 'equipment' && entry.id === 'pugnale'));
+
+  actions.applyLanguageToCharacterSheet({
+    id: 'comune',
+    nome: 'Comune',
+    categoria: 'Standard',
+  });
+  assert.equal(appState.characterSheet.proficiencies.languages, 'Comune');
+  assert.ok(appState.characterSheet.references.some((entry) => entry.section === 'languages' && entry.id === 'comune'));
 
   console.log('Azioni equipaggiamento scheda OK');
 })().catch((error) => {

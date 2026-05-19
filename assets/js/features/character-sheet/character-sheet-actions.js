@@ -58,6 +58,25 @@ export function createCharacterSheetActionsController({
   }
 
   /*
+   * Importa una voce del JSON equipaggiamento nell'inventario.
+   */
+  function addEquipmentItemToCharacterSheet(item) {
+    if (!item?.id) return false;
+
+    const row = equipmentRowFromItem(item);
+    const added = addEquipmentToCharacterSheet(
+      { id: item.id, nome: item.nome || item.id },
+      row,
+      item.categoria || item.tipo || ''
+    );
+
+    if (!added) return false;
+    addReferenceToCharacterSheet('equipment', item, { save: false });
+    saveCharacterSheet();
+    return true;
+  }
+
+  /*
    * Applica una specie alla scheda e la conserva anche come riferimento SRD.
    */
   function applySpeciesToCharacterSheet(species) {
@@ -84,6 +103,21 @@ export function createCharacterSheetActionsController({
     appState.characterSheet.background = background.nome || background.id;
     applyBackgroundProficiencies(background);
     addReferenceToCharacterSheet('backgrounds', background, { save: false });
+    saveCharacterSheet();
+    return true;
+  }
+
+  /*
+   * Aggiunge una lingua alle competenze linguistiche della scheda.
+   */
+  function applyLanguageToCharacterSheet(language) {
+    if (!language?.id) return false;
+
+    appState.characterSheet.proficiencies.languages = appendUniqueText(
+      appState.characterSheet.proficiencies.languages,
+      language.nome || language.id
+    );
+    addReferenceToCharacterSheet('languages', language, { save: false });
     saveCharacterSheet();
     return true;
   }
@@ -153,6 +187,24 @@ export function createCharacterSheetActionsController({
 
     if (section === 'backgrounds') {
       return [Array.isArray(item.punteggi_caratteristica) ? item.punteggi_caratteristica.join(', ') : '', item.talento_origine]
+        .filter(Boolean)
+        .join(' · ');
+    }
+
+    if (section === 'equipment') {
+      return [item.categoria || item.tipo, item.danni, item.classe_armatura ? `CA ${item.classe_armatura}` : null]
+        .filter(Boolean)
+        .join(' · ');
+    }
+
+    if (section === 'feats') {
+      return [item.categoria, item.prerequisito ? `Prerequisito: ${item.prerequisito}` : null]
+        .filter(Boolean)
+        .join(' · ');
+    }
+
+    if (section === 'languages') {
+      return [item.categoria, item.tiro_casuale && item.tiro_casuale !== '—' ? `1d12 ${item.tiro_casuale}` : null]
         .filter(Boolean)
         .join(' · ');
     }
@@ -235,6 +287,24 @@ export function createCharacterSheetActionsController({
     return String(row.Nome || row.Oggetto || row.Armatura || row.Voce || '').trim();
   }
 
+  function equipmentRowFromItem(item) {
+    return {
+      Categoria: item.categoria || item.tipo || '',
+      Nome: item.nome || item.oggetto || item.id,
+      Oggetto: item.oggetto,
+      Armatura: ['armatura', 'scudo'].includes(item.tipo) ? item.nome : '',
+      Danni: item.danni || '',
+      'Classe Armatura': item.classe_armatura || '',
+      Proprietà: Array.isArray(item.proprieta) ? item.proprieta.join(', ') : item.proprieta,
+      Padronanza: item.padronanza || '',
+      Peso: item.peso || '',
+      Costo: item.costo || '',
+      Forza: item.forza || '',
+      Furtività: item.furtivita || '',
+      Riepilogo: item.descrizione || '',
+    };
+  }
+
   function equipmentItem(rule, row, sectionTitle, name) {
     return {
       id: `equipment-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
@@ -282,11 +352,13 @@ export function createCharacterSheetActionsController({
   }
 
   return {
+    addEquipmentItemToCharacterSheet,
     addEquipmentToCharacterSheet,
     addMagicItemToCharacterSheet,
     addReferenceToCharacterSheet,
     addSpellToCharacterSheet,
     applyBackgroundToCharacterSheet,
+    applyLanguageToCharacterSheet,
     applySpeciesToCharacterSheet,
     magicItemRequiresAttunement,
     resetCharacterResources,

@@ -1,5 +1,5 @@
-import { createReferenceSectionRenderer } from './reference-section-renderer.js?v=20260519-origins';
-import { formatDisplayValue } from './display-values.js?v=20260519-origins';
+import { createReferenceSectionRenderer } from './reference-section-renderer.js?v=20260519-entities';
+import { formatDisplayValue } from './display-values.js?v=20260519-entities';
 
 export function createReferenceDetailRenderer({
   appState,
@@ -37,6 +37,9 @@ export function createReferenceDetailRenderer({
     if (section === 'classes') return renderClass(item);
     if (section === 'species') return renderSpecies(item);
     if (section === 'backgrounds') return renderBackground(item);
+    if (section === 'equipment') return renderEquipment(item);
+    if (section === 'feats') return renderFeat(item);
+    if (section === 'languages') return renderLanguage(item);
     if (section === 'rules') return renderRule(item);
     if (section === 'rules_glossary') return renderGlossaryEntry(item);
     return renderMagicItem(item);
@@ -375,6 +378,80 @@ export function createReferenceDetailRenderer({
       <div class="description">${formatInline(background.descrizione || '')}</div>
 
       ${renderSections('Dettagli', background.sezioni)}
+    `;
+  }
+
+  function renderEquipment(item) {
+    return `
+      ${renderHeader(
+        'equipment',
+        item,
+        [item.categoria || item.tipo, item.pagine_sorgente ? `pag. ${item.pagine_sorgente}` : null].filter(Boolean).join(' · ')
+      )}
+      ${renderSheetActions('equipment', item)}
+
+      ${compactMeta([
+        ['Capitolo', item.capitolo],
+        ['Tipo', item.tipo],
+        ['Categoria', item.categoria],
+        ['Danni', item.danni],
+        ['Classe Armatura', item.classe_armatura],
+        ['Proprietà', item.proprieta],
+        ['Padronanza', item.padronanza],
+        ['Caratteristica', item.caratteristica],
+        ['Costo', item.costo],
+        ['Peso', item.peso],
+        ['Pagine SRD', item.pagine_sorgente],
+      ])}
+
+      <div class="description">${formatInline(item.descrizione || '')}</div>
+
+      ${renderSections('Dettagli', item.sezioni)}
+    `;
+  }
+
+  function renderFeat(feat) {
+    return `
+      ${renderHeader(
+        'feats',
+        feat,
+        [feat.categoria, feat.prerequisito ? `Prerequisito: ${feat.prerequisito}` : null].filter(Boolean).join(' · ')
+      )}
+      ${renderSheetActions('feats', feat)}
+
+      ${compactMeta([
+        ['Capitolo', feat.capitolo],
+        ['Categoria', feat.categoria],
+        ['Prerequisito', feat.prerequisito],
+        ['Ripetibile', feat.ripetibile ? 'Sì' : 'No'],
+        ['Pagine SRD', feat.pagine_sorgente],
+      ])}
+
+      <div class="description">${formatInline(feat.descrizione || '')}</div>
+
+      ${renderSections('Dettagli', feat.sezioni)}
+    `;
+  }
+
+  function renderLanguage(language) {
+    return `
+      ${renderHeader(
+        'languages',
+        language,
+        [language.categoria, language.pagine_sorgente ? `pag. ${language.pagine_sorgente}` : null].filter(Boolean).join(' · ')
+      )}
+      ${renderSheetActions('languages', language)}
+
+      ${compactMeta([
+        ['Capitolo', language.capitolo],
+        ['Categoria', language.categoria],
+        ['Tiro casuale', language.tiro_casuale],
+        ['Pagine SRD', language.pagine_sorgente],
+      ])}
+
+      <div class="description">${formatInline(language.descrizione || '')}</div>
+
+      ${renderSections('Dettagli', language.sezioni)}
     `;
   }
 
