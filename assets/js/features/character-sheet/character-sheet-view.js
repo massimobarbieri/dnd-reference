@@ -58,7 +58,7 @@ export const CHARACTER_SHEET_TABS = [
 * Versione del formato salvato in localStorage/esportazione.
 * Incrementare quando si aggiungono campi persistenti alla scheda.
 */
-export const CHARACTER_SHEET_SCHEMA_VERSION = 10;
+export const CHARACTER_SHEET_SCHEMA_VERSION = 11;
 
 /*
 * Modello canonico della scheda. Tutte le importazioni e i salvataggi
@@ -121,6 +121,7 @@ export const DEFAULT_CHARACTER_SHEET = {
     magicItems: [],
     attunedMagicItems: [],
     references: [],
+    equipmentItems: [],
     equipment: '',
     coins: {
       pp: 0,

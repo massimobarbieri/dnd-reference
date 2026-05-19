@@ -1823,6 +1823,76 @@ h1 {
   gap: .35rem;
 }
 
+.sheet-equipment-form {
+  display: grid;
+  grid-template-columns: minmax(10rem, 2fr) minmax(4rem, .55fr) minmax(6rem, 1fr) minmax(6rem, 1fr) auto;
+  align-items: end;
+  gap: .45rem;
+  margin-bottom: .6rem;
+}
+
+.sheet-equipment-list {
+  display: grid;
+  gap: .45rem;
+}
+
+.sheet-equipment-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: .45rem;
+  border: 1px solid rgba(217,199,179,.62);
+  border-radius: 8px;
+  background: rgba(255,255,255,.45);
+  padding: .6rem;
+}
+
+.sheet-equipment-main strong,
+.sheet-equipment-main span,
+.sheet-equipment-main small {
+  display: block;
+}
+
+.sheet-equipment-main strong {
+  color: var(--accent);
+  font-size: .96rem;
+}
+
+.sheet-equipment-main span,
+.sheet-equipment-main small,
+.sheet-equipment-main p {
+  color: var(--muted);
+  font-size: .82rem;
+}
+
+.sheet-equipment-main p {
+  margin: .2rem 0 0;
+}
+
+.sheet-equipment-edit {
+  display: grid;
+  grid-template-columns: minmax(9rem, 1.4fr) minmax(4rem, .5fr) minmax(5rem, .75fr) minmax(5rem, .75fr) minmax(10rem, 1.8fr);
+  gap: .4rem;
+}
+
+.sheet-equipment-edit label {
+  display: grid;
+  gap: .16rem;
+  min-width: 0;
+  color: var(--muted);
+  font-size: .74rem;
+  font-weight: 720;
+}
+
+.sheet-equipment-edit input {
+  width: 100%;
+}
+
+.sheet-equipment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+}
+
 .prepared-spell,
 .sheet-item {
   display: grid;
@@ -2227,6 +2297,11 @@ code {
     min-height: 2.35rem;
     padding: 0 .7rem;
     font-size: .92rem;
+  }
+
+  .sheet-equipment-form,
+  .sheet-equipment-edit {
+    grid-template-columns: 1fr;
   }
 
   .detail-card {

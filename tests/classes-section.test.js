@@ -44,6 +44,6 @@ assert.ok(
 
 assert.match(configSource, /classes: Classi/);
 assert.match(configSource, /classes: data\/srd\/5\.2\.1\/json\/srd_5_2_1_classes\.json/);
-assert.match(indexSource, /20260519-sheet-modern2/);
+assert.match(indexSource, /20260519-sheet-inventory3/);
 
 console.log('Sezione classi OK');

@@ -8,6 +8,7 @@ const { pathToFileURL } = require('node:url');
   const appState = {
     characterSheet: {
       equipment: '',
+      equipmentItems: [],
       attacks: [],
       references: [],
       magicItems: [],
@@ -37,15 +38,32 @@ const { pathToFileURL } = require('node:url');
 
   assert.equal(added, true);
   assert.equal(saveCount, 1);
-  assert.match(appState.characterSheet.equipment, /\[SRD\] Pugnale/);
-  assert.match(appState.characterSheet.equipment, /Costo: 2 mo/);
+  assert.equal(appState.characterSheet.equipmentItems.length, 1);
+  assert.equal(appState.characterSheet.equipmentItems[0].name, 'Pugnale');
+  assert.equal(appState.characterSheet.equipmentItems[0].cost, '2 mo');
+  assert.match(appState.characterSheet.equipmentItems[0].notes, /Danni: 1d4 perforanti/);
   assert.equal(appState.characterSheet.attacks.length, 1);
   assert.equal(appState.characterSheet.attacks[0].name, 'Pugnale');
   assert.equal(appState.characterSheet.attacks[0].damage, '1d4');
   assert.equal(appState.characterSheet.attacks[0].damageType, 'perforanti');
 
   actions.addEquipmentToCharacterSheet({ id: 'armi', nome: 'Armi' }, { Nome: 'Pugnale', Danni: '1d4 perforanti' }, 'Armi principali');
+  assert.equal(appState.characterSheet.equipmentItems.length, 1);
   assert.equal(appState.characterSheet.attacks.length, 1);
+
+  actions.addEquipmentToCharacterSheet(
+    { id: 'armature', nome: 'Armature' },
+    {
+      Armatura: 'Armatura di cuoio',
+      'Classe Armatura': '11 + Des',
+      Peso: '5 kg',
+      Costo: '10 mo',
+    },
+    'Armature complete'
+  );
+  assert.equal(appState.characterSheet.equipmentItems.length, 2);
+  assert.equal(appState.characterSheet.equipmentItems[1].armorClass, '11 + Des');
+  assert.equal(appState.characterSheet.equipmentItems[1].weight, '5 kg');
 
   console.log('Azioni equipaggiamento scheda OK');
 })().catch((error) => {

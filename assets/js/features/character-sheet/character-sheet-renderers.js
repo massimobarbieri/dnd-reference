@@ -1,8 +1,8 @@
-import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260519-sheet-modern2';
-import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260519-sheet-modern2';
-import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260519-sheet-modern2';
-import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260519-sheet-modern2';
-import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260519-sheet-modern2';
+import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260519-sheet-inventory3';
+import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260519-sheet-inventory3';
+import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260519-sheet-inventory3';
+import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260519-sheet-inventory3';
+import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260519-sheet-inventory3';
 
 export function createCharacterSheetRenderer({
   appState,

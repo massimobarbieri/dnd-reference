@@ -3,7 +3,7 @@ import {
   SKILL_META,
   CHARACTER_SHEET_SCHEMA_VERSION,
   DEFAULT_CHARACTER_SHEET,
-} from './character-sheet-view.js?v=20260519-sheet-modern2';
+} from './character-sheet-view.js?v=20260519-sheet-inventory3';
 
 /*
 * Normalizza una scheda parziale mantenendo compatibilita con campi nuovi.
@@ -38,6 +38,7 @@ export function normalizeCharacterSheet(sheet) {
       magicItems: Array.isArray(migrated.magicItems) ? migrated.magicItems : [],
       attunedMagicItems: normalizeIdList(migrated.attunedMagicItems),
       references: normalizeSheetReferences(migrated.references),
+      equipmentItems: normalizeEquipmentItems(migrated.equipmentItems),
       coins: {
         ...base.coins,
         ...(migrated.coins || {}),
@@ -95,6 +96,10 @@ export function migrateCharacterSheet(value) {
 
     if (sheet.schemaVersion < 10) {
       sheet.references = normalizeSheetReferences(sheet.references);
+    }
+
+    if (sheet.schemaVersion < 11) {
+      sheet.equipmentItems = normalizeEquipmentItems(sheet.equipmentItems);
     }
 
     return sheet;
@@ -222,6 +227,30 @@ export function normalizeSheetReferences(value) {
           id,
           name: entry.name ? String(entry.name) : id,
           summary: entry.summary ? String(entry.summary) : '',
+        };
+      })
+      .filter(Boolean);
+  }
+
+export function normalizeEquipmentItems(value) {
+    if (!Array.isArray(value)) return [];
+
+    return value
+      .map((item, index) => {
+        if (!item || typeof item !== 'object') return null;
+        const name = item.name ? String(item.name).trim() : '';
+        if (!name) return null;
+
+        return {
+          id: item.id ? String(item.id) : `equipment-${index + 1}`,
+          name,
+          quantity: Math.max(1, Number(item.quantity) || 1),
+          weight: item.weight ? String(item.weight) : '',
+          cost: item.cost ? String(item.cost) : '',
+          source: item.source ? String(item.source) : '',
+          notes: item.notes ? String(item.notes) : '',
+          armorClass: item.armorClass ? String(item.armorClass) : '',
+          equipped: Boolean(item.equipped),
         };
       })
       .filter(Boolean);

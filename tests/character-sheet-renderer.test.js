@@ -13,6 +13,7 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
     preparedSpells: ['magic-missile'],
     magicItems: [{ id: 'wand', name: 'Bacchetta', summary: 'rara · richiede sintonia' }],
     references: [{ section: 'rules', id: 'cover', name: 'Copertura', summary: 'Combattimento' }],
+    equipmentItems: [{ id: 'eq-armor', name: 'Armatura di cuoio', quantity: 1, armorClass: '11 + Des', source: 'Armature' }],
   });
 
   api.appState.characterSheet = sheet;
@@ -76,6 +77,9 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
 
   api.renderCharacterSheet('inventory');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-coin="mo"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-add-equipment/);
+  assert.match(views['#detail-view'].innerHTML, /Armatura di cuoio/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-apply-armor="eq-armor"/);
   assert.match(views['#detail-view'].innerHTML, /Bacchetta/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-toggle-attunement="wand"/);
 

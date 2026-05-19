@@ -65,11 +65,8 @@ export function createCharacterSheetActionsController({
     const name = equipmentRowName(row);
     if (!rule?.id || !name) return false;
 
-    const line = equipmentLine(rule, row, sectionTitle, name);
-    const current = String(appState.characterSheet.equipment || '').trim();
-
-    if (!current.split('\n').some((entry) => entry.trim() === line)) {
-      appState.characterSheet.equipment = [current, line].filter(Boolean).join('\n');
+    if (!appState.characterSheet.equipmentItems.some((entry) => normalizeText(entry.name) === normalizeText(name))) {
+      appState.characterSheet.equipmentItems.push(equipmentItem(rule, row, sectionTitle, name));
     }
 
     const attack = equipmentAttack(row, name);
@@ -129,14 +126,30 @@ export function createCharacterSheetActionsController({
     return String(row.Nome || row.Oggetto || row.Armatura || row.Voce || '').trim();
   }
 
-  function equipmentLine(rule, row, sectionTitle, name) {
-    const details = Object.entries(row || {})
-      .filter(([key, value]) => key !== 'Nome' && key !== 'Oggetto' && key !== 'Armatura' && key !== 'Voce' && value && String(value).trim() !== '-')
-      .map(([key, value]) => `${key}: ${value}`)
-      .join('; ');
-    const source = [rule.nome, sectionTitle].filter(Boolean).join(' > ');
+  function equipmentItem(rule, row, sectionTitle, name) {
+    return {
+      id: `equipment-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      name,
+      quantity: 1,
+      weight: row?.Peso ? String(row.Peso) : '',
+      cost: row?.Costo ? String(row.Costo) : '',
+      source: [rule.nome, sectionTitle].filter(Boolean).join(' > '),
+      notes: equipmentNotes(row),
+      armorClass: row?.['Classe Armatura'] ? String(row['Classe Armatura']) : '',
+      equipped: false,
+    };
+  }
 
-    return [`[SRD] ${name}`, details, source ? `(${source})` : ''].filter(Boolean).join(' - ');
+  function equipmentNotes(row) {
+    return [
+      row?.Categoria,
+      row?.Danni ? `Danni: ${row.Danni}` : null,
+      row?.Proprietà ? `Proprietà: ${row.Proprietà}` : null,
+      row?.Padronanza ? `Padronanza: ${row.Padronanza}` : null,
+      row?.Riepilogo,
+      row?.Forza && row.Forza !== '-' ? `Forza: ${row.Forza}` : null,
+      row?.Furtività && row.Furtività !== '-' ? `Furtivita: ${row.Furtività}` : null,
+    ].filter(Boolean).join(' · ');
   }
 
   function equipmentAttack(row, name) {
