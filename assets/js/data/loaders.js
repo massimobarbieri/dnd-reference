@@ -1,13 +1,13 @@
 
 
 export async function fetchJson(path) {
-  const response = await fetch(path);
+  const response = await fetch(path, { cache: 'no-cache' });
   if (!response.ok) throw new Error(`Errore caricamento JSON: ${path}`);
   return response.json();
 }
 
 export async function fetchText(path) {
-  const response = await fetch(path);
+  const response = await fetch(path, { cache: 'no-cache' });
   if (!response.ok) throw new Error(`Errore caricamento testo: ${path}`);
   return response.text();
 }

@@ -3,7 +3,7 @@ import {
   createFilterOptions,
   filterCatalogItems,
   sectionSummaryLine,
-} from './catalog.js?v=20260519-browserverify';
+} from './catalog.js?v=20260519-origins';
 
 export function createReferenceViewController({
   appState,

@@ -3,7 +3,7 @@ import {
   SKILL_META,
   CHARACTER_SHEET_SCHEMA_VERSION,
   DEFAULT_CHARACTER_SHEET,
-} from './character-sheet-view.js?v=20260519-sheet-inventory3';
+} from './character-sheet-view.js?v=20260519-origins';
 
 /*
 * Normalizza una scheda parziale mantenendo compatibilita con campi nuovi.

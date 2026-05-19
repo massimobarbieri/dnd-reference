@@ -1,4 +1,4 @@
-import { formatDisplayValue } from './display-values.js?v=20260519-browserverify';
+import { formatDisplayValue } from './display-values.js?v=20260519-origins';
 
 export function createReferenceSectionRenderer({
   appState,

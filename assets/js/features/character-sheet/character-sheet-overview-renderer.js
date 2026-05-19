@@ -38,8 +38,8 @@ export function createCharacterSheetOverviewRenderer({
             ${sheetField('name', 'Nome', sheet.name)}
             ${sheetSelect('classId', 'Classe', sheet.classId, characterClassOptions())}
             ${sheetNumberField('level', 'Livello', sheet.level, 1, 20)}
-            ${sheetField('ancestry', 'Specie', sheet.ancestry)}
-            ${sheetField('background', 'Background', sheet.background)}
+            ${originSelectOrField('ancestry', 'Specie', sheet.ancestry, appState.data.species, 'Nessuna specie')}
+            ${originSelectOrField('background', 'Background', sheet.background, appState.data.backgrounds, 'Nessun background')}
             ${sheetField('alignment', 'Allineamento', sheet.alignment)}
             ${sheetNumberField('xp', 'PE', sheet.xp, 0)}
           </div>
@@ -141,6 +141,29 @@ export function createCharacterSheetOverviewRenderer({
         <small>${escapeHtml(hint)}</small>
       </div>
     `;
+  }
+
+  function originSelectOrField(key, label, value, entries, emptyLabel) {
+    if (!Array.isArray(entries) || !entries.length) {
+      return sheetField(key, label, value);
+    }
+
+    return sheetSelect(key, label, value, originOptions(entries, value, emptyLabel));
+  }
+
+  function originOptions(entries, value, emptyLabel) {
+    const options = [
+      { value: '', label: emptyLabel },
+      ...entries
+        .map((entry) => ({ value: entry.nome || entry.id, label: entry.nome || entry.id }))
+        .sort((a, b) => a.label.localeCompare(b.label, 'it')),
+    ];
+
+    if (value && !options.some((option) => option.value === value)) {
+      options.splice(1, 0, { value, label: value });
+    }
+
+    return options;
   }
 
   function skillModifier(key) {

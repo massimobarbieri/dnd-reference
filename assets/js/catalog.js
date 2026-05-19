@@ -1,5 +1,5 @@
 import { normalizeText } from './app-core.js';
-import { formatDisplayValue } from './display-values.js?v=20260519-browserverify';
+import { formatDisplayValue } from './display-values.js?v=20260519-origins';
 
 /*
  * Restituisce gli elementi filtrati e ordinati alfabeticamente.
