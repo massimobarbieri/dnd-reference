@@ -35,6 +35,8 @@ export function createReferenceDetailRenderer({
     if (section === 'monsters') return renderMonster(item);
     if (section === 'spells') return renderSpell(item);
     if (section === 'classes') return renderClass(item);
+    if (section === 'species') return renderSpecies(item);
+    if (section === 'backgrounds') return renderBackground(item);
     if (section === 'rules') return renderRule(item);
     if (section === 'rules_glossary') return renderGlossaryEntry(item);
     return renderMagicItem(item);
@@ -326,6 +328,53 @@ export function createReferenceDetailRenderer({
       <div class="description">${formatInline(rule.descrizione || '')}</div>
 
       ${renderSections('Dettagli', rule.sezioni)}
+    `;
+  }
+
+  function renderSpecies(species) {
+    return `
+      ${renderHeader(
+        'species',
+        species,
+        [species.tipo_creatura, species.taglia, species.velocita].filter(Boolean).join(' · ')
+      )}
+      ${renderSheetActions('species', species)}
+
+      ${compactMeta([
+        ['Capitolo', species.capitolo],
+        ['Tipo creatura', species.tipo_creatura],
+        ['Taglia', species.taglia],
+        ['Velocità', species.velocita],
+        ['Pagine SRD', species.pagine_sorgente],
+      ])}
+
+      <div class="description">${formatInline(species.descrizione || '')}</div>
+
+      ${renderSections('Dettagli', species.sezioni)}
+    `;
+  }
+
+  function renderBackground(background) {
+    return `
+      ${renderHeader(
+        'backgrounds',
+        background,
+        [background.talento_origine, background.pagine_sorgente ? `pag. ${background.pagine_sorgente}` : null].filter(Boolean).join(' · ')
+      )}
+      ${renderSheetActions('backgrounds', background)}
+
+      ${compactMeta([
+        ['Capitolo', background.capitolo],
+        ['Caratteristiche', background.punteggi_caratteristica],
+        ['Talento origine', background.talento_origine],
+        ['Competenze', background.competenze],
+        ['Alternativa', background.equipaggiamento_alternativo],
+        ['Pagine SRD', background.pagine_sorgente],
+      ])}
+
+      <div class="description">${formatInline(background.descrizione || '')}</div>
+
+      ${renderSections('Dettagli', background.sezioni)}
     `;
   }
 

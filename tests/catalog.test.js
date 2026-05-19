@@ -38,6 +38,13 @@ const { pathToFileURL } = require('node:url');
     rules: [
       { id: 'azione', nome: 'Azione', categoria: 'Combattimento' },
     ],
+    species: [
+      { id: 'elfo', nome: 'Elfo', tipo_creatura: 'Umanoide', taglia: 'Media', velocita: '9 m', tratti_sintesi: 'lignaggi elfici' },
+    ],
+    backgrounds: [
+      { id: 'accolito', nome: 'Accolito', punteggi_caratteristica: ['Intelligenza', 'Saggezza', 'Carisma'], talento_origine: 'Iniziato alla magia (chierico)' },
+      { id: 'soldato', nome: 'Soldato', punteggi_caratteristica: ['Forza', 'Destrezza', 'Costituzione'], talento_origine: 'Attaccante selvaggio' },
+    ],
     rules_glossary: [
       { id: 'prono', nome: 'Prono', descrittore: 'condizione' },
     ],
@@ -83,6 +90,28 @@ const { pathToFileURL } = require('node:url');
     ['drago']
   );
 
+  assert.deepEqual(
+    createFilterOptions('backgrounds', data, () => '').map((option) => option.value),
+    ['Carisma', 'Costituzione', 'Destrezza', 'Forza', 'Intelligenza', 'Saggezza']
+  );
+
+  assert.deepEqual(
+    filterCatalogItems({
+      section: 'backgrounds',
+      items: data.backgrounds,
+      searchTerm: '',
+      filter: 'Saggezza',
+      showOnlyFavorites: false,
+      isFavorite: () => false,
+    }).map((item) => item.id),
+    ['accolito']
+  );
+
+  assert.match(
+    searchableText('species', data.species[0]),
+    /lignaggi elfici/
+  );
+
   assert.match(
     searchableText('rules_glossary', {
       nome: 'Afferrato',
@@ -100,6 +129,11 @@ const { pathToFileURL } = require('node:url');
       richiede_sintonia: true,
     }, () => ''),
     'Anello · raro · sintonia'
+  );
+
+  assert.equal(
+    sectionSummaryLine('species', data.species[0], () => ''),
+    'Umanoide · Media · 9 m'
   );
 
   console.log('Catalogo reference OK');

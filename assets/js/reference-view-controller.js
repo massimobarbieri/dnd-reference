@@ -23,6 +23,8 @@ export function createReferenceViewController({
   addSpellToCharacterSheet,
   addMagicItemToCharacterSheet,
   addReferenceToCharacterSheet,
+  applySpeciesToCharacterSheet,
+  applyBackgroundToCharacterSheet,
 }) {
   function renderRoute() {
     const route = parseHash(location.hash);
@@ -197,6 +199,8 @@ export function createReferenceViewController({
       monsters: 'Tutti i GS',
       spells: 'Tutti i livelli',
       classes: 'Tutte le classi',
+      species: 'Tutte le specie',
+      backgrounds: 'Tutte le caratteristiche',
       magic_items: 'Tutte le rarità',
       rules: 'Tutte le categorie',
       rules_glossary: 'Tutti i descrittori',
@@ -277,6 +281,16 @@ export function createReferenceViewController({
       location.hash = '#/character_sheet/inventory';
     });
 
+    views.detail.querySelector('[data-sheet-use-species]')?.addEventListener('click', () => {
+      applySpeciesToCharacterSheet(item);
+      location.hash = '#/character_sheet/overview';
+    });
+
+    views.detail.querySelector('[data-sheet-use-background]')?.addEventListener('click', () => {
+      applyBackgroundToCharacterSheet(item);
+      location.hash = '#/character_sheet/overview';
+    });
+
     views.detail.querySelector('[data-sheet-add-reference]')?.addEventListener('click', () => {
       addReferenceToCharacterSheet(section, item);
       location.hash = '#/character_sheet/notes';
@@ -340,6 +354,24 @@ export function renderReferenceSheetActions({ section, item, escapeAttr }) {
       <div class="sheet-actions">
         <button class="button button--primary" type="button" data-sheet-add-magic-item="${escapeAttr(item.id)}">Aggiungi all'inventario</button>
         <a class="button button--ghost" href="#/character_sheet/inventory">Inventario scheda</a>
+      </div>
+    `;
+  }
+
+  if (section === 'species') {
+    return `
+      <div class="sheet-actions">
+        <button class="button button--primary" type="button" data-sheet-use-species="${escapeAttr(item.id)}">Usa per scheda</button>
+        <a class="button button--ghost" href="#/character_sheet/overview">Apri scheda</a>
+      </div>
+    `;
+  }
+
+  if (section === 'backgrounds') {
+    return `
+      <div class="sheet-actions">
+        <button class="button button--primary" type="button" data-sheet-use-background="${escapeAttr(item.id)}">Usa per scheda</button>
+        <a class="button button--ghost" href="#/character_sheet/overview">Apri scheda</a>
       </div>
     `;
   }

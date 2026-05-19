@@ -58,6 +58,37 @@ export function createCharacterSheetActionsController({
   }
 
   /*
+   * Applica una specie alla scheda e la conserva anche come riferimento SRD.
+   */
+  function applySpeciesToCharacterSheet(species) {
+    if (!species?.id) return false;
+
+    appState.characterSheet.ancestry = species.nome || species.id;
+
+    const speed = speedMeters(species.velocita);
+    if (speed !== null) {
+      appState.characterSheet.speed = speed;
+    }
+
+    addReferenceToCharacterSheet('species', species, { save: false });
+    saveCharacterSheet();
+    return true;
+  }
+
+  /*
+   * Applica un background alla scheda e la conserva anche come riferimento SRD.
+   */
+  function applyBackgroundToCharacterSheet(background) {
+    if (!background?.id) return false;
+
+    appState.characterSheet.background = background.nome || background.id;
+    applyBackgroundProficiencies(background);
+    addReferenceToCharacterSheet('backgrounds', background, { save: false });
+    saveCharacterSheet();
+    return true;
+  }
+
+  /*
    * Importa una riga di equipaggiamento SRD nell'inventario libero.
    * Le armi con dado danno creano anche un attacco modificabile.
    */
@@ -81,7 +112,7 @@ export function createCharacterSheetActionsController({
   /*
    * Collega qualsiasi voce SRD alla scheda come riferimento consultabile.
    */
-  function addReferenceToCharacterSheet(section, item) {
+  function addReferenceToCharacterSheet(section, item, options = {}) {
     if (!section || !item?.id) return false;
     if (appState.characterSheet.references.some((entry) => entry.section === section && entry.id === item.id)) return false;
 
@@ -91,7 +122,9 @@ export function createCharacterSheetActionsController({
       name: item.nome || item.id,
       summary: referenceSummary(section, item),
     });
-    saveCharacterSheet();
+    if (options.save !== false) {
+      saveCharacterSheet();
+    }
     return true;
   }
 
@@ -114,11 +147,87 @@ export function createCharacterSheetActionsController({
       return [item.capitolo, item.categoria].filter(Boolean).join(' · ');
     }
 
+    if (section === 'species') {
+      return [item.tipo_creatura, item.taglia, item.velocita].filter(Boolean).join(' · ');
+    }
+
+    if (section === 'backgrounds') {
+      return [Array.isArray(item.punteggi_caratteristica) ? item.punteggi_caratteristica.join(', ') : '', item.talento_origine]
+        .filter(Boolean)
+        .join(' · ');
+    }
+
     if (section === 'rules_glossary') {
       return [item.descrittore, item.pagine_sorgente ? `pag. ${item.pagine_sorgente}` : null].filter(Boolean).join(' · ');
     }
 
     return [item.tipo_base || item.tipo, item.rarita, item.scuola].filter(Boolean).join(' · ');
+  }
+
+  function applyBackgroundProficiencies(background) {
+    const skills = Array.isArray(background.competenze?.abilita)
+      ? background.competenze.abilita
+      : [];
+
+    skills
+      .map(skillKey)
+      .filter(Boolean)
+      .forEach((key) => {
+        if (appState.characterSheet.skillProficiencies?.[key] !== undefined) {
+          appState.characterSheet.skillProficiencies[key] = Math.max(1, Number(appState.characterSheet.skillProficiencies[key]) || 0);
+        }
+      });
+
+    const tools = String(background.competenze?.strumenti || '').trim();
+    if (tools && appState.characterSheet.proficiencies) {
+      appState.characterSheet.proficiencies.tools = appendUniqueText(appState.characterSheet.proficiencies.tools, tools);
+    }
+  }
+
+  function speedMeters(value) {
+    const match = String(value || '').match(/\d+(?:[,.]\d+)?/);
+    if (!match) return null;
+
+    const speed = Number(match[0].replace(',', '.'));
+    return Number.isFinite(speed) ? speed : null;
+  }
+
+  function skillKey(label) {
+    const aliases = {
+      acrobazia: 'acrobatics',
+      'addestrare animali': 'animalHandling',
+      arcano: 'arcana',
+      atletica: 'athletics',
+      inganno: 'deception',
+      storia: 'history',
+      intuizione: 'insight',
+      intimidire: 'intimidation',
+      indagare: 'investigation',
+      medicina: 'medicine',
+      natura: 'nature',
+      percezione: 'perception',
+      intrattenere: 'performance',
+      persuasione: 'persuasion',
+      religione: 'religion',
+      'rapidita di mano': 'sleightOfHand',
+      furtivita: 'stealth',
+      sopravvivenza: 'survival',
+    };
+
+    return aliases[normalizeText(label)] || '';
+  }
+
+  function appendUniqueText(current, next) {
+    const parts = String(current || '')
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    if (!parts.some((part) => normalizeText(part) === normalizeText(next))) {
+      parts.push(next);
+    }
+
+    return parts.join(', ');
   }
 
   function equipmentRowName(row) {
@@ -177,6 +286,8 @@ export function createCharacterSheetActionsController({
     addMagicItemToCharacterSheet,
     addReferenceToCharacterSheet,
     addSpellToCharacterSheet,
+    applyBackgroundToCharacterSheet,
+    applySpeciesToCharacterSheet,
     magicItemRequiresAttunement,
     resetCharacterResources,
   };

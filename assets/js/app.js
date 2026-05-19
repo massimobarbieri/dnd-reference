@@ -97,6 +97,8 @@ import {
       monsters: [],
       spells: [],
       classes: [],
+      species: [],
+      backgrounds: [],
       character_sheet: [],
       magic_items: [],
       rules: [],
@@ -120,6 +122,8 @@ import {
       monsters: '',
       spells: '',
       classes: '',
+      species: '',
+      backgrounds: '',
       character_sheet: '',
       magic_items: '',
       rules: '',
@@ -214,6 +218,8 @@ import {
     addMagicItemToCharacterSheet,
     addReferenceToCharacterSheet,
     addSpellToCharacterSheet,
+    applyBackgroundToCharacterSheet,
+    applySpeciesToCharacterSheet,
     magicItemRequiresAttunement,
     resetCharacterResources,
   } = createCharacterSheetActionsController({
@@ -314,6 +320,8 @@ import {
     addSpellToCharacterSheet,
     addMagicItemToCharacterSheet,
     addReferenceToCharacterSheet,
+    applySpeciesToCharacterSheet,
+    applyBackgroundToCharacterSheet,
   });
 
   const characterSheetEvents = createCharacterSheetEventsController({

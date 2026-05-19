@@ -359,6 +359,8 @@ export function createCharacterSheetRenderer({
       rules: 'Regola',
       rules_glossary: 'Glossario',
       classes: 'Classe',
+      species: 'Specie',
+      backgrounds: 'Background',
       spells: 'Incantesimo',
       magic_items: 'Oggetto magico',
     }[section] || section;

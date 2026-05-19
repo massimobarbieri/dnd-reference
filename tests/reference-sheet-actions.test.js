@@ -22,6 +22,23 @@ const { pathToFileURL } = require('node:url');
 
   assert.match(monsterHtml, /Collega alla scheda/);
 
+  const speciesHtml = renderReferenceSheetActions({
+    section: 'species',
+    item: { id: 'elfo', nome: 'Elfo' },
+    escapeAttr,
+  });
+
+  assert.match(speciesHtml, /data-sheet-use-species="elfo"/);
+  assert.match(speciesHtml, /Usa per scheda/);
+
+  const backgroundHtml = renderReferenceSheetActions({
+    section: 'backgrounds',
+    item: { id: 'accolito', nome: 'Accolito' },
+    escapeAttr,
+  });
+
+  assert.match(backgroundHtml, /data-sheet-use-background="accolito"/);
+
   console.log('Azioni scheda su riferimenti SRD OK');
 })().catch((error) => {
   console.error(error);

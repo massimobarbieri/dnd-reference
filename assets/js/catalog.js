@@ -59,8 +59,17 @@ export function createFilterOptions(section, data, spellLevel) {
       }));
   }
 
-  if (section === 'classes') {
+  if (section === 'classes' || section === 'species') {
     return [];
+  }
+
+  if (section === 'backgrounds') {
+    return uniqueArrayValues(data.backgrounds, 'punteggi_caratteristica')
+      .sort((a, b) => a.localeCompare(b, 'it'))
+      .map((value) => ({
+        value,
+        label: value,
+      }));
   }
 
   if (section === 'rules_glossary') {
@@ -98,8 +107,12 @@ export function matchesSectionFilter(section, item, filter) {
     return String(item.categoria || '') === filter;
   }
 
-  if (section === 'classes') {
+  if (section === 'classes' || section === 'species') {
     return true;
+  }
+
+  if (section === 'backgrounds') {
+    return normalizeList(item.punteggi_caratteristica).includes(filter);
   }
 
   if (section === 'rules_glossary') {
@@ -120,6 +133,16 @@ export function uniqueValues(items, key) {
         .filter((value) => value !== null && value !== undefined && value !== '')
     )
   ).map(String);
+}
+
+export function uniqueArrayValues(items, key) {
+  return Array.from(
+    new Set(
+      items
+        .flatMap((item) => normalizeList(item[key]))
+        .filter((value) => value !== '')
+    )
+  );
 }
 
 /*
@@ -175,11 +198,28 @@ export function searchableText(section, item) {
     ]);
   }
 
-  if (section === 'rules' || section === 'classes') {
+  if (section === 'rules' || section === 'classes' || section === 'species') {
     return displayText([
       item.nome,
       item.capitolo,
       item.categoria,
+      item.tipo_creatura,
+      item.taglia,
+      item.velocita,
+      item.tratti_sintesi,
+      item.descrizione,
+      ...searchableSectionText(item.sezioni),
+    ]);
+  }
+
+  if (section === 'backgrounds') {
+    return displayText([
+      item.nome,
+      item.capitolo,
+      item.talento_origine,
+      item.punteggi_caratteristica,
+      item.competenze,
+      item.equipaggiamento_alternativo,
       item.descrizione,
       ...searchableSectionText(item.sezioni),
     ]);
@@ -232,6 +272,23 @@ export function sectionSummaryLine(section, item, spellLevel) {
     ].filter(Boolean).join(' · ');
   }
 
+  if (section === 'species') {
+    return [
+      item.tipo_creatura,
+      item.taglia,
+      item.velocita,
+      item.pagine_sorgente ? `pag. ${item.pagine_sorgente}` : null,
+    ].filter(Boolean).join(' · ');
+  }
+
+  if (section === 'backgrounds') {
+    return [
+      normalizeList(item.punteggi_caratteristica).join(', '),
+      item.talento_origine,
+      item.pagine_sorgente ? `pag. ${item.pagine_sorgente}` : null,
+    ].filter(Boolean).join(' · ');
+  }
+
   if (section === 'rules_glossary') {
     return [
       item.descrittore ? capitalizeFirst(item.descrittore) : `Lettera ${item.lettera}`,
@@ -266,6 +323,12 @@ function searchableSectionText(sections) {
 
 function displayText(values) {
   return values.map(formatDisplayValue).filter(Boolean).join(' ');
+}
+
+function normalizeList(value) {
+  if (Array.isArray(value)) return value.map((entry) => formatDisplayValue(entry)).filter(Boolean);
+  const text = formatDisplayValue(value);
+  return text ? [text] : [];
 }
 
 function catalogValue(value) {

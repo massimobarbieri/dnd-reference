@@ -7,6 +7,8 @@ L'app raccoglie in un'unica interfaccia:
 - mostri
 - incantesimi
 - classi
+- specie
+- background
 - scheda personaggio
 - oggetti magici
 - regole
@@ -18,7 +20,7 @@ I dati SRD sono mantenuti nel submodule `data` e vengono caricati dal browser co
 
 - Navigazione per categoria.
 - Ricerca full text nelle schede.
-- Schede dettagliate per mostri, incantesimi, classi, oggetti magici, regole e glossario.
+- Schede dettagliate per mostri, incantesimi, classi, specie, background, oggetti magici, regole e glossario.
 - Scheda personaggio locale con caratteristiche, combattimento, incantesimi, inventario, import ed export JSON.
 - Preferiti locali per sezione.
 - Dice roller integrato.

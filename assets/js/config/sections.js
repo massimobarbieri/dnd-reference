@@ -18,6 +18,16 @@
       singular: 'classe',
       titleKey: 'classes',
     },
+    species: {
+      icon: '🧬',
+      singular: 'specie',
+      titleKey: 'species',
+    },
+    backgrounds: {
+      icon: '🎒',
+      singular: 'background',
+      titleKey: 'backgrounds',
+    },
     character_sheet: {
       icon: '🧾',
       singular: 'scheda',

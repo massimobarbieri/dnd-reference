@@ -2,7 +2,7 @@
 # Questo file e' pensato per essere modificato senza toccare il codice JavaScript.
 site:
   title: D&D Reference
-  subtitle: Mostri, incantesimi, classi, scheda personaggio, oggetti magici, regole e glossario SRD 5.2.1
+  subtitle: Mostri, incantesimi, classi, specie, background, scheda personaggio, oggetti magici, regole e glossario SRD 5.2.1
   language: it
   default_section: monsters
   enable_favorites: true
@@ -14,6 +14,8 @@ paths:
   monsters: data/srd/5.2.1/json/srd_5_2_1_monsters.json
   spells: data/srd/5.2.1/json/srd_5_2_1_spells.json
   classes: data/srd/5.2.1/json/srd_5_2_1_classes.json
+  species: data/srd/5.2.1/json/srd_5_2_1_species.json
+  backgrounds: data/srd/5.2.1/json/srd_5_2_1_backgrounds.json
   magic_items: data/srd/5.2.1/json/srd_5_2_1_magic_items.json
   rules: data/srd/5.2.1/json/srd_5_2_1_rules.json
   rules_glossary: data/srd/5.2.1/json/srd_5_2_1_rules_glossary.json
@@ -23,6 +25,8 @@ labels:
   monsters: Mostri
   spells: Incantesimi
   classes: Classi
+  species: Specie
+  backgrounds: Background
   character_sheet: Scheda
   magic_items: Oggetti magici
   rules: Regole
