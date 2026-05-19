@@ -28,7 +28,7 @@ const { pathToFileURL } = require('node:url');
 
   const data = {
     monsters: [
-      { id: 'drago', nome: 'Drago', tipo: 'drago', dimensione: 'Grande', grado_sfida: '1/2' },
+      { id: 'drago', nome: 'Drago', tipo: 'drago', dimensione: 'Grande', grado_sfida: { valore: '1/2', raw: '1/2 (PE 100)' } },
       { id: 'zombi', nome: 'Zombi', tipo: 'non morto', dimensione: 'Media', grado_sfida: '2' },
     ],
     spells: [
@@ -76,7 +76,7 @@ const { pathToFileURL } = require('node:url');
       section: 'monsters',
       items: data.monsters,
       searchTerm: '',
-      filter: '',
+      filter: '1/2',
       showOnlyFavorites: true,
       isFavorite: (_section, id) => id === 'drago',
     }).map((item) => item.id),

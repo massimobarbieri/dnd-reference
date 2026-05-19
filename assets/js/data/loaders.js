@@ -65,6 +65,14 @@ export function parseMonsterImages(text) {
       const trimmed = line.trim();
 
       if (!trimmed || trimmed.startsWith('#')) return;
+      if (trimmed === 'mostri:') return;
+
+      const listIdMatch = trimmed.match(/^-\s*id:\s*(.+)$/);
+      if (listIdMatch) {
+        currentId = String(parseYamlScalar(listIdMatch[1]));
+        images.set(currentId, {});
+        return;
+      }
 
       const idMatch = trimmed.match(/^([a-zA-Z0-9_-]+):\s*$/);
       if (idMatch) {

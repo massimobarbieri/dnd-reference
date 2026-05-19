@@ -1,3 +1,5 @@
+import { formatDisplayValue } from './display-values.js?v=20260519-browserverify';
+
 export function createReferenceSectionRenderer({
   appState,
   escapeAttr,
@@ -64,8 +66,8 @@ export function createReferenceSectionRenderer({
   function renderEntry(entry) {
     if (!entry) return '';
 
-    const name = entry.nome || entry.chiave || '';
-    const description = entry.descrizione || entry.valore || '';
+    const name = formatDisplayValue(entry.nome || entry.chiave || '');
+    const description = formatDisplayValue(entry.descrizione || entry.valore || '');
 
     if (!name && !description) return '';
 
@@ -198,8 +200,8 @@ export function createReferenceSectionRenderer({
             ${visibleRows
               .map((row) => `
                 <tr>
-                  <th scope="row"${keyColumnClass}>${formatInline(row.chiave || '', { dice: false })}</th>
-                  <td${valueColumnClass}>${formatInline(row.valore || '')}</td>
+                  <th scope="row"${keyColumnClass}>${formatInline(formatDisplayValue(row.chiave || ''), { dice: false })}</th>
+                  <td${valueColumnClass}>${formatInline(formatDisplayValue(row.valore || ''))}</td>
                 </tr>
               `)
               .join('')}
@@ -283,20 +285,20 @@ export function createReferenceSectionRenderer({
 
   function renderTableCell(value, column) {
     if (normalizeText(column) !== 'incantesimo') {
-      return formatInline(value, { dice: false });
+      return formatInline(formatDisplayValue(value), { dice: false });
     }
 
     const spell = spellByName(value);
 
     if (!spell) {
-      return formatInline(value, { dice: false });
+      return formatInline(formatDisplayValue(value), { dice: false });
     }
 
-    return `<a class="table-spell-link" href="#/spells/${encodeURIComponent(spell.id)}">${escapeHtml(value)}</a>`;
+    return `<a class="table-spell-link" href="#/spells/${encodeURIComponent(spell.id)}">${escapeHtml(formatDisplayValue(value))}</a>`;
   }
 
   function spellByName(name) {
-    const normalizedName = normalizeText(name).trim();
+    const normalizedName = normalizeText(formatDisplayValue(name)).trim();
 
     if (!normalizedName) return null;
 

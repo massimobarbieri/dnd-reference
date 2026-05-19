@@ -1,24 +1,84 @@
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
 
-const source = fs.readFileSync('assets/js/roll-tray.js', 'utf8');
-const bodyStart = source.indexOf('<div id="roll-tray-body" class="roll-tray-body">');
-const resultIndex = source.indexOf('<div class="roll-result', bodyStart);
-const formIndex = source.indexOf('<form id="roll-tray-form"', bodyStart);
-const toggleSummaryIndex = source.indexOf('class="roll-toggle-result"');
-const showRollResultIndex = source.indexOf('function showRollResult');
-const scrollResetIndex = source.indexOf('body.scrollTop = 0', showRollResultIndex);
+let markup = '';
+let bodyNode = { scrollTop: 99 };
 
-assert.notEqual(bodyStart, -1);
+global.document = {
+  body: {
+    insertAdjacentHTML(_position, html) {
+      markup = html;
+    },
+  },
+  querySelector(selector) {
+    if (selector !== '#roll-tray' || !markup) return null;
+
+    return {
+      get outerHTML() {
+        return markup;
+      },
+      set outerHTML(value) {
+        markup = value;
+      },
+      querySelector(innerSelector) {
+        return innerSelector === '.roll-tray-body' ? bodyNode : null;
+      },
+    };
+  },
+};
+
+require('../assets/js/roll-tray.js');
+
+const appState = {
+  rollHistory: [{
+    formula: '1d20 + 5',
+    total: 18,
+    rolls: [13],
+    keptRolls: [13],
+    modifier: 5,
+  }],
+  rollError: '',
+  rollTrayOpen: true,
+};
+
+const controller = global.DndRollTray.createRollTrayController({
+  appState,
+  DICE_LIMITS: { historySize: 10 },
+  parseDiceFormula: () => ({ formula: '1d20' }),
+  rollDice: () => appState.rollHistory[0],
+  randomInt: () => 1,
+  escapeHtml: escapeText,
+  escapeAttr: escapeText,
+});
+
+controller.renderRollTray();
+
+const resultIndex = markup.indexOf('<div class="roll-result');
+const formIndex = markup.indexOf('<form id="roll-tray-form"');
+
 assert.notEqual(resultIndex, -1);
 assert.notEqual(formIndex, -1);
-assert.notEqual(toggleSummaryIndex, -1);
-assert.notEqual(showRollResultIndex, -1);
-assert.notEqual(scrollResetIndex, -1);
-assert.ok(
-  resultIndex < formIndex,
-  'Il risultato del tiro deve precedere i controlli del tray.'
-);
-assert.match(source, /class="roll-result \$\{escapeAttr\(rollResultClass\(lastRoll\)\)\}" role="status" aria-live="polite"/);
+assert.ok(resultIndex < formIndex, 'Il risultato del tiro deve precedere i controlli del tray.');
+assert.match(markup, /class="roll-result[^"]*" role="status" aria-live="polite"/);
+assert.match(markup, /class="roll-toggle-result" aria-label="Ultimo tiro: 1d20 \+ 5, totale 18"/);
+assert.match(markup, /data-quick-roll="1d20" aria-label="Tira 1d20"/);
+
+controller.handleRollCommand({
+  target: {
+    closest(selector) {
+      return selector === '[data-dice-roll]' ? { getAttribute: () => '1d20' } : null;
+    },
+  },
+});
+
+assert.equal(bodyNode.scrollTop, 0);
 
 console.log('Markup dice tray OK');
+
+function escapeText(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}

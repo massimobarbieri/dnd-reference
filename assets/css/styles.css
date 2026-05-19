@@ -299,6 +299,17 @@ h1 {
 }
 
 /* Immagine del mostro */
+.monster-image-link {
+  display: block;
+  width: 120px;
+  border-radius: 14px;
+}
+
+.monster-image-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .monster-image {
   width: 120px;
   aspect-ratio: 1;
@@ -2030,6 +2041,7 @@ code {
   }
 
   .monster-image,
+  .monster-image-link,
   .monster-image-fallback {
     width: 86px;
   }

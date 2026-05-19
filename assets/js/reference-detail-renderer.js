@@ -1,4 +1,5 @@
-import { createReferenceSectionRenderer } from './reference-section-renderer.js';
+import { createReferenceSectionRenderer } from './reference-section-renderer.js?v=20260519-browserverify';
+import { formatDisplayValue } from './display-values.js?v=20260519-browserverify';
 
 export function createReferenceDetailRenderer({
   appState,
@@ -90,7 +91,7 @@ export function createReferenceDetailRenderer({
           ])}
         </div>
 
-        ${showImages ? renderMonsterImage(image) : ''}
+        ${showImages ? renderMonsterImage(image, monster.nome) : ''}
       </div>
 
       ${renderAbilityScores(monster.caratteristiche)}
@@ -112,7 +113,7 @@ export function createReferenceDetailRenderer({
     `;
   }
 
-  function renderMonsterImage(src) {
+  function renderMonsterImage(src, name) {
     const fallback = escapeHtml(appState.config.site?.image_fallback_text || 'Immagine non disponibile');
 
     if (!src) {
@@ -120,16 +121,24 @@ export function createReferenceDetailRenderer({
     }
 
     return `
-      <img
-        class="monster-image"
-        src="${escapeAttr(src)}"
-        alt="Immagine del mostro"
-        loading="lazy"
-        onerror="this.replaceWith(Object.assign(document.createElement('div'), {
-          className: 'monster-image-fallback',
-          textContent: '${escapeAttr(fallback)}'
-        }))"
+      <a
+        class="monster-image-link"
+        href="${escapeAttr(src)}"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Apri immagine di ${escapeAttr(name || 'mostro')}"
       >
+        <img
+          class="monster-image"
+          src="${escapeAttr(src)}"
+          alt="Immagine di ${escapeAttr(name || 'mostro')}"
+          loading="lazy"
+          onerror="this.replaceWith(Object.assign(document.createElement('span'), {
+            className: 'monster-image-fallback',
+            textContent: '${escapeAttr(fallback)}'
+          }))"
+        >
+      </a>
     `;
   }
 
@@ -297,7 +306,7 @@ export function createReferenceDetailRenderer({
         ${list
           .map(([label, value]) => `
             <li>
-              <b>${escapeHtml(label)}:</b> ${escapeHtml(String(value))}
+              <b>${escapeHtml(label)}:</b> ${escapeHtml(formatDisplayValue(value))}
             </li>
           `)
           .join('')}
@@ -320,11 +329,12 @@ export function createReferenceDetailRenderer({
         ${Object.entries(labels)
           .map(([key, label]) => {
             const stat = scores[key] || {};
+            const value = stat.valore ?? stat.punteggio;
 
             return `
               <div class="stat">
                 <b>${label}</b>
-                ${escapeHtml(String(stat.valore ?? '-'))}
+                ${escapeHtml(String(value ?? '-'))}
                 <span>${escapeHtml(formatAbilityModifier(stat.modificatore))}</span>
               </div>
             `;

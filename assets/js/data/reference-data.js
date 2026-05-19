@@ -1,13 +1,14 @@
 import {
   normalizeArray,
   normalizeMagicItem,
-} from './normalizers.js';
+  normalizeMonster,
+} from './normalizers.js?v=20260519-browserverify';
 
 import {
   fetchJson,
   fetchText,
   parseMonsterImages,
-} from './loaders.js';
+} from './loaders.js?v=20260519-browserverify';
 
 /*
  * Carica in parallelo tutte le sorgenti dati del reference.
@@ -33,7 +34,7 @@ export async function loadReferenceSources(paths) {
 export function applyReferenceSources(appState, sources) {
   const { monsters, spells, classes, magicItems, rules, rulesGlossary, monsterImageYaml } = sources;
 
-  appState.data.monsters = normalizeArray(monsters);
+  appState.data.monsters = normalizeArray(monsters).map(normalizeMonster);
   appState.data.spells = normalizeArray(spells);
   appState.data.magic_items = normalizeArray(magicItems).map(normalizeMagicItem);
   appState.data.classes = normalizeArray(classes);

@@ -9,11 +9,11 @@
  * - Permette ricerca, filtri e preferiti.
  * - Salva i preferiti nel localStorage del browser.
  */
-import { loadConfig } from './data/loaders.js';
+import { loadConfig } from './data/loaders.js?v=20260519-browserverify';
 import {
   applyReferenceSources,
   loadReferenceSources,
-} from './data/reference-data.js';
+} from './data/reference-data.js?v=20260519-browserverify';
 import {
   escapeAttr,
   escapeHtml,
@@ -29,9 +29,9 @@ import {
 import {
   createReferenceViewController,
   renderReferenceSheetActions,
-} from './reference-view-controller.js';
+} from './reference-view-controller.js?v=20260519-browserverify';
 import { createInlineFormatter } from './inline-formatting.js';
-import { createReferenceDetailRenderer } from './reference-detail-renderer.js';
+import { createReferenceDetailRenderer } from './reference-detail-renderer.js?v=20260519-browserverify';
 
 import {
   normalizeCharacterSheet,

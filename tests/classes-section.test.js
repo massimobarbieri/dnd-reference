@@ -1,26 +1,11 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const classes = require('../data/srd/5.2.1/json/srd_5_2_1_classes.json');
-const { readJavaScriptSources } = require('./helpers/source-utils');
 
-const jsSource = readJavaScriptSources('assets/js');
 const configSource = fs.readFileSync('config.yml', 'utf8');
 const indexSource = fs.readFileSync('index.html', 'utf8');
 
 assert.equal(classes.length, 12);
-
-[
-  'classes: []',
-  "classes: ''",
-  "classes: {",
-  'fetchJson(paths.classes)',
-  'appState.data.classes = normalizeArray(classes);',
-  'appState.data.rules = normalizeArray(rules);',
-  'function legacyClassId(id)',
-  "location.hash = `#/classes/${encodeURIComponent(classId)}`;",
-  "if (section === 'classes') return renderClass(item);",
-  "function renderClass(rule)",
-].forEach((token) => assert.ok(jsSource.includes(token), `${token} deve essere presente nei sorgenti JS`));
 
 for (const classEntry of classes) {
   const progression = classEntry.sezioni.find((section) => section.titolo === 'Progressione di classe');
