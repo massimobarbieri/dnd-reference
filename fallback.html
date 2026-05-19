@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#251a12">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://5e.tools data:; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'self';">
+  <title>D&D Reference - fallback locale</title>
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260514-character-sheet">
+</head>
+<body>
+  <header class="site-header">
+    <p class="eyebrow">SRD 5.2.1</p>
+    <h1>D&D Reference</h1>
+    <p class="subtitle">Fallback locale per ripristinare il caricamento dei dati</p>
+  </header>
+
+  <main class="app-shell">
+    <section class="state-box">
+      <h2>Dati non disponibili</h2>
+      <p>
+        L'app usa i JSON nel submodule locale <code>data</code>. Se questa pagina appare dopo un errore di caricamento,
+        il submodule potrebbe non essere stato inizializzato oppure il sito potrebbe essere aperto con <code>file://</code>.
+      </p>
+
+      <p>Da root del progetto esegui:</p>
+
+      <pre><code>git submodule update --init --recursive
+python3 -m http.server 8080</code></pre>
+
+      <p>Quindi apri <code>http://localhost:8080</code>.</p>
+
+      <p>
+        <a class="button button--primary" href="index.html">Torna all'app</a>
+      </p>
+    </section>
+  </main>
+</body>
+</html>
