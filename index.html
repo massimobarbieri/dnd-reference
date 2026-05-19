@@ -6,7 +6,8 @@
   <meta name="theme-color" content="#251a12">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://5e.tools data:; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'self';">
   <title>D&D Reference</title>
-  <link rel="stylesheet" href="assets/css/styles.css?v=20260514-attack-editor">
+  <script src="assets/js/file-protocol-redirect.js?v=20260519-local-fix"></script>
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260519-sheet-inventory3">
 </head>
 <body>
   <a class="skip-link" href="#app">Salta al contenuto</a>
@@ -28,7 +29,12 @@
   <!-- Contenitore principale dell’applicazione -->
   <main id="app" class="app-shell" aria-live="polite">
     <!-- Vista home -->
-    <section id="home-view" class="view"></section>
+    <section id="home-view" class="view">
+      <div class="state-box">
+        Caricamento app... Se questa schermata resta visibile, avvia il progetto via HTTP con
+        <code>python3 -m http.server 8080</code> e apri <code>http://localhost:8080</code>.
+      </div>
+    </section>
 
     <!-- Vista lista, inizialmente nascosta -->
     <section id="list-view" class="view" hidden></section>
@@ -66,6 +72,6 @@
   <script src="assets/js/roll-tray.js" defer></script>
 
   <!-- Script principale dell’app, caricato dopo il parsing dell’HTML -->
-  <script type="module" src="assets/js/app.js"></script>
+  <script type="module" src="assets/js/app.js?v=20260519-sheet-inventory3"></script>
 </body>
 </html>

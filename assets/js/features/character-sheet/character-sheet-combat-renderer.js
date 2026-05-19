@@ -20,7 +20,9 @@ export function createCharacterSheetCombatRenderer({
 
     return `
       <section class="sheet-grid">
-        <div class="sheet-panel">
+        ${renderCombatSummary(initiative)}
+
+        <div class="sheet-panel sheet-panel--control">
           <h3>Difesa e punti ferita</h3>
           <div class="sheet-form-grid sheet-form-grid--compact">
             ${sheetNumberField('armorClass', 'Classe Armatura', sheet.armorClass, 0)}
@@ -33,7 +35,7 @@ export function createCharacterSheetCombatRenderer({
           </div>
         </div>
 
-        <div class="sheet-panel">
+        <div class="sheet-panel sheet-panel--control">
           <h3>Tiri rapidi</h3>
           <div class="quick-dice sheet-rolls">
             <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, initiative))}">Iniziativa ${escapeHtml(formatSigned(initiative))}</button>
@@ -66,6 +68,50 @@ export function createCharacterSheetCombatRenderer({
           ${renderCharacterAttacks()}
         </div>
       </section>
+    `;
+  }
+
+  function renderCombatSummary(initiative) {
+    const sheet = appState.characterSheet;
+    const status = sheet.status;
+    const activeStates = [
+      status.inspiration ? 'Ispirazione' : null,
+      status.concentration ? 'Concentrazione' : null,
+      status.exhaustion ? `Indebolimento ${status.exhaustion}` : null,
+      status.conditions.length ? `${status.conditions.length} condizioni` : null,
+    ].filter(Boolean);
+
+    return `
+      <div class="sheet-panel sheet-panel--wide sheet-dashboard sheet-dashboard--combat">
+        <div class="sheet-dashboard-heading">
+          <div>
+            <span>Combattimento</span>
+            <strong>${escapeHtml(sheet.name || 'Personaggio')}</strong>
+            <p>${escapeHtml(activeStates.length ? activeStates.join(' · ') : 'Nessuno stato critico attivo.')}</p>
+          </div>
+          <div class="sheet-action-row">
+            <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, initiative))}">Iniziativa ${escapeHtml(formatSigned(initiative))}</button>
+          </div>
+        </div>
+        <div class="sheet-stat-strip">
+          ${renderCombatStat('CA', Number(sheet.armorClass) || 10, 'Classe armatura')}
+          ${renderCombatStat('PF', `${Number(sheet.currentHp) || 0}/${Number(sheet.maxHp) || 0}`, 'Attuali / massimi')}
+          ${renderCombatStat('Temp', Number(sheet.tempHp) || 0, 'Punti ferita')}
+          ${renderCombatStat('Vel', Number(sheet.speed) || 0, 'metri')}
+          ${renderCombatStat('DV', sheet.hitDice || '-', 'Dadi vita')}
+          ${renderCombatStat('Iniz.', formatSigned(initiative), 'Totale')}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderCombatStat(label, value, hint) {
+    return `
+      <div class="sheet-summary-stat">
+        <span>${escapeHtml(label)}</span>
+        <strong>${escapeHtml(String(value))}</strong>
+        <small>${escapeHtml(hint)}</small>
+      </div>
     `;
   }
 

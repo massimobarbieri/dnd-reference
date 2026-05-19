@@ -12,6 +12,8 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
     spellcastingAbility: 'int',
     preparedSpells: ['magic-missile'],
     magicItems: [{ id: 'wand', name: 'Bacchetta', summary: 'rara · richiede sintonia' }],
+    references: [{ section: 'rules', id: 'cover', name: 'Copertura', summary: 'Combattimento' }],
+    equipmentItems: [{ id: 'eq-armor', name: 'Armatura di cuoio', quantity: 1, armorClass: '11 + Des', source: 'Armature' }],
   });
 
   api.appState.characterSheet = sheet;
@@ -25,6 +27,9 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   ];
   api.appState.data.rules_glossary = [
     { id: 'prone', nome: 'Prono' },
+  ];
+  api.appState.data.rules = [
+    { id: 'cover', nome: 'Copertura', categoria: 'Combattimento' },
   ];
   api.appState.data.classes = [
     {
@@ -47,6 +52,10 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   sheet.resources = [{ id: 'res-1', name: 'Azione Impetuosa', max: 1, used: 0, recovery: 'Riposo breve' }];
   sheet.attacks = [{ id: 'atk-1', name: 'Spada lunga', ability: 'str', proficient: true, bonus: 0, damage: '1d8', damageType: 'taglienti', notes: '' }];
 
+  context.location.hash = '#/character_sheet';
+  api.renderRoute();
+  assert.equal(context.location.hash, '#/character_sheet/overview');
+
   api.renderCharacterSheet('overview');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-field="name"/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-ability="str"/);
@@ -68,8 +77,16 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
 
   api.renderCharacterSheet('inventory');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-coin="mo"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-add-equipment/);
+  assert.match(views['#detail-view'].innerHTML, /Armatura di cuoio/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-apply-armor="eq-armor"/);
   assert.match(views['#detail-view'].innerHTML, /Bacchetta/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-toggle-attunement="wand"/);
+
+  api.renderCharacterSheet('notes');
+  assert.match(views['#detail-view'].innerHTML, /Riferimenti SRD/);
+  assert.match(views['#detail-view'].innerHTML, /href="#\/rules\/cover"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-remove-reference="cover"/);
 
   console.log('Renderer scheda personaggio OK');
 })().catch((error) => {

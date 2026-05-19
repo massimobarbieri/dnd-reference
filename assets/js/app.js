@@ -9,11 +9,11 @@
  * - Permette ricerca, filtri e preferiti.
  * - Salva i preferiti nel localStorage del browser.
  */
-import { loadConfig } from './data/loaders.js';
+import { loadConfig } from './data/loaders.js?v=20260519-browserverify';
 import {
   applyReferenceSources,
   loadReferenceSources,
-} from './data/reference-data.js';
+} from './data/reference-data.js?v=20260519-browserverify';
 import {
   escapeAttr,
   escapeHtml,
@@ -29,9 +29,9 @@ import {
 import {
   createReferenceViewController,
   renderReferenceSheetActions,
-} from './reference-view-controller.js';
+} from './reference-view-controller.js?v=20260519-sheet-inventory3';
 import { createInlineFormatter } from './inline-formatting.js';
-import { createReferenceDetailRenderer } from './reference-detail-renderer.js';
+import { createReferenceDetailRenderer } from './reference-detail-renderer.js?v=20260519-browserverify';
 
 import {
   normalizeCharacterSheet,
@@ -46,7 +46,7 @@ import {
   uniqueCharacterSheets,
   createCharacterSheetId,
   cloneJson,
-} from './features/character-sheet/character-sheet-normalizers.js';
+} from './features/character-sheet/character-sheet-normalizers.js?v=20260519-sheet-inventory3';
 
 import {
   readJsonStorage,
@@ -63,14 +63,14 @@ import {
   CHARACTER_SHEETS_STORAGE_KEY,
   ACTIVE_CHARACTER_SHEET_STORAGE_KEY,
   APP_STORAGE_PREFIX,
-} from './features/character-sheet/character-sheet-storage.js';
+} from './features/character-sheet/character-sheet-storage.js?v=20260519-sheet-inventory3';
 
-import { createCharacterSheetClassController } from './features/character-sheet/character-sheet-classes.js';
-import { createCharacterSheetActionsController } from './features/character-sheet/character-sheet-actions.js';
-import { createCharacterSheetEventsController } from './features/character-sheet/character-sheet-events.js';
-import { createCharacterSheetRenderer } from './features/character-sheet/character-sheet-renderers.js';
-import { createCharacterSheetSelectors } from './features/character-sheet/character-sheet-selectors.js';
-import { createCharacterSheetBackupWorkflow } from './features/character-sheet/character-sheet-backup-workflow.js';
+import { createCharacterSheetClassController } from './features/character-sheet/character-sheet-classes.js?v=20260519-sheet-inventory3';
+import { createCharacterSheetActionsController } from './features/character-sheet/character-sheet-actions.js?v=20260519-sheet-inventory3';
+import { createCharacterSheetEventsController } from './features/character-sheet/character-sheet-events.js?v=20260519-sheet-inventory3';
+import { createCharacterSheetRenderer } from './features/character-sheet/character-sheet-renderers.js?v=20260519-sheet-inventory3';
+import { createCharacterSheetSelectors } from './features/character-sheet/character-sheet-selectors.js?v=20260519-sheet-inventory3';
+import { createCharacterSheetBackupWorkflow } from './features/character-sheet/character-sheet-backup-workflow.js?v=20260519-sheet-inventory3';
 
 import {
   CONDITION_ALIASES,
@@ -79,7 +79,7 @@ import {
   CHARACTER_SHEET_TABS,
   CHARACTER_SHEET_SCHEMA_VERSION,
   DEFAULT_CHARACTER_SHEET,
-} from './features/character-sheet/character-sheet-view.js';
+} from './features/character-sheet/character-sheet-view.js?v=20260519-sheet-inventory3';
 
 (() => {
   'use strict';
@@ -210,7 +210,9 @@ import {
   });
 
   const {
+    addEquipmentToCharacterSheet,
     addMagicItemToCharacterSheet,
+    addReferenceToCharacterSheet,
     addSpellToCharacterSheet,
     magicItemRequiresAttunement,
     resetCharacterResources,
@@ -308,8 +310,10 @@ import {
     renderCharacterSheet,
     applyClassToCharacterSheet,
     saveCharacterSheet,
+    addEquipmentToCharacterSheet,
     addSpellToCharacterSheet,
     addMagicItemToCharacterSheet,
+    addReferenceToCharacterSheet,
   });
 
   const characterSheetEvents = createCharacterSheetEventsController({
@@ -466,6 +470,7 @@ import {
       normalizeCharacterSheet,
       normalizeCharacterSheetArchive,
       renderCharacterSheet,
+      renderRoute,
       resetCharacterResources,
       restoreAppBackup: backupActions.restoreAppBackup,
       saveCharacterSheet,

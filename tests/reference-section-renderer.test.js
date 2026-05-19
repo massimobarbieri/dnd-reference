@@ -61,11 +61,14 @@ function normalizeText(value) {
     titolo: 'Effetti',
     righe: [
       { chiave: '1', valore: 'Un effetto testuale molto lungo che deve andare a capo' },
+      { chiave: '2', valore: { percezione_passiva: 20, scurovisione: '36 m' } },
     ],
   }]);
 
   assert.match(tableHtml, /data-table-key-value/);
   assert.match(tableHtml, /class="data-table-cell-wrap"/);
+  assert.match(tableHtml, /Percezione passiva 20, scurovisione 36 m/);
+  assert.doesNotMatch(tableHtml, /\[object Object\]/);
 
   const scalingHtml = renderer.renderScalingEntries('A livelli superiori', [{
     descrizione: 'Il danno aumenta di 1d6 per ogni slot oltre il 1°.',

@@ -1,4 +1,5 @@
 import { normalizeText } from './app-core.js';
+import { formatDisplayValue } from './display-values.js?v=20260519-browserverify';
 
 /*
  * Restituisce gli elementi filtrati e ordinati alfabeticamente.
@@ -86,7 +87,7 @@ export function matchesSectionFilter(section, item, filter) {
   if (!filter) return true;
 
   if (section === 'monsters') {
-    return String(item.grado_sfida || '') === filter;
+    return catalogValue(item.grado_sfida) === filter;
   }
 
   if (section === 'spells') {
@@ -115,7 +116,7 @@ export function uniqueValues(items, key) {
   return Array.from(
     new Set(
       items
-        .map((item) => item[key])
+        .map((item) => catalogValue(item[key]))
         .filter((value) => value !== null && value !== undefined && value !== '')
     )
   ).map(String);
@@ -137,7 +138,7 @@ export function sourcePageValue(value) {
  * "2"   -> 2
  */
 export function challengeRatingValue(value) {
-  const text = String(value);
+  const text = catalogValue(value);
 
   if (text.includes('/')) {
     const [numerator, denominator] = text.split('/').map(Number);
@@ -161,47 +162,47 @@ export function capitalizeFirst(value) {
  */
 export function searchableText(section, item) {
   if (section === 'monsters') {
-    return [item.nome, item.tipo, item.dimensione, item.gruppo, item.grado_sfida].join(' ');
+    return displayText([item.nome, item.tipo, item.dimensione, item.gruppo, item.grado_sfida]);
   }
 
   if (section === 'spells') {
-    return [
+    return displayText([
       item.nome,
       item.scuola,
-      item.classi?.join(' '),
+      item.classi,
       item.descrizione,
       item.livello,
-    ].join(' ');
+    ]);
   }
 
   if (section === 'rules' || section === 'classes') {
-    return [
+    return displayText([
       item.nome,
       item.capitolo,
       item.categoria,
       item.descrizione,
       ...searchableSectionText(item.sezioni),
-    ].join(' ');
+    ]);
   }
 
   if (section === 'rules_glossary') {
-    return [
+    return displayText([
       item.nome,
       item.lettera,
       item.descrittore,
       item.descrizione,
-      item.vedi_anche?.join(' '),
+      item.vedi_anche,
       ...searchableSectionText(item.sezioni),
-    ].join(' ');
+    ]);
   }
 
-  return [
+  return displayText([
     item.nome,
     item.tipo,
     item.tipo_base,
     item.rarita,
     item.descrizione,
-  ].join(' ');
+  ]);
 }
 
 /*
@@ -212,7 +213,7 @@ export function sectionSummaryLine(section, item, spellLevel) {
     return [
       item.tipo,
       item.dimensione,
-      item.grado_sfida ? `GS ${item.grado_sfida}` : null,
+      item.grado_sfida ? `GS ${catalogValue(item.grado_sfida)}` : null,
     ].filter(Boolean).join(' · ');
   }
 
@@ -255,10 +256,22 @@ function searchableSectionText(sections) {
     sectionEntry.titolo,
     sectionEntry.descrizione,
     ...(Array.isArray(sectionEntry.righe)
-      ? sectionEntry.righe.map((row) => Object.values(row || {}).join(' '))
+      ? sectionEntry.righe.map((row) => displayText(Object.values(row || {})))
       : []),
     ...(Array.isArray(sectionEntry.blocchi)
-      ? sectionEntry.blocchi.map((block) => `${block.nome || ''} ${block.descrizione || ''}`)
+      ? sectionEntry.blocchi.map((block) => displayText([block.nome, block.descrizione]))
       : []),
   ]);
+}
+
+function displayText(values) {
+  return values.map(formatDisplayValue).filter(Boolean).join(' ');
+}
+
+function catalogValue(value) {
+  if (value && typeof value === 'object' && !Array.isArray(value) && value.valore !== undefined) {
+    return String(value.valore);
+  }
+
+  return formatDisplayValue(value);
 }

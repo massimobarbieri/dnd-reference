@@ -273,6 +273,75 @@ export function createCharacterSheetEventsController({
       });
     });
 
+    views.detail.querySelector('[data-sheet-add-equipment]')?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const data = new FormData(form);
+      const name = String(data.get('name') || '').trim();
+
+      if (!name) return;
+
+      appState.characterSheet.equipmentItems.push({
+        id: `equipment-${Date.now().toString(36)}`,
+        name,
+        quantity: Math.max(1, Number(data.get('quantity')) || 1),
+        weight: String(data.get('weight') || '').trim(),
+        cost: String(data.get('cost') || '').trim(),
+        source: '',
+        notes: '',
+        armorClass: '',
+        equipped: false,
+      });
+      saveCharacterSheet();
+      renderCharacterSheet('inventory');
+    });
+
+    views.detail.querySelectorAll('[data-sheet-equipment-field]').forEach((node) => {
+      node.addEventListener('input', (event) => {
+        const id = event.currentTarget.dataset.sheetEquipmentId;
+        const field = event.currentTarget.dataset.sheetEquipmentField;
+        const item = appState.characterSheet.equipmentItems.find((entry) => entry.id === id);
+
+        if (!item) return;
+
+        if (field === 'quantity') {
+          item.quantity = Math.max(1, Number(event.currentTarget.value) || 1);
+        } else if (['name', 'weight', 'cost', 'notes'].includes(field)) {
+          item[field] = event.currentTarget.value;
+        }
+        saveCharacterSheet();
+      });
+
+      node.addEventListener('change', () => renderCharacterSheet('inventory'));
+    });
+
+    views.detail.querySelectorAll('[data-sheet-apply-armor]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        const id = event.currentTarget.dataset.sheetApplyArmor;
+        const item = appState.characterSheet.equipmentItems.find((entry) => entry.id === id);
+        const armorClass = armorClassFromEquipment(item);
+
+        if (!item || armorClass === null) return;
+
+        appState.characterSheet.armorClass = armorClass;
+        appState.characterSheet.equipmentItems = appState.characterSheet.equipmentItems.map((entry) => ({
+          ...entry,
+          equipped: entry.id === id,
+        }));
+        saveCharacterSheet();
+        renderCharacterSheet('inventory');
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-remove-equipment]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        const id = event.currentTarget.dataset.sheetRemoveEquipment;
+        appState.characterSheet.equipmentItems = appState.characterSheet.equipmentItems.filter((item) => item.id !== id);
+        saveCharacterSheet();
+        renderCharacterSheet('inventory');
+      });
+    });
+
     views.detail.querySelector('[data-sheet-add-spell]')?.addEventListener('change', (event) => {
       const id = event.currentTarget.value;
       if (id) {
@@ -332,6 +401,17 @@ export function createCharacterSheetEventsController({
       });
     });
 
+    views.detail.querySelectorAll('[data-sheet-remove-reference]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        const section = event.currentTarget.dataset.sheetReferenceSection;
+        const id = event.currentTarget.dataset.sheetRemoveReference;
+        appState.characterSheet.references = appState.characterSheet.references
+          .filter((entry) => entry.section !== section || entry.id !== id);
+        saveCharacterSheet();
+        renderCharacterSheet('notes');
+      });
+    });
+
     views.detail.querySelector('[data-sheet-export]')?.addEventListener('click', exportCharacterSheet);
     views.detail.querySelector('[data-sheet-import]')?.addEventListener('click', () => {
       views.detail.querySelector('#character-sheet-import')?.click();
@@ -381,6 +461,24 @@ export function createCharacterSheetEventsController({
       deleteActiveCharacterSheet();
       renderCharacterSheet('overview');
     });
+  }
+
+  function armorClassFromEquipment(item) {
+    const text = String(item?.armorClass || '').trim();
+    if (!text) return null;
+
+    const dex = Math.floor(((Number(appState.characterSheet.abilities?.dex) || 10) - 10) / 2);
+    const shield = text.match(/^\+(\d+)/);
+    if (shield) return Math.max(0, Number(appState.characterSheet.armorClass) || 10) + Number(shield[1]);
+
+    const base = Number(text.match(/\d+/)?.[0]);
+    if (!Number.isFinite(base)) return null;
+    if (!/des/i.test(text)) return base;
+
+    const maxMatch = text.match(/max\s*(\d+)/i);
+    const dexBonus = maxMatch ? Math.min(dex, Number(maxMatch[1])) : dex;
+
+    return base + dexBonus;
   }
 
   return { bindCharacterSheetEvents };

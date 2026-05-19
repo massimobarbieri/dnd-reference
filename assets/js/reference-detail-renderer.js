@@ -1,4 +1,5 @@
-import { createReferenceSectionRenderer } from './reference-section-renderer.js';
+import { createReferenceSectionRenderer } from './reference-section-renderer.js?v=20260519-browserverify';
+import { formatDisplayValue } from './display-values.js?v=20260519-browserverify';
 
 export function createReferenceDetailRenderer({
   appState,
@@ -90,7 +91,7 @@ export function createReferenceDetailRenderer({
           ])}
         </div>
 
-        ${showImages ? renderMonsterImage(image) : ''}
+        ${showImages ? renderMonsterImage(image, monster.nome) : ''}
       </div>
 
       ${renderAbilityScores(monster.caratteristiche)}
@@ -112,7 +113,7 @@ export function createReferenceDetailRenderer({
     `;
   }
 
-  function renderMonsterImage(src) {
+  function renderMonsterImage(src, name) {
     const fallback = escapeHtml(appState.config.site?.image_fallback_text || 'Immagine non disponibile');
 
     if (!src) {
@@ -120,16 +121,24 @@ export function createReferenceDetailRenderer({
     }
 
     return `
-      <img
-        class="monster-image"
-        src="${escapeAttr(src)}"
-        alt="Immagine del mostro"
-        loading="lazy"
-        onerror="this.replaceWith(Object.assign(document.createElement('div'), {
-          className: 'monster-image-fallback',
-          textContent: '${escapeAttr(fallback)}'
-        }))"
+      <a
+        class="monster-image-link"
+        href="${escapeAttr(src)}"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Apri immagine di ${escapeAttr(name || 'mostro')}"
       >
+        <img
+          class="monster-image"
+          src="${escapeAttr(src)}"
+          alt="Immagine di ${escapeAttr(name || 'mostro')}"
+          loading="lazy"
+          onerror="this.replaceWith(Object.assign(document.createElement('span'), {
+            className: 'monster-image-fallback',
+            textContent: '${escapeAttr(fallback)}'
+          }))"
+        >
+      </a>
     `;
   }
 
@@ -236,7 +245,68 @@ export function createReferenceDetailRenderer({
       <div class="description">${formatInline(rule.descrizione || '')}</div>
 
       ${renderSections('Dettagli', rule.sezioni)}
+      ${renderEquipmentSheetPicker(rule)}
     `;
+  }
+
+  function renderEquipmentSheetPicker(rule) {
+    if (normalizeText(rule.categoria) !== 'equipaggiamento') return '';
+
+    const rows = equipmentRows(rule);
+    if (!rows.length) return '';
+
+    return `
+      <section class="content-section">
+        <h3>Aggiungi alla scheda</h3>
+        <div class="sheet-reference-picker">
+          ${rows.map((entry) => `
+            <article class="sheet-reference-option">
+              <div>
+                <strong>${escapeHtml(entry.name)}</strong>
+                <span>${escapeHtml([entry.sectionTitle, entry.summary].filter(Boolean).join(' · '))}</span>
+              </div>
+              <button
+                class="button button--ghost"
+                type="button"
+                data-sheet-add-equipment-row
+                data-sheet-section-index="${escapeAttr(String(entry.sectionIndex))}"
+                data-sheet-row-index="${escapeAttr(String(entry.rowIndex))}"
+              >Aggiungi</button>
+            </article>
+          `).join('')}
+        </div>
+      </section>
+    `;
+  }
+
+  function equipmentRows(rule) {
+    return (rule.sezioni || []).flatMap((section, sectionIndex) => {
+      return (section.righe || [])
+        .map((row, rowIndex) => {
+          const name = row?.Nome || row?.Oggetto || row?.Armatura || row?.Voce;
+          if (!name) return null;
+
+          return {
+            sectionIndex,
+            rowIndex,
+            sectionTitle: section.titolo || '',
+            name,
+            summary: equipmentRowSummary(row),
+          };
+        })
+        .filter(Boolean);
+    });
+  }
+
+  function equipmentRowSummary(row) {
+    return [
+      row.Categoria,
+      row.Danni,
+      row['Classe Armatura'] ? `CA ${row['Classe Armatura']}` : null,
+      row.Costo,
+      row.Peso,
+      row.Riepilogo,
+    ].filter((value) => value && String(value).trim() !== '-').join(' · ');
   }
 
   function renderClass(rule) {
@@ -297,7 +367,7 @@ export function createReferenceDetailRenderer({
         ${list
           .map(([label, value]) => `
             <li>
-              <b>${escapeHtml(label)}:</b> ${escapeHtml(String(value))}
+              <b>${escapeHtml(label)}:</b> ${escapeHtml(formatDisplayValue(value))}
             </li>
           `)
           .join('')}
@@ -320,11 +390,12 @@ export function createReferenceDetailRenderer({
         ${Object.entries(labels)
           .map(([key, label]) => {
             const stat = scores[key] || {};
+            const value = stat.valore ?? stat.punteggio;
 
             return `
               <div class="stat">
                 <b>${label}</b>
-                ${escapeHtml(String(stat.valore ?? '-'))}
+                ${escapeHtml(String(value ?? '-'))}
                 <span>${escapeHtml(formatAbilityModifier(stat.modificatore))}</span>
               </div>
             `;
