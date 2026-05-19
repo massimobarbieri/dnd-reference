@@ -2,8 +2,9 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const classes = require('../data/srd/5.2.1/json/srd_5_2_1_classes.json');
 const spells = require('../data/srd/5.2.1/json/srd_5_2_1_spells.json');
+const { readJavaScriptSources } = require('./helpers/source-utils');
 
-const appSource = fs.readFileSync('assets/js/app.js', 'utf8');
+const jsSource = readJavaScriptSources('assets/js');
 const cssSource = fs.readFileSync('assets/css/styles.css', 'utf8');
 
 function normalizeText(value) {
@@ -29,13 +30,13 @@ classes
     });
   });
 
-assert.match(appSource, /function renderTableCell\(value, column\)/);
-assert.match(appSource, /function renderClassSpellListTables\(rows, columns\)/);
-assert.match(appSource, /function groupRowsBySpellLevel\(rows\)/);
-assert.match(appSource, /normalizeTableColumns\(visibleRows, columns\)\.filter\(\(column\) => column !== 'Livello'\)/);
-assert.match(appSource, /href="#\/spells\/\$\{encodeURIComponent\(spell\.id\)\}"/);
-assert.match(appSource, /class="table-spell-link"/);
-assert.match(appSource, /tabindex="0" aria-label="Tabella scorrevole"/);
+assert.match(jsSource, /function renderTableCell\(value, column\)/);
+assert.match(jsSource, /function renderClassSpellListTables\(rows, columns\)/);
+assert.match(jsSource, /function groupRowsBySpellLevel\(rows\)/);
+assert.match(jsSource, /normalizeTableColumns\(visibleRows, columns\)\.filter\(\(column\) => column !== 'Livello'\)/);
+assert.match(jsSource, /href="#\/spells\/\$\{encodeURIComponent\(spell\.id\)\}"/);
+assert.match(jsSource, /class="table-spell-link"/);
+assert.match(jsSource, /tabindex="0" aria-label="Tabella scorrevole"/);
 
 [
   '.table-wrap:focus-visible',

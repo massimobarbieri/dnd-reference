@@ -1,7 +1,186 @@
-/*
-* Renderizza la scheda personaggio nativa.
-*/
-export async function renderCharacterSheet(tab = 'overview') {
+import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js';
+import { createCharacterSheetFields } from './character-sheet-fields.js';
+import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js';
+import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js';
+import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js';
+
+export function createCharacterSheetRenderer({
+  appState,
+  views,
+  setView,
+  bindCharacterSheetEvents,
+  escapeAttr,
+  escapeHtml,
+  APP_STORAGE_PREFIX,
+  CHARACTER_SHEET_TABS,
+  ABILITY_META,
+  SKILL_META,
+  characterSheetClassName,
+  characterLevel,
+  characterProficiencyBonus,
+  characterClassOptions,
+  abilityModifier,
+  rollFormula,
+  formatSigned,
+  abilityOptions,
+  characterSpellOptions,
+  spellOptionLabel,
+  characterSpellSlots,
+  characterConditionOptions,
+  classSkillOptions,
+  characterClassEntry,
+  skillProficiencyBonus,
+  characterAttackBonus,
+  spellLevel,
+  magicItemRequiresAttunement,
+  classProgressionSection,
+  classProgressionRow,
+  classProgressionResources,
+  splitClassFeatures,
+  classSubclassRows,
+  nextLevelSummary,
+  renderLevelAdvancementSummary,
+}) {
+  /*
+   * Renderer della scheda personaggio.
+   * Il modulo genera solo markup e delega eventi/mutazioni ad app.js.
+   */
+  const {
+    sheetField,
+    sheetNumberField,
+    sheetProficiencyTextArea,
+    sheetSelect,
+    sheetStatusTextArea,
+    sheetTextArea,
+  } = createCharacterSheetFields({ escapeAttr, escapeHtml });
+
+  const { renderCharacterSheetInventory } = createCharacterSheetInventoryRenderer({
+    appState,
+    escapeAttr,
+    escapeHtml,
+    sheetTextArea,
+    magicItemRequiresAttunement,
+  });
+
+  const { renderCharacterSheetSpells } = createCharacterSheetSpellsRenderer({
+    appState,
+    escapeAttr,
+    escapeHtml,
+    sheetSelect,
+    abilityOptions,
+    abilityModifier,
+    characterProficiencyBonus,
+    formatSigned,
+    characterSpellOptions,
+    spellOptionLabel,
+    characterSpellSlots,
+    spellLevel,
+  });
+
+  const { renderCharacterSheetCombat } = createCharacterSheetCombatRenderer({
+    appState,
+    escapeAttr,
+    escapeHtml,
+    ABILITY_META,
+    sheetField,
+    sheetNumberField,
+    sheetStatusTextArea,
+    abilityModifier,
+    rollFormula,
+    formatSigned,
+    abilityOptions,
+    characterConditionOptions,
+    characterProficiencyBonus,
+    characterAttackBonus,
+  });
+
+  const { renderCharacterSheetOverview } = createCharacterSheetOverviewRenderer({
+    appState,
+    escapeAttr,
+    escapeHtml,
+    ABILITY_META,
+    SKILL_META,
+    sheetField,
+    sheetNumberField,
+    sheetSelect,
+    sheetProficiencyTextArea,
+    characterClassOptions,
+    abilityModifier,
+    rollFormula,
+    formatSigned,
+    classSkillOptions,
+    characterClassEntry,
+    skillProficiencyBonus,
+    characterLevel,
+    characterProficiencyBonus,
+    classProgressionSection,
+    classProgressionRow,
+    classProgressionResources,
+    splitClassFeatures,
+    classSubclassRows,
+    nextLevelSummary,
+    renderLevelAdvancementSummary,
+  });
+
+  function renderCharacterSheetArchiveImportPrompt() {
+    const archive = appState.pendingCharacterSheetArchive;
+    if (!archive) return '';
+
+    const names = archive.sheets
+      .slice(0, 4)
+      .map((sheet) => sheet.name || 'Scheda personaggio')
+      .join(', ');
+    const extra = archive.sheets.length > 4 ? ` e altre ${archive.sheets.length - 4}` : '';
+
+    return `
+      <section class="sheet-archive-confirm" role="status" aria-live="polite">
+        <div>
+          <strong>Import archivio schede</strong>
+          <p>
+            File con ${escapeHtml(String(archive.sheets.length))} schede:
+            ${escapeHtml(names || 'nessun nome')}${escapeHtml(extra)}.
+            Schede locali attuali: ${escapeHtml(String(appState.characterSheets.length))}.
+          </p>
+        </div>
+        <div class="sheet-archive-actions">
+          <button class="button" type="button" data-sheet-import-archive-mode="unisci">Unisci</button>
+          <button class="button button--ghost" type="button" data-sheet-import-archive-mode="sostituisci">Sostituisci</button>
+          <button class="button button--ghost" type="button" data-sheet-import-archive-cancel>Annulla</button>
+        </div>
+      </section>
+    `;
+  }
+
+  function renderAppBackupImportPrompt() {
+    const backup = appState.pendingAppBackup;
+    if (!backup) return '';
+
+    const keys = Object.keys(backup.storage);
+    const names = keys.slice(0, 4).map((key) => key.replace(APP_STORAGE_PREFIX, '')).join(', ');
+    const extra = keys.length > 4 ? ` e altre ${keys.length - 4}` : '';
+
+    return `
+      <section class="sheet-archive-confirm" role="status" aria-live="polite">
+        <div>
+          <strong>Import backup app</strong>
+          <p>
+            Il backup contiene ${escapeHtml(String(keys.length))} voci locali:
+            ${escapeHtml(names || 'nessuna voce')}${escapeHtml(extra)}.
+            Il ripristino sostituira i dati locali D&D Reference.
+          </p>
+        </div>
+        <div class="sheet-archive-actions">
+          <button class="button" type="button" data-app-import-backup-apply>Ripristina backup</button>
+          <button class="button button--ghost" type="button" data-app-import-backup-cancel>Annulla</button>
+        </div>
+      </section>
+    `;
+  }
+
+  /*
+   * Renderizza la scheda personaggio nativa.
+   */
+  function renderCharacterSheet(tab = 'overview') {
     const validTab = CHARACTER_SHEET_TABS.some(([id]) => id === tab) ? tab : 'overview';
     appState.characterSheetTab = validTab;
 
@@ -51,68 +230,83 @@ export async function renderCharacterSheet(tab = 'overview') {
     `;
 
     bindCharacterSheetEvents();
-}
+  }
 
-export async function sheetField(key, label, value) {
-    return `
-      <label class="sheet-field">
-        <span>${escapeHtml(label)}</span>
-        <input type="text" value="${escapeAttr(value || '')}" data-sheet-field="${escapeAttr(key)}">
-      </label>
-    `;
-}
+  /*
+   * Header della scheda con riepilogo derivato.
+   */
+  function renderCharacterSheetHeader() {
+    const sheet = appState.characterSheet;
+    const className = characterSheetClassName();
+    const level = characterLevel();
 
-export async function sheetNumberField(key, label, value, min, max) {
     return `
-      <label class="sheet-field">
-        <span>${escapeHtml(label)}</span>
-        <input
-          type="number"
-          value="${escapeAttr(String(value ?? 0))}"
-          ${min !== undefined ? `min="${escapeAttr(String(min))}"` : ''}
-          ${max !== undefined ? `max="${escapeAttr(String(max))}"` : ''}
-          data-sheet-number="${escapeAttr(key)}"
-        >
-      </label>
+      <header class="detail-header character-sheet-header">
+        <div>
+          <h2 class="detail-title">${escapeHtml(sheet.name || 'Scheda personaggio')}</h2>
+          <p class="detail-kicker">${escapeHtml([className, level ? `livello ${level}` : null, sheet.ancestry].filter(Boolean).join(' · '))}</p>
+        </div>
+        <div class="sheet-badges" aria-label="Riepilogo personaggio">
+          <span>BC ${escapeHtml(String(characterProficiencyBonus()))}</span>
+          <span>CA ${escapeHtml(String(Number(sheet.armorClass) || 10))}</span>
+          <span>PF ${escapeHtml(String(Number(sheet.currentHp) || 0))}/${escapeHtml(String(Number(sheet.maxHp) || 0))}</span>
+        </div>
+      </header>
     `;
-}
+  }
 
-export async function sheetSelect(key, label, value, options) {
+  /*
+   * Navigazione interna della scheda.
+   */
+  function renderCharacterSheetTabs(activeTab) {
     return `
-      <label class="sheet-field">
-        <span>${escapeHtml(label)}</span>
-        <select data-sheet-field="${escapeAttr(key)}">
-          ${options.map((option) => `
-            <option value="${escapeAttr(option.value)}"${option.value === value ? ' selected' : ''}>${escapeHtml(option.label)}</option>
-          `).join('')}
-        </select>
-      </label>
+      <div class="sheet-tabs" role="tablist" aria-label="Sezioni scheda">
+        ${CHARACTER_SHEET_TABS.map(([id, label]) => `
+          <a
+            class="sheet-tab${id === activeTab ? ' is-active' : ''}"
+            href="#/character_sheet/${id}"
+            role="tab"
+            aria-selected="${id === activeTab}"
+          >${escapeHtml(label)}</a>
+        `).join('')}
+      </div>
     `;
-}
+  }
 
-export async function sheetTextArea(key, placeholder, value) {
-    return `
-      <label class="sheet-field sheet-field--wide">
-        <span class="visually-hidden">${escapeHtml(placeholder)}</span>
-        <textarea data-sheet-field="${escapeAttr(key)}" placeholder="${escapeAttr(placeholder)}">${escapeHtml(value || '')}</textarea>
-      </label>
-    `;
-}
+  /*
+   * Contenuto della tab attiva.
+   */
+  function renderCharacterSheetTab(tab) {
+    if (tab === 'combat') return renderCharacterSheetCombat();
+    if (tab === 'spells') return renderCharacterSheetSpells();
+    if (tab === 'inventory') return renderCharacterSheetInventory();
+    if (tab === 'notes') return renderCharacterSheetNotes();
+    return renderCharacterSheetOverview();
+  }
 
-export async function sheetProficiencyTextArea(key, label, placeholder, value) {
-    return `
-      <label class="sheet-field sheet-field--wide">
-        <span>${escapeHtml(label)}</span>
-        <textarea data-sheet-proficiency="${escapeAttr(key)}" placeholder="${escapeAttr(placeholder)}">${escapeHtml(value || '')}</textarea>
-      </label>
-    `;
-}
+  /*
+   * Tab note.
+   */
+  function renderCharacterSheetNotes() {
+    const sheet = appState.characterSheet;
 
-export async function sheetStatusTextArea(key, placeholder, value) {
     return `
-      <label class="sheet-field sheet-field--wide sheet-status-notes">
-        <span class="visually-hidden">${escapeHtml(placeholder)}</span>
-        <textarea data-sheet-status-field="${escapeAttr(key)}" placeholder="${escapeAttr(placeholder)}">${escapeHtml(value || '')}</textarea>
-      </label>
+      <section class="sheet-grid">
+        <div class="sheet-panel sheet-panel--wide">
+          <h3>Diario e note</h3>
+          ${sheetTextArea('notes', 'Appunti di sessione, PNG, luoghi, obiettivi...', sheet.notes)}
+        </div>
+      </section>
     `;
+  }
+
+  /*
+   * Collega gli eventi dopo ogni render della scheda. La vista viene spesso
+   * ridisegnata interamente, quindi i listener non devono essere conservati.
+   */
+
+
+  return {
+    renderCharacterSheet,
+  };
 }

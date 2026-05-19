@@ -1,16 +1,6 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-
-function readJavaScriptSources(dir) {
-  return fs.readdirSync(dir, { withFileTypes: true })
-    .flatMap((entry) => {
-      const path = `${dir}/${entry.name}`;
-      if (entry.isDirectory()) return readJavaScriptSources(path);
-      if (entry.isFile() && entry.name.endsWith('.js')) return [fs.readFileSync(path, 'utf8')];
-      return [];
-    })
-    .join('\n');
-}
+const { readJavaScriptSources } = require('./helpers/source-utils');
 
 const jsSource = readJavaScriptSources('assets/js');
 const cssSource = fs.readFileSync('assets/css/styles.css', 'utf8');
