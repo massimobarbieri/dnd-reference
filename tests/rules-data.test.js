@@ -91,13 +91,6 @@ assert.ok(!ids.has('specie_origini_personaggio'), 'le specie devono stare nel JS
   ['avanzamento_livelli_superiori', 'Equipaggiamento a livelli superiori', 4],
   ['multiclasse_e_monili', 'Incantatore multiclasse: slot incantesimo 1-9', 20],
   ['multiclasse_e_monili', 'Monili', 100],
-  ['armi', 'Armi principali', 38],
-  ['armature', 'Armature complete', 13],
-  ['equipaggiamento_avventura', "Equipaggiamento d'avventura: peso e costo", 82],
-  ['cavalcature_e_veicoli', 'Finimenti e veicoli da tiro', 10],
-  ['cavalcature_e_veicoli', 'Veicoli aerei e imbarcazioni', 7],
-  ['spese_servizi_e_stile_di_vita', 'Vitto e alloggio', 17],
-  ['spese_servizi_e_stile_di_vita', 'Gregari e servizi magici', 10],
   ['pozioni_maledizioni_resilienza', 'Miscibilita delle pozioni', 8],
   ['creare_oggetti_magici', 'Strumenti per categoria', 9],
   ['creare_oggetti_magici', 'Tempi e costi', 5],
@@ -110,6 +103,19 @@ assert.ok(!ids.has('specie_origini_personaggio'), 'le specie devono stare nel JS
 
   assert.ok(section, `${ruleId} deve includere la tabella ${sectionTitle}`);
   assert.equal(section.righe.length, rowCount, `${sectionTitle} deve avere ${rowCount} righe`);
+});
+
+[
+  ['armi', 'Armi principali'],
+  ['armature', 'Armature complete'],
+  ['equipaggiamento_avventura', "Equipaggiamento d'avventura: peso e costo"],
+  ['cavalcature_e_veicoli', 'Finimenti e veicoli da tiro'],
+  ['cavalcature_e_veicoli', 'Veicoli aerei e imbarcazioni'],
+  ['spese_servizi_e_stile_di_vita', 'Vitto e alloggio'],
+  ['spese_servizi_e_stile_di_vita', 'Gregari e servizi magici'],
+].forEach(([ruleId, sectionTitle]) => {
+  const rule = rules.find((entry) => entry.id === ruleId);
+  assert.ok(!rule?.sezioni.some((entry) => entry.titolo === sectionTitle), `${sectionTitle} deve stare nel JSON dedicato`);
 });
 
 console.log('Dati regole SRD OK');

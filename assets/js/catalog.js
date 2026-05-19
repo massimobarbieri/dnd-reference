@@ -1,5 +1,5 @@
 import { normalizeText } from './app-core.js';
-import { formatDisplayValue } from './display-values.js?v=20260519-origins';
+import { formatDisplayValue } from './display-values.js?v=20260519-entities';
 
 /*
  * Restituisce gli elementi filtrati e ordinati alfabeticamente.
@@ -72,6 +72,24 @@ export function createFilterOptions(section, data, spellLevel) {
       }));
   }
 
+  if (section === 'equipment') {
+    return uniqueValues(data.equipment, 'categoria')
+      .sort((a, b) => a.localeCompare(b, 'it'))
+      .map((value) => ({ value, label: value }));
+  }
+
+  if (section === 'feats') {
+    return uniqueValues(data.feats, 'categoria')
+      .sort((a, b) => a.localeCompare(b, 'it'))
+      .map((value) => ({ value, label: value }));
+  }
+
+  if (section === 'languages') {
+    return uniqueValues(data.languages, 'categoria')
+      .sort((a, b) => a.localeCompare(b, 'it'))
+      .map((value) => ({ value, label: value }));
+  }
+
   if (section === 'rules_glossary') {
     return uniqueValues(data.rules_glossary, 'descrittore')
       .sort((a, b) => a.localeCompare(b, 'it'))
@@ -113,6 +131,10 @@ export function matchesSectionFilter(section, item, filter) {
 
   if (section === 'backgrounds') {
     return normalizeList(item.punteggi_caratteristica).includes(filter);
+  }
+
+  if (['equipment', 'feats', 'languages'].includes(section)) {
+    return String(item.categoria || '') === filter;
   }
 
   if (section === 'rules_glossary') {
@@ -225,6 +247,43 @@ export function searchableText(section, item) {
     ]);
   }
 
+  if (section === 'equipment') {
+    return displayText([
+      item.nome,
+      item.tipo,
+      item.categoria,
+      item.danni,
+      item.classe_armatura,
+      item.padronanza,
+      item.proprieta,
+      item.costo,
+      item.peso,
+      item.descrizione,
+      ...searchableSectionText(item.sezioni),
+    ]);
+  }
+
+  if (section === 'feats') {
+    return displayText([
+      item.nome,
+      item.categoria,
+      item.prerequisito,
+      item.beneficio,
+      item.descrizione,
+      ...searchableSectionText(item.sezioni),
+    ]);
+  }
+
+  if (section === 'languages') {
+    return displayText([
+      item.nome,
+      item.categoria,
+      item.tiro_casuale,
+      item.descrizione,
+      ...searchableSectionText(item.sezioni),
+    ]);
+  }
+
   if (section === 'rules_glossary') {
     return displayText([
       item.nome,
@@ -286,6 +345,30 @@ export function sectionSummaryLine(section, item, spellLevel) {
       normalizeList(item.punteggi_caratteristica).join(', '),
       item.talento_origine,
       item.pagine_sorgente ? `pag. ${item.pagine_sorgente}` : null,
+    ].filter(Boolean).join(' · ');
+  }
+
+  if (section === 'equipment') {
+    return [
+      item.categoria || item.tipo,
+      item.danni ? `Danni ${item.danni}` : null,
+      item.classe_armatura ? `CA ${item.classe_armatura}` : null,
+      item.costo,
+    ].filter(Boolean).join(' · ');
+  }
+
+  if (section === 'feats') {
+    return [
+      item.categoria,
+      item.prerequisito ? `Prerequisito: ${item.prerequisito}` : null,
+      item.ripetibile ? 'ripetibile' : null,
+    ].filter(Boolean).join(' · ');
+  }
+
+  if (section === 'languages') {
+    return [
+      item.categoria,
+      item.tiro_casuale && item.tiro_casuale !== '—' ? `1d12 ${item.tiro_casuale}` : null,
     ].filter(Boolean).join(' · ');
   }
 

@@ -1,8 +1,8 @@
-import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260519-origins';
-import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260519-origins';
-import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260519-origins';
-import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260519-origins';
-import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260519-origins';
+import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260519-entities';
+import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260519-entities';
+import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260519-entities';
+import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260519-entities';
+import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260519-entities';
 
 export function createCharacterSheetRenderer({
   appState,
@@ -361,6 +361,9 @@ export function createCharacterSheetRenderer({
       classes: 'Classe',
       species: 'Specie',
       backgrounds: 'Background',
+      equipment: 'Equipaggiamento',
+      feats: 'Talento',
+      languages: 'Lingua',
       spells: 'Incantesimo',
       magic_items: 'Oggetto magico',
     }[section] || section;

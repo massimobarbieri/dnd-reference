@@ -28,6 +28,21 @@
       singular: 'background',
       titleKey: 'backgrounds',
     },
+    equipment: {
+      icon: '🛡️',
+      singular: 'oggetto',
+      titleKey: 'equipment',
+    },
+    feats: {
+      icon: '🏅',
+      singular: 'talento',
+      titleKey: 'feats',
+    },
+    languages: {
+      icon: '🗣️',
+      singular: 'lingua',
+      titleKey: 'languages',
+    },
     character_sheet: {
       icon: '🧾',
       singular: 'scheda',
