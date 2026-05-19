@@ -30,7 +30,9 @@ export function createCharacterSheetOverviewRenderer({
 
     return `
       <section class="sheet-grid">
-        <div class="sheet-panel">
+        ${renderOverviewSummary()}
+
+        <div class="sheet-panel sheet-panel--identity">
           <h3>Identita</h3>
           <div class="sheet-form-grid">
             ${sheetField('name', 'Nome', sheet.name)}
@@ -66,6 +68,85 @@ export function createCharacterSheetOverviewRenderer({
         </div>
       </section>
     `;
+  }
+
+  function renderOverviewSummary() {
+    const sheet = appState.characterSheet;
+    const initiative = abilityModifier(sheet.abilities.dex) + (Number(sheet.initiativeBonus) || 0);
+    const passivePerception = 10 + skillModifier('perception');
+    const activeSkills = SKILL_META
+      .map(([key, label, ability]) => ({
+        key,
+        label,
+        rank: Number(sheet.skillProficiencies[key]) || 0,
+        modifier: abilityModifier(sheet.abilities[ability]) + skillProficiencyBonus(sheet.skillProficiencies[key]),
+      }))
+      .filter((skill) => skill.rank > 0)
+      .sort((a, b) => b.modifier - a.modifier || a.label.localeCompare(b.label, 'it'))
+      .slice(0, 6);
+
+    return `
+      <div class="sheet-panel sheet-panel--wide sheet-hero">
+        <div class="sheet-hero-main">
+          <div>
+            <span>Profilo</span>
+            <strong>${escapeHtml(sheet.name || 'Nuovo personaggio')}</strong>
+            <p>${escapeHtml([
+              characterClassEntry()?.nome.replace(/^Classe:\s*/i, ''),
+              `Livello ${characterLevel()}`,
+              sheet.ancestry,
+              sheet.background,
+            ].filter(Boolean).join(' · '))}</p>
+          </div>
+          <div class="sheet-hero-rolls">
+            <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, initiative))}">
+              Iniziativa ${escapeHtml(formatSigned(initiative))}
+            </button>
+            <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, skillModifier('perception')))}">
+              Percezione ${escapeHtml(formatSigned(skillModifier('perception')))}
+            </button>
+          </div>
+        </div>
+
+        <div class="sheet-stat-strip" aria-label="Statistiche principali">
+          ${renderSummaryStat('CA', Number(sheet.armorClass) || 10, 'Difesa')}
+          ${renderSummaryStat('PF', `${Number(sheet.currentHp) || 0}/${Number(sheet.maxHp) || 0}`, 'Attuali / massimi')}
+          ${renderSummaryStat('Temp', Number(sheet.tempHp) || 0, 'Punti ferita')}
+          ${renderSummaryStat('Vel', Number(sheet.speed) || 0, 'metri')}
+          ${renderSummaryStat('BC', formatSigned(characterProficiencyBonus()), 'Competenza')}
+          ${renderSummaryStat('Passiva', passivePerception, 'Percezione')}
+        </div>
+
+        <div class="sheet-skill-strip" aria-label="Competenze attive">
+          <span>Competenze attive</span>
+          ${activeSkills.length ? `
+            <div>
+              ${activeSkills.map((skill) => `
+                <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, skill.modifier))}">
+                  ${escapeHtml(skill.label)} ${escapeHtml(formatSigned(skill.modifier))}
+                </button>
+              `).join('')}
+            </div>
+          ` : '<p>Nessuna competenza selezionata.</p>'}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderSummaryStat(label, value, hint) {
+    return `
+      <div class="sheet-summary-stat">
+        <span>${escapeHtml(label)}</span>
+        <strong>${escapeHtml(String(value))}</strong>
+        <small>${escapeHtml(hint)}</small>
+      </div>
+    `;
+  }
+
+  function skillModifier(key) {
+    const skill = SKILL_META.find(([skillKey]) => skillKey === key);
+    if (!skill) return 0;
+    return abilityModifier(appState.characterSheet.abilities[skill[2]]) + skillProficiencyBonus(appState.characterSheet.skillProficiencies[key]);
   }
 
   function renderAbilityCard(key, label, short) {

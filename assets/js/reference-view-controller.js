@@ -19,8 +19,10 @@ export function createReferenceViewController({
   renderCharacterSheet,
   applyClassToCharacterSheet,
   saveCharacterSheet,
+  addEquipmentToCharacterSheet,
   addSpellToCharacterSheet,
   addMagicItemToCharacterSheet,
+  addReferenceToCharacterSheet,
 }) {
   function renderRoute() {
     const route = parseHash(location.hash);
@@ -43,6 +45,11 @@ export function createReferenceViewController({
     }
 
     if (route.section === 'character_sheet') {
+      if (!route.id) {
+        location.hash = '#/character_sheet/overview';
+        return;
+      }
+
       renderCharacterSheet(route.id || appState.characterSheetTab);
       return;
     }
@@ -269,6 +276,23 @@ export function createReferenceViewController({
       addMagicItemToCharacterSheet(item);
       location.hash = '#/character_sheet/inventory';
     });
+
+    views.detail.querySelector('[data-sheet-add-reference]')?.addEventListener('click', () => {
+      addReferenceToCharacterSheet(section, item);
+      location.hash = '#/character_sheet/notes';
+    });
+
+    views.detail.querySelectorAll('[data-sheet-add-equipment-row]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        const sectionIndex = Number(event.currentTarget.dataset.sheetSectionIndex);
+        const rowIndex = Number(event.currentTarget.dataset.sheetRowIndex);
+        const sourceSection = item.sezioni?.[sectionIndex];
+        const row = sourceSection?.righe?.[rowIndex];
+
+        addEquipmentToCharacterSheet(item, row, sourceSection?.titolo || '');
+        location.hash = '#/character_sheet/inventory';
+      });
+    });
   }
 
   function getSiblingLinks(section, id) {
@@ -316,6 +340,15 @@ export function renderReferenceSheetActions({ section, item, escapeAttr }) {
       <div class="sheet-actions">
         <button class="button button--primary" type="button" data-sheet-add-magic-item="${escapeAttr(item.id)}">Aggiungi all'inventario</button>
         <a class="button button--ghost" href="#/character_sheet/inventory">Inventario scheda</a>
+      </div>
+    `;
+  }
+
+  if (['monsters', 'rules', 'rules_glossary'].includes(section)) {
+    return `
+      <div class="sheet-actions">
+        <button class="button button--primary" type="button" data-sheet-add-reference="${escapeAttr(item.id)}">Collega alla scheda</button>
+        <a class="button button--ghost" href="#/character_sheet/notes">Riferimenti scheda</a>
       </div>
     `;
   }

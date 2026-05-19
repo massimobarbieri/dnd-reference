@@ -245,7 +245,68 @@ export function createReferenceDetailRenderer({
       <div class="description">${formatInline(rule.descrizione || '')}</div>
 
       ${renderSections('Dettagli', rule.sezioni)}
+      ${renderEquipmentSheetPicker(rule)}
     `;
+  }
+
+  function renderEquipmentSheetPicker(rule) {
+    if (normalizeText(rule.categoria) !== 'equipaggiamento') return '';
+
+    const rows = equipmentRows(rule);
+    if (!rows.length) return '';
+
+    return `
+      <section class="content-section">
+        <h3>Aggiungi alla scheda</h3>
+        <div class="sheet-reference-picker">
+          ${rows.map((entry) => `
+            <article class="sheet-reference-option">
+              <div>
+                <strong>${escapeHtml(entry.name)}</strong>
+                <span>${escapeHtml([entry.sectionTitle, entry.summary].filter(Boolean).join(' · '))}</span>
+              </div>
+              <button
+                class="button button--ghost"
+                type="button"
+                data-sheet-add-equipment-row
+                data-sheet-section-index="${escapeAttr(String(entry.sectionIndex))}"
+                data-sheet-row-index="${escapeAttr(String(entry.rowIndex))}"
+              >Aggiungi</button>
+            </article>
+          `).join('')}
+        </div>
+      </section>
+    `;
+  }
+
+  function equipmentRows(rule) {
+    return (rule.sezioni || []).flatMap((section, sectionIndex) => {
+      return (section.righe || [])
+        .map((row, rowIndex) => {
+          const name = row?.Nome || row?.Oggetto || row?.Armatura || row?.Voce;
+          if (!name) return null;
+
+          return {
+            sectionIndex,
+            rowIndex,
+            sectionTitle: section.titolo || '',
+            name,
+            summary: equipmentRowSummary(row),
+          };
+        })
+        .filter(Boolean);
+    });
+  }
+
+  function equipmentRowSummary(row) {
+    return [
+      row.Categoria,
+      row.Danni,
+      row['Classe Armatura'] ? `CA ${row['Classe Armatura']}` : null,
+      row.Costo,
+      row.Peso,
+      row.Riepilogo,
+    ].filter((value) => value && String(value).trim() !== '-').join(' · ');
   }
 
   function renderClass(rule) {

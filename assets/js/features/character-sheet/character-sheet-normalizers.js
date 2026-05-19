@@ -3,7 +3,7 @@ import {
   SKILL_META,
   CHARACTER_SHEET_SCHEMA_VERSION,
   DEFAULT_CHARACTER_SHEET,
-} from './character-sheet-view.js';
+} from './character-sheet-view.js?v=20260519-sheet-modern2';
 
 /*
 * Normalizza una scheda parziale mantenendo compatibilita con campi nuovi.
@@ -37,6 +37,7 @@ export function normalizeCharacterSheet(sheet) {
       preparedSpells: Array.isArray(migrated.preparedSpells) ? migrated.preparedSpells : [],
       magicItems: Array.isArray(migrated.magicItems) ? migrated.magicItems : [],
       attunedMagicItems: normalizeIdList(migrated.attunedMagicItems),
+      references: normalizeSheetReferences(migrated.references),
       coins: {
         ...base.coins,
         ...(migrated.coins || {}),
@@ -90,6 +91,10 @@ export function migrateCharacterSheet(value) {
 
     if (sheet.schemaVersion < 9) {
       sheet.spellSlotsUsed = normalizeSpellSlotsUsed(sheet.spellSlotsUsed);
+    }
+
+    if (sheet.schemaVersion < 10) {
+      sheet.references = normalizeSheetReferences(sheet.references);
     }
 
     return sheet;
@@ -194,6 +199,32 @@ export function normalizeCharacterStatus(status) {
 export function normalizeIdList(value) {
     if (!Array.isArray(value)) return [];
     return Array.from(new Set(value.map((id) => String(id)).filter(Boolean)));
+  }
+
+export function normalizeSheetReferences(value) {
+    if (!Array.isArray(value)) return [];
+
+    const seen = new Set();
+
+    return value
+      .map((entry) => {
+        if (!entry || typeof entry !== 'object' || !entry.section || !entry.id) return null;
+
+        const section = String(entry.section);
+        const id = String(entry.id);
+        const key = `${section}:${id}`;
+
+        if (seen.has(key)) return null;
+        seen.add(key);
+
+        return {
+          section,
+          id,
+          name: entry.name ? String(entry.name) : id,
+          summary: entry.summary ? String(entry.summary) : '',
+        };
+      })
+      .filter(Boolean);
   }
 
 export function normalizeSkillProficiencies(value) {

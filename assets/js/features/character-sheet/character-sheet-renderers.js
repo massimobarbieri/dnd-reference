@@ -1,8 +1,8 @@
-import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js';
-import { createCharacterSheetFields } from './character-sheet-fields.js';
-import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js';
-import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js';
-import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js';
+import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260519-sheet-modern2';
+import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260519-sheet-modern2';
+import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260519-sheet-modern2';
+import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260519-sheet-modern2';
+import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260519-sheet-modern2';
 
 export function createCharacterSheetRenderer({
   appState,
@@ -292,12 +292,76 @@ export function createCharacterSheetRenderer({
 
     return `
       <section class="sheet-grid">
+        <div class="sheet-panel sheet-panel--wide sheet-dashboard sheet-dashboard--notes">
+          <div class="sheet-dashboard-heading">
+            <div>
+              <span>Note e SRD</span>
+              <strong>${escapeHtml(`${sheet.references.length} riferimenti`)}</strong>
+              <p>${escapeHtml(sheet.references.length ? 'Voci SRD collegate alla scheda locale.' : 'Spazio libero per sessioni, PNG, luoghi, obiettivi e riferimenti SRD.')}</p>
+            </div>
+          </div>
+        </div>
+
         <div class="sheet-panel sheet-panel--wide">
+          <h3>Riferimenti SRD</h3>
+          ${renderCharacterSheetReferences()}
+        </div>
+
+        <div class="sheet-panel sheet-panel--wide sheet-panel--control">
           <h3>Diario e note</h3>
           ${sheetTextArea('notes', 'Appunti di sessione, PNG, luoghi, obiettivi...', sheet.notes)}
         </div>
       </section>
     `;
+  }
+
+  function renderCharacterSheetReferences() {
+    const references = appState.characterSheet.references
+      .map((entry) => {
+        const source = appState.data[entry.section]?.find((item) => item.id === entry.id);
+
+        return {
+          section: entry.section,
+          id: entry.id,
+          name: source?.nome || entry.name || entry.id,
+          summary: entry.summary,
+        };
+      })
+      .sort((a, b) => sectionLabel(a.section).localeCompare(sectionLabel(b.section), 'it') || String(a.name).localeCompare(String(b.name), 'it'));
+
+    if (!references.length) {
+      return '<p class="sheet-empty">Nessun riferimento SRD collegato.</p>';
+    }
+
+    return `
+      <div class="sheet-item-list">
+        ${references.map((entry) => `
+          <article class="sheet-item">
+            <div>
+              <a href="#/${entry.section}/${encodeURIComponent(entry.id)}">${escapeHtml(entry.name)}</a>
+              <span>${escapeHtml([sectionLabel(entry.section), entry.summary].filter(Boolean).join(' · '))}</span>
+            </div>
+            <button
+              class="button button--ghost"
+              type="button"
+              data-sheet-remove-reference="${escapeAttr(entry.id)}"
+              data-sheet-reference-section="${escapeAttr(entry.section)}"
+            >Rimuovi</button>
+          </article>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function sectionLabel(section) {
+    return {
+      monsters: 'Mostro',
+      rules: 'Regola',
+      rules_glossary: 'Glossario',
+      classes: 'Classe',
+      spells: 'Incantesimo',
+      magic_items: 'Oggetto magico',
+    }[section] || section;
   }
 
   /*

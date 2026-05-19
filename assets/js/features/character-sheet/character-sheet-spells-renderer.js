@@ -20,7 +20,23 @@ export function createCharacterSheetSpellsRenderer({
 
     return `
       <section class="sheet-grid sheet-spell-grid">
-        <div class="sheet-panel sheet-spell-summary">
+        <div class="sheet-panel sheet-panel--wide sheet-dashboard sheet-dashboard--spells">
+          <div class="sheet-dashboard-heading">
+            <div>
+              <span>Magia</span>
+              <strong>${escapeHtml(`${appState.characterSheet.preparedSpells.length} preparati`)}</strong>
+              <p>${escapeHtml(spellOptions.length ? "Catalogo filtrato per classe pronto all'uso." : 'Scegli una classe per filtrare il catalogo incantesimi.')}</p>
+            </div>
+          </div>
+          <div class="sheet-stat-strip">
+            ${renderSpellStat('CD', dc, 'Incantesimi')}
+            ${renderSpellStat('Attacco', formatSigned(attack), 'Incantesimo')}
+            ${renderSpellStat('Car.', abilityOptions().find((option) => option.value === sheet.spellcastingAbility)?.label || sheet.spellcastingAbility, 'Lancio')}
+            ${renderSpellStat('Preparati', appState.characterSheet.preparedSpells.length, 'Lista')}
+          </div>
+        </div>
+
+        <div class="sheet-panel sheet-panel--control sheet-spell-summary">
           <h3>Incantatore</h3>
           <div class="sheet-form-grid sheet-form-grid--compact">
             ${sheetSelect('spellcastingAbility', 'Caratteristica', sheet.spellcastingAbility, abilityOptions())}
@@ -29,12 +45,12 @@ export function createCharacterSheetSpellsRenderer({
           </div>
         </div>
 
-        <div class="sheet-panel sheet-spell-slots">
+        <div class="sheet-panel sheet-panel--control sheet-spell-slots">
           <h3>Slot disponibili</h3>
           ${renderCharacterSpellSlots()}
         </div>
 
-        <div class="sheet-panel sheet-spell-picker">
+        <div class="sheet-panel sheet-panel--control sheet-spell-picker">
           <h3>Aggiungi incantesimo</h3>
           <div class="sheet-inline-form">
             <label class="sheet-field">
@@ -52,6 +68,16 @@ export function createCharacterSheetSpellsRenderer({
           ${renderPreparedSpells()}
         </div>
       </section>
+    `;
+  }
+
+  function renderSpellStat(label, value, hint) {
+    return `
+      <div class="sheet-summary-stat">
+        <span>${escapeHtml(label)}</span>
+        <strong>${escapeHtml(String(value))}</strong>
+        <small>${escapeHtml(hint)}</small>
+      </div>
     `;
   }
 

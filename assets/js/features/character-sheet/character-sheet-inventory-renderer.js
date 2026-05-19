@@ -10,7 +10,9 @@ export function createCharacterSheetInventoryRenderer({
 
     return `
       <section class="sheet-grid">
-        <div class="sheet-panel">
+        ${renderInventorySummary()}
+
+        <div class="sheet-panel sheet-panel--control">
           <h3>Monete</h3>
           <div class="coin-grid">
             ${Object.entries({ pp: 'PP', mo: 'MO', ma: 'MA', mr: 'MR' }).map(([key, label]) => `
@@ -33,6 +35,40 @@ export function createCharacterSheetInventoryRenderer({
           ${sheetTextArea('equipment', 'Armi, armature, oggetti, tesori...', sheet.equipment)}
         </div>
       </section>
+    `;
+  }
+
+  function renderInventorySummary() {
+    const sheet = appState.characterSheet;
+    const coinEntries = Object.entries({ pp: 'PP', mo: 'MO', ma: 'MA', mr: 'MR' });
+    const magicCount = sheet.magicItems.length;
+    const attunedCount = sheet.attunedMagicItems.length;
+
+    return `
+      <div class="sheet-panel sheet-panel--wide sheet-dashboard sheet-dashboard--inventory">
+        <div class="sheet-dashboard-heading">
+          <div>
+            <span>Inventario</span>
+            <strong>${escapeHtml(`${magicCount} oggetti magici`)}</strong>
+            <p>${escapeHtml(attunedCount ? `${attunedCount}/3 oggetti in sintonia.` : 'Nessun oggetto in sintonia.')}</p>
+          </div>
+        </div>
+        <div class="sheet-stat-strip">
+          ${coinEntries.map(([key, label]) => renderInventoryStat(label, sheet.coins[key] ?? 0, 'Monete')).join('')}
+          ${renderInventoryStat('Magici', magicCount, 'Oggetti')}
+          ${renderInventoryStat('Sintonia', `${attunedCount}/3`, 'Limite')}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderInventoryStat(label, value, hint) {
+    return `
+      <div class="sheet-summary-stat">
+        <span>${escapeHtml(label)}</span>
+        <strong>${escapeHtml(String(value))}</strong>
+        <small>${escapeHtml(hint)}</small>
+      </div>
     `;
   }
 

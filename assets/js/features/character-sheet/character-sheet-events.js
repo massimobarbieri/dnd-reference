@@ -332,6 +332,17 @@ export function createCharacterSheetEventsController({
       });
     });
 
+    views.detail.querySelectorAll('[data-sheet-remove-reference]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        const section = event.currentTarget.dataset.sheetReferenceSection;
+        const id = event.currentTarget.dataset.sheetRemoveReference;
+        appState.characterSheet.references = appState.characterSheet.references
+          .filter((entry) => entry.section !== section || entry.id !== id);
+        saveCharacterSheet();
+        renderCharacterSheet('notes');
+      });
+    });
+
     views.detail.querySelector('[data-sheet-export]')?.addEventListener('click', exportCharacterSheet);
     views.detail.querySelector('[data-sheet-import]')?.addEventListener('click', () => {
       views.detail.querySelector('#character-sheet-import')?.click();
