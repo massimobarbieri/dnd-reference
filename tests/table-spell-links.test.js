@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const rules = require('../data/srd/5.2.1/json/srd_5_2_1_rules.json');
+const classes = require('../data/srd/5.2.1/json/srd_5_2_1_classes.json');
 const spells = require('../data/srd/5.2.1/json/srd_5_2_1_spells.json');
 
 const appSource = fs.readFileSync('assets/js/app.js', 'utf8');
@@ -15,12 +15,11 @@ function normalizeText(value) {
 
 const spellNames = new Set(spells.map((spell) => normalizeText(spell.nome).trim()));
 
-rules
-  .filter((rule) => rule.id.startsWith('classe_'))
+classes
   .flatMap((rule) => rule.sezioni)
   .filter((section) => section.titolo.startsWith('Lista degli incantesimi da '))
   .forEach((section) => {
-    assert.ok(section.colonne.includes('Incantesimo'), `${section.titolo} deve avere la colonna Incantesimo`);
+    assert.ok(section.righe.some((row) => Object.hasOwn(row, 'Incantesimo')), `${section.titolo} deve avere la colonna Incantesimo`);
 
     section.righe.forEach((row) => {
       assert.ok(
@@ -33,7 +32,7 @@ rules
 assert.match(appSource, /function renderTableCell\(value, column\)/);
 assert.match(appSource, /function renderClassSpellListTables\(rows, columns\)/);
 assert.match(appSource, /function groupRowsBySpellLevel\(rows\)/);
-assert.match(appSource, /columns\.filter\(\(column\) => column !== 'Livello'\)/);
+assert.match(appSource, /normalizeTableColumns\(visibleRows, columns\)\.filter\(\(column\) => column !== 'Livello'\)/);
 assert.match(appSource, /href="#\/spells\/\$\{encodeURIComponent\(spell\.id\)\}"/);
 assert.match(appSource, /class="table-spell-link"/);
 assert.match(appSource, /tabindex="0" aria-label="Tabella scorrevole"/);

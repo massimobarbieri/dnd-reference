@@ -1,9 +1,16 @@
+import {
+  ABILITY_META,
+  SKILL_META,
+  CHARACTER_SHEET_SCHEMA_VERSION,
+  DEFAULT_CHARACTER_SHEET,
+} from './character-sheet-view.js';
+
 /*
 * Normalizza una scheda parziale mantenendo compatibilita con campi nuovi.
 * I sotto-oggetti vengono sempre ricostruiti per evitare riferimenti o shape
 * vecchie provenienti da localStorage/import JSON.
 */
-export async function normalizeCharacterSheet(sheet) {
+export function normalizeCharacterSheet(sheet) {
     const base = cloneJson(DEFAULT_CHARACTER_SHEET);
     const value = sheet && typeof sheet === 'object' ? sheet : {};
     const migrated = migrateCharacterSheet(value);
@@ -42,7 +49,7 @@ export async function normalizeCharacterSheet(sheet) {
 * Ogni blocco deve essere idempotente: puo essere richiamato anche su dati
 * gia normalizzati senza duplicare o perdere informazioni.
 */
-export async function migrateCharacterSheet(value) {
+export function migrateCharacterSheet(value) {
     const sheet = { ...value };
 
     if (!Number.isFinite(Number(sheet.schemaVersion))) {
@@ -88,7 +95,7 @@ export async function migrateCharacterSheet(value) {
     return sheet;
   }
 
-export async function normalizeSpellSlotsUsed(value) {
+export function normalizeSpellSlotsUsed(value) {
     const source = value && typeof value === 'object' ? value : {};
 
     return Object.fromEntries(Object.entries(source)
@@ -98,7 +105,7 @@ export async function normalizeSpellSlotsUsed(value) {
 /*
 * Riallinea vecchie liste di oggetti magici a una forma stabile.
 */
-export async function normalizeLegacyMagicItems(items) {
+export function normalizeLegacyMagicItems(items) {
     if (!Array.isArray(items)) return [];
 
     return items
@@ -121,7 +128,7 @@ export async function normalizeLegacyMagicItems(items) {
 /*
 * Riallinea vecchi attacchi a una forma calcolabile.
 */
-export async function normalizeLegacyAttacks(attacks) {
+export function normalizeLegacyAttacks(attacks) {
     if (!Array.isArray(attacks)) return [];
 
     return attacks
@@ -146,7 +153,7 @@ export async function normalizeLegacyAttacks(attacks) {
 * Le risorse sono contatori manuali: usiamo `used` invece di `remaining`
 * cosi il valore massimo puo cambiare senza perdere lo storico consumato.
 */
-export async function normalizeLegacyResources(resources) {
+export function normalizeLegacyResources(resources) {
     if (!Array.isArray(resources)) return [];
 
     return resources
@@ -170,7 +177,7 @@ export async function normalizeLegacyResources(resources) {
 * Stato operativo del personaggio durante la sessione.
 * I limiti numerici rispecchiano SRD: indebolimento 0-6, TS morte 0-3.
 */
-export async function normalizeCharacterStatus(status) {
+export function normalizeCharacterStatus(status) {
     const source = status && typeof status === 'object' ? status : {};
 
     return {
@@ -184,12 +191,12 @@ export async function normalizeCharacterStatus(status) {
     };
   }
 
-export async function normalizeIdList(value) {
+export function normalizeIdList(value) {
     if (!Array.isArray(value)) return [];
     return Array.from(new Set(value.map((id) => String(id)).filter(Boolean)));
   }
 
-export async function normalizeSkillProficiencies(value) {
+export function normalizeSkillProficiencies(value) {
     const source = value && typeof value === 'object' ? value : {};
 
     return Object.fromEntries(SKILL_META.map(([key]) => {
@@ -198,7 +205,7 @@ export async function normalizeSkillProficiencies(value) {
     }));
   }
 
-export async function normalizeProficiencies(value) {
+export function normalizeProficiencies(value) {
     const source = value && typeof value === 'object' ? value : {};
 
     return {
@@ -209,7 +216,7 @@ export async function normalizeProficiencies(value) {
     };
   }
 
-export async function uniqueCharacterSheets(sheets) {
+export function uniqueCharacterSheets(sheets) {
     const seen = new Set();
 
     return sheets.map((sheet) => {
@@ -220,13 +227,13 @@ export async function uniqueCharacterSheets(sheets) {
     });
   }
 
-export async function createCharacterSheetId() {
+export function createCharacterSheetId() {
     return `sheet-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   }
 
 /*
 * Crea una copia profonda semplice per dati JSON-safe.
 */
-export async function cloneJson(value) {
+export function cloneJson(value) {
     return JSON.parse(JSON.stringify(value));
   }

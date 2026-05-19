@@ -1,5 +1,18 @@
 
-export async function readJsonStorage(key, fallback) {
+import {
+  normalizeCharacterSheet,
+  uniqueCharacterSheets,
+  createCharacterSheetId,
+  cloneJson,
+} from './character-sheet-normalizers.js';
+
+let appState = null;
+
+export function setCharacterSheetStorageState(state) {
+  appState = state;
+}
+
+export function readJsonStorage(key, fallback) {
     try {
       const raw = localStorage.getItem(key);
       return raw ? JSON.parse(raw) : fallback;
@@ -12,7 +25,7 @@ export async function readJsonStorage(key, fallback) {
 * Salva archivio e scheda attiva. La vecchia chiave singola resta aggiornata
 * per compatibilita con esportazioni/manual debug precedenti.
 */
-export async function saveCharacterSheet() {
+export function saveCharacterSheet() {
     const index = appState.characterSheets.findIndex((sheet) => sheet.id === appState.characterSheet.id);
     if (index >= 0) {
       appState.characterSheets[index] = appState.characterSheet;
@@ -31,7 +44,7 @@ export async function saveCharacterSheet() {
 * Carica l'archivio multi-personaggio. Se esiste solo la vecchia chiave
 * singola, la migra come prima scheda senza richiedere azioni all'utente.
 */
-export async function loadCharacterSheetArchive() {
+export function loadCharacterSheetArchive() {
     const storedSheets = readJsonStorage(CHARACTER_SHEETS_STORAGE_KEY, null);
     const legacySheet = readJsonStorage(CHARACTER_SHEET_STORAGE_KEY, null);
     const rawSheets = Array.isArray(storedSheets) && storedSheets.length
@@ -45,7 +58,7 @@ export async function loadCharacterSheetArchive() {
     saveCharacterSheet();
   }
 
-export async function switchCharacterSheet(id) {
+export function switchCharacterSheet(id) {
     const next = appState.characterSheets.find((sheet) => sheet.id === id);
     if (!next) return false;
 
@@ -56,14 +69,14 @@ export async function switchCharacterSheet(id) {
     return true;
   }
 
-export async function createNewCharacterSheet() {
+export function createNewCharacterSheet() {
     saveCharacterSheet();
     appState.characterSheet = normalizeCharacterSheet({ name: 'Nuovo personaggio' });
     appState.characterSheets.push(appState.characterSheet);
     saveCharacterSheet();
   }
 
-export async function duplicateCharacterSheet() {
+export function duplicateCharacterSheet() {
     const copy = normalizeCharacterSheet({
       ...cloneJson(appState.characterSheet),
       id: createCharacterSheetId(),
@@ -76,7 +89,7 @@ export async function duplicateCharacterSheet() {
     saveCharacterSheet();
   }
 
-export async function deleteActiveCharacterSheet() {
+export function deleteActiveCharacterSheet() {
     if (appState.characterSheets.length <= 1) return false;
 
     const currentId = appState.characterSheet.id;
@@ -86,7 +99,7 @@ export async function deleteActiveCharacterSheet() {
     return true;
   }
 
-export async function mergeCharacterSheetArchives(currentSheets, importedSheets) {
+export function mergeCharacterSheetArchives(currentSheets, importedSheets) {
     const byId = new Map();
 
     currentSheets.forEach((sheet) => {
@@ -105,7 +118,7 @@ export async function mergeCharacterSheetArchives(currentSheets, importedSheets)
 * Normalizza un archivio esportato con piu schede. L'import sostituisce
 * l'archivio locale, quindi qui garantiamo almeno una scheda valida.
 */
-export async function normalizeCharacterSheetArchive(value) {
+export function normalizeCharacterSheetArchive(value) {
     if (!value || typeof value !== 'object' || !Array.isArray(value.sheets)) {
         throw new Error('Archivio schede non valido');
     }

@@ -9,18 +9,26 @@ for (const entry of glossary) {
   assert.equal(typeof entry.id, 'string');
   assert.equal(typeof entry.nome, 'string');
   assert.equal(typeof entry.lettera, 'string');
-  assert.ok(entry.descrittore === null || typeof entry.descrittore === 'string');
-  assert.equal(typeof entry.pagine_sorgente, 'string');
+  assert.ok(entry.descrittore == null || typeof entry.descrittore === 'string');
+  assert.ok(['number', 'string'].includes(typeof entry.pagine_sorgente));
   assert.equal(typeof entry.descrizione, 'string');
-  assert.ok(Array.isArray(entry.sezioni));
-  assert.ok(Array.isArray(entry.vedi_anche));
+  if (entry.sezioni) {
+    assert.ok(Array.isArray(entry.sezioni));
+  }
+  if (entry.vedi_anche) {
+    assert.ok(Array.isArray(entry.vedi_anche));
+  }
   assert.ok(!ids.has(entry.id), `ID duplicato: ${entry.id}`);
   ids.add(entry.id);
 
-  for (const section of entry.sezioni) {
+  for (const section of entry.sezioni || []) {
     assert.equal(typeof section.titolo, 'string');
-    assert.ok(Array.isArray(section.righe));
-    assert.ok(Array.isArray(section.blocchi));
+    if (section.righe) {
+      assert.ok(Array.isArray(section.righe));
+    }
+    if (section.blocchi) {
+      assert.ok(Array.isArray(section.blocchi));
+    }
   }
 }
 

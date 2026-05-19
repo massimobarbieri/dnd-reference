@@ -1,7 +1,19 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 
+function readJavaScriptSources(dir) {
+  return fs.readdirSync(dir, { withFileTypes: true })
+    .flatMap((entry) => {
+      const path = `${dir}/${entry.name}`;
+      if (entry.isDirectory()) return readJavaScriptSources(path);
+      if (entry.isFile() && entry.name.endsWith('.js')) return [fs.readFileSync(path, 'utf8')];
+      return [];
+    })
+    .join('\n');
+}
+
 const appSource = fs.readFileSync('assets/js/app.js', 'utf8');
+const jsSource = readJavaScriptSources('assets/js');
 const cssSource = fs.readFileSync('assets/css/styles.css', 'utf8');
 const configSource = fs.readFileSync('config.yml', 'utf8');
 const indexSource = fs.readFileSync('index.html', 'utf8');
@@ -148,7 +160,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
   'data-sheet-reset-spell-slots',
   'data-dice-roll="${escapeAttr(rollFormula(20, modifier))}"',
   'window.DndReferenceTest',
-].forEach((token) => assert.ok(appSource.includes(token), `${token} deve essere presente in app.js`));
+].forEach((token) => assert.ok(jsSource.includes(token), `${token} deve essere presente nei sorgenti JS`));
 
 [
   '.character-sheet',
@@ -194,7 +206,7 @@ const indexSource = fs.readFileSync('index.html', 'utf8');
 
 assert.match(configSource, /character_sheet: Scheda/);
 assert.match(indexSource, /20260514-attack-editor/);
-assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd5'/);
-assert.doesNotMatch(appSource, /localStorage\.setItem\('dnd-theme'/);
+assert.doesNotMatch(jsSource, /localStorage\.setItem\('dnd5'/);
+assert.doesNotMatch(jsSource, /localStorage\.setItem\('dnd-theme'/);
 
 console.log('Scheda personaggio OK');

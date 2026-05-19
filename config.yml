@@ -13,6 +13,7 @@ site:
 paths:
   monsters: data/srd/5.2.1/json/srd_5_2_1_monsters.json
   spells: data/srd/5.2.1/json/srd_5_2_1_spells.json
+  classes: data/srd/5.2.1/json/srd_5_2_1_classes.json
   magic_items: data/srd/5.2.1/json/srd_5_2_1_magic_items.json
   rules: data/srd/5.2.1/json/srd_5_2_1_rules.json
   rules_glossary: data/srd/5.2.1/json/srd_5_2_1_rules_glossary.json

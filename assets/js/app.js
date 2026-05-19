@@ -40,6 +40,7 @@ import {
 
 import {
   readJsonStorage,
+  setCharacterSheetStorageState,
   saveCharacterSheet,
   loadCharacterSheetArchive,
   switchCharacterSheet,
@@ -62,18 +63,6 @@ import {
   CHARACTER_SHEET_SCHEMA_VERSION,
   DEFAULT_CHARACTER_SHEET,
 } from './features/character-sheet/character-sheet-view.js';
-
-import {
-  renderCharacterSheet,
-  sheetField,
-  sheetNumberField,
-  sheetSelect,
-  sheetTextArea,
-  sheetProficiencyTextArea,
-  sheetStatusTextArea,
-} from './features/character-sheet/character-sheet-renderers.js';
-
-
 
 (() => {
   'use strict';
@@ -141,6 +130,8 @@ import {
     rollTrayOpen: false,
   };
 
+  setCharacterSheetStorageState(appState);
+
   const {
     analyzeRollContext,
     DICE_LIMITS,
@@ -151,6 +142,20 @@ import {
     randomInt,
     rollDice,
   } = window.DndDiceRoller;
+
+  const {
+    renderRollTray,
+    handleRollCommand,
+    handleRollSubmit,
+  } = window.DndRollTray.createRollTrayController({
+    appState,
+    DICE_LIMITS,
+    parseDiceFormula,
+    rollDice,
+    randomInt,
+    escapeHtml,
+    escapeAttr,
+  });
 
   /*
    * Riferimenti alle tre viste principali dell’interfaccia.
@@ -193,9 +198,10 @@ import {
        * Carica in parallelo tutti i dati.
        * Promise.all migliora i tempi perché non aspetta un file alla volta.
        */
-      const [monsters, spells, magicItems, rules, rulesGlossary, monsterImageYaml] = await Promise.all([
+      const [monsters, spells, classes, magicItems, rules, rulesGlossary, monsterImageYaml] = await Promise.all([
         fetchJson(paths.monsters),
         fetchJson(paths.spells),
+        paths.classes ? fetchJson(paths.classes) : Promise.resolve([]),
         fetchJson(paths.magic_items),
         fetchJson(paths.rules),
         fetchJson(paths.rules_glossary),
@@ -211,8 +217,8 @@ import {
 
       // Gli oggetti magici vengono anche normalizzati nella rarità.
       appState.data.magic_items = normalizeArray(magicItems).map(normalizeMagicItem);
-      appState.data.classes = normalizeArray(rules).filter(isClassRule);
-      appState.data.rules = normalizeArray(rules).filter((rule) => !isClassRule(rule));
+      appState.data.classes = normalizeArray(classes);
+      appState.data.rules = normalizeArray(rules);
       appState.data.rules_glossary = normalizeArray(rulesGlossary);
 
       // Converte il piccolo YAML delle immagini in una Map.
@@ -227,11 +233,12 @@ import {
   }
 
   /*
-   * Le classi sono mantenute nei dati regole SRD, ma nell'app hanno una
-   * sezione principale dedicata.
+   * Mantiene compatibili i vecchi link alle classi quando erano incluse
+   * nelle regole con id classe_*.
    */
-  function isClassRule(rule) {
-    return String(rule?.id || '').startsWith('classe_');
+  function legacyClassId(id) {
+    const value = String(id || '');
+    return value.startsWith('classe_') ? value.slice('classe_'.length) : '';
   }
 
   /*
@@ -260,8 +267,9 @@ import {
       return;
     }
 
-    if (route.section === 'rules' && route.id && isClassRule({ id: route.id })) {
-      location.hash = `#/classes/${encodeURIComponent(route.id)}`;
+    const classId = route.section === 'rules' ? legacyClassId(route.id) : '';
+    if (classId) {
+      location.hash = `#/classes/${encodeURIComponent(classId)}`;
       return;
     }
 
@@ -901,6 +909,125 @@ import {
           <button class="button button--ghost" type="button" data-app-import-backup-cancel>Annulla</button>
         </div>
       </section>
+    `;
+  }
+
+  /*
+   * Renderizza la scheda personaggio nativa.
+   */
+  function renderCharacterSheet(tab = 'overview') {
+    const validTab = CHARACTER_SHEET_TABS.some(([id]) => id === tab) ? tab : 'overview';
+    appState.characterSheetTab = validTab;
+
+    setView('detail');
+
+    views.detail.innerHTML = `
+      <nav class="detail-nav" aria-label="Navigazione scheda personaggio">
+        <a class="button" href="#/">Home</a>
+        <div class="sheet-manager">
+          <label class="sheet-character-picker">
+            <span>Personaggio</span>
+            <select class="sheet-character-select" data-sheet-switch-character aria-label="Personaggio attivo">
+              ${appState.characterSheets.map((sheet) => `
+                <option value="${escapeAttr(sheet.id)}"${sheet.id === appState.characterSheet.id ? ' selected' : ''}>${escapeHtml(sheet.name || 'Scheda personaggio')}</option>
+              `).join('')}
+            </select>
+          </label>
+          <div class="sheet-manager-actions">
+            <button class="button button--ghost" type="button" data-sheet-reset>Nuova</button>
+            <button class="button button--ghost" type="button" data-sheet-duplicate>Duplica</button>
+            <details class="sheet-more-actions">
+              <summary>Altro</summary>
+              <div>
+                <button class="button button--ghost" type="button" data-sheet-export>Esporta</button>
+                <button class="button button--ghost" type="button" data-sheet-import>Importa</button>
+                <button class="button button--ghost" type="button" data-sheet-export-archive>Esporta archivio</button>
+                <button class="button button--ghost" type="button" data-sheet-import-archive>Importa archivio</button>
+                <button class="button button--ghost" type="button" data-app-export-backup>Esporta backup app</button>
+                <button class="button button--ghost" type="button" data-app-import-backup>Importa backup app</button>
+                <button class="button button--ghost sheet-danger-action" type="button" data-sheet-delete>Elimina</button>
+              </div>
+            </details>
+            <input id="character-sheet-import" class="visually-hidden" type="file" accept="application/json,.json">
+            <input id="character-sheet-archive-import" class="visually-hidden" type="file" accept="application/json,.json">
+            <input id="app-backup-import" class="visually-hidden" type="file" accept="application/json,.json">
+          </div>
+        </div>
+      </nav>
+
+      <article class="detail-card detail-card--flat character-sheet">
+        ${renderCharacterSheetArchiveImportPrompt()}
+        ${renderAppBackupImportPrompt()}
+        ${renderCharacterSheetHeader()}
+        ${renderCharacterSheetTabs(validTab)}
+        ${renderCharacterSheetTab(validTab)}
+      </article>
+    `;
+
+    bindCharacterSheetEvents();
+  }
+
+  function sheetField(key, label, value) {
+    return `
+      <label class="sheet-field">
+        <span>${escapeHtml(label)}</span>
+        <input type="text" value="${escapeAttr(value || '')}" data-sheet-field="${escapeAttr(key)}">
+      </label>
+    `;
+  }
+
+  function sheetNumberField(key, label, value, min, max) {
+    return `
+      <label class="sheet-field">
+        <span>${escapeHtml(label)}</span>
+        <input
+          type="number"
+          value="${escapeAttr(String(value ?? 0))}"
+          ${min !== undefined ? `min="${escapeAttr(String(min))}"` : ''}
+          ${max !== undefined ? `max="${escapeAttr(String(max))}"` : ''}
+          data-sheet-number="${escapeAttr(key)}"
+        >
+      </label>
+    `;
+  }
+
+  function sheetSelect(key, label, value, options) {
+    return `
+      <label class="sheet-field">
+        <span>${escapeHtml(label)}</span>
+        <select data-sheet-field="${escapeAttr(key)}">
+          ${options.map((option) => `
+            <option value="${escapeAttr(option.value)}"${option.value === value ? ' selected' : ''}>${escapeHtml(option.label)}</option>
+          `).join('')}
+        </select>
+      </label>
+    `;
+  }
+
+  function sheetTextArea(key, placeholder, value) {
+    return `
+      <label class="sheet-field sheet-field--wide">
+        <span class="visually-hidden">${escapeHtml(placeholder)}</span>
+        <textarea data-sheet-field="${escapeAttr(key)}" placeholder="${escapeAttr(placeholder)}">${escapeHtml(value || '')}</textarea>
+      </label>
+    `;
+  }
+
+  function sheetProficiencyTextArea(key, label, placeholder, value) {
+    return `
+      <label class="sheet-field sheet-field--wide">
+        <span>${escapeHtml(label)}</span>
+        <textarea data-sheet-proficiency="${escapeAttr(key)}" placeholder="${escapeAttr(placeholder)}">${escapeHtml(value || '')}</textarea>
+      </label>
+    `;
+  }
+
+  function sheetStatusTextArea(key, placeholder, value) {
+    return `
+      <label class="sheet-field sheet-field--wide sheet-status-notes">
+        <span class="visually-hidden">${escapeHtml(placeholder)}</span>
+        <textarea data-sheet-status-field="${escapeAttr(key)}" placeholder="${escapeAttr(placeholder)}">${escapeHtml(value || '')}</textarea>
+      </label>
     `;
   }
 
@@ -2600,6 +2727,14 @@ import {
    */
   function classDefaultSpellcastingAbility(classId) {
     const defaults = {
+      bardo: 'cha',
+      chierico: 'wis',
+      druido: 'wis',
+      mago: 'int',
+      paladino: 'cha',
+      ranger: 'wis',
+      stregone: 'cha',
+      warlock: 'cha',
       classe_bardo: 'cha',
       classe_chierico: 'wis',
       classe_druido: 'wis',
@@ -3185,9 +3320,8 @@ import {
   function isClassSpellListSection(section) {
     return (
       String(section?.titolo || '').startsWith('Lista degli incantesimi da ') &&
-      Array.isArray(section?.colonne) &&
-      section.colonne.includes('Livello') &&
-      section.colonne.includes('Incantesimo')
+      Array.isArray(section?.righe) &&
+      section.righe.some((row) => Object.hasOwn(row || {}, 'Livello') && Object.hasOwn(row || {}, 'Incantesimo'))
     );
   }
 
@@ -3197,7 +3331,7 @@ import {
    */
   function renderClassSpellListTables(rows, columns) {
     const visibleRows = rows.filter((row) => row && Object.keys(row).length);
-    const tableColumns = columns.filter((column) => column !== 'Livello');
+    const tableColumns = normalizeTableColumns(visibleRows, columns).filter((column) => column !== 'Livello');
     const groups = groupRowsBySpellLevel(visibleRows);
 
     if (!groups.length) return '';
