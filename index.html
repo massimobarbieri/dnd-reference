@@ -4,8 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#251a12">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://5e.tools data:; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'self';">
   <title>D&D Reference</title>
-  <link rel="stylesheet" href="assets/css/styles.css">
+  <script src="assets/js/file-protocol-redirect.js?v=20260519-local-fix"></script>
+  <link rel="stylesheet" href="assets/css/styles.css?v=20260519-origins">
 </head>
 <body>
   <a class="skip-link" href="#app">Salta al contenuto</a>
@@ -20,22 +22,28 @@
       <h1 id="site-title">D&D Reference</h1>
 
       <!-- Sottotitolo aggiornabile via JavaScript -->
-      <p id="site-subtitle" class="subtitle">Mostri, incantesimi e oggetti magici</p>
+      <p id="site-subtitle" class="subtitle">Mostri, incantesimi, classi, scheda personaggio, oggetti magici, regole e glossario</p>
     </div>
   </header>
 
   <!-- Contenitore principale dell’applicazione -->
   <main id="app" class="app-shell" aria-live="polite">
     <!-- Vista home -->
-    <section id="home-view" class="view"></section>
+    <section id="home-view" class="view">
+      <div class="state-box">
+        Caricamento app... Se questa schermata resta visibile, avvia il progetto via HTTP con
+        <code>python3 -m http.server 8080</code> e apri <code>http://localhost:8080</code>.
+      </div>
+    </section>
 
     <!-- Vista lista, inizialmente nascosta -->
     <section id="list-view" class="view" hidden></section>
 
     <!-- Vista dettaglio, inizialmente nascosta -->
     <section id="detail-view" class="view" hidden></section>
-    <p>©2026 <a href="legal.html">Copyright e info sul progetto</a>
-  </main>
+    <p>©2026 <a href="legal.html">Copyright e info sul progetto</a><br><small>v.2.20260516</small>
+</p>
+      </main>
 
   <!-- Template mostrato durante il caricamento dei dati -->
   <template id="loading-template">
@@ -49,8 +57,10 @@
 
       <!-- Suggerimento per avviare correttamente il sito in locale -->
       <p>
-        Avvia il sito con un server locale, ad esempio:
-        <code>python3 -m http.server 8080</code>.
+        I dati locali non sono disponibili oppure il sito non e servito via HTTP.
+      </p>
+      <p>
+        Apri la <a href="fallback.html">pagina locale di fallback</a> per le istruzioni di ripristino.
       </p>
     </div>
   </template>
@@ -58,7 +68,10 @@
   <!-- Core del dice roller, condiviso tra app e test -->
   <script src="assets/js/dice-roller.js" defer></script>
 
+  <!-- UI del dice tray, caricata dopo il core dadi -->
+  <script src="assets/js/roll-tray.js" defer></script>
+
   <!-- Script principale dell’app, caricato dopo il parsing dell’HTML -->
-  <script src="assets/js/app.js" defer></script>
+  <script type="module" src="assets/js/app.js?v=20260519-origins"></script>
 </body>
 </html>
