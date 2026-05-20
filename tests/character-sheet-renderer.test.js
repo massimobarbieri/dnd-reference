@@ -34,10 +34,20 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
     { id: 'cover', nome: 'Copertura', categoria: 'Combattimento' },
   ];
   api.appState.data.species = [
-    { id: 'elfo', nome: 'Elfo', velocita: '9 m' },
+    { id: 'elfo', nome: 'Elfo', tipo_creatura: 'Umanoide', taglia: 'Media', velocita: '9 m', tratti_sintesi: 'scurovisione e retaggio fatato' },
   ];
   api.appState.data.backgrounds = [
-    { id: 'accolito', nome: 'Accolito', talento_origine: 'Iniziato alla magia', equipaggiamento_alternativo: '50 mo' },
+    {
+      id: 'accolito',
+      nome: 'Accolito',
+      punteggi_caratteristica: ['Intelligenza', 'Saggezza', 'Carisma'],
+      talento_origine: 'Iniziato alla magia',
+      competenze: {
+        abilita: ['Intuizione', 'Religione'],
+        strumenti: 'scorte da calligrafo.',
+      },
+      equipaggiamento_alternativo: '50 mo',
+    },
   ];
   api.appState.data.feats = [
     { id: 'iniziato_alla_magia', nome: 'Iniziato alla magia', categoria: 'Origini' },
@@ -50,6 +60,10 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
         {
           titolo: 'Tratti di classe',
           righe: [
+            { Voce: 'Caratteristica primaria', Riepilogo: 'Intelligenza.' },
+            { Voce: 'Dado Vita', Riepilogo: 'D6 per ogni livello da mago.' },
+            { Voce: 'Tiri salvezza', Riepilogo: 'Intelligenza e Saggezza.' },
+            { Voce: 'Abilita', Riepilogo: 'Due a scelta tra Arcano, Indagare, Medicina, Natura, Religione o Storia.' },
             { Voce: 'Equipaggiamento iniziale', Riepilogo: 'A: pugnale e dotazione da studioso; oppure B: 55 mo.' },
           ],
         },
@@ -79,6 +93,10 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /<option value="accolito" selected>Accolito<\/option>/);
   assert.match(views['#detail-view'].innerHTML, /Talento origine/);
   assert.match(views['#detail-view'].innerHTML, /Talento: Iniziato alla magia/);
+  assert.match(views['#detail-view'].innerHTML, /Percorso guidato/);
+  assert.match(views['#detail-view'].innerHTML, /D6 per ogni livello da mago/);
+  assert.match(views['#detail-view'].innerHTML, /scurovisione e retaggio fatato/);
+  assert.match(views['#detail-view'].innerHTML, /Intelligenza, Saggezza, Carisma/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-ability="str"/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-skill="arcana"/);
   assert.match(views['#detail-view'].innerHTML, /Tradizione Arcana/);

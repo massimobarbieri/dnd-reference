@@ -1,8 +1,8 @@
-import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260520-starting2';
-import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260520-starting2';
-import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260520-starting2';
-import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260520-starting2';
-import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260520-starting2';
+import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260520-guided';
+import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260520-guided';
+import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260520-guided';
+import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260520-guided';
+import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260520-guided';
 
 export function createCharacterSheetRenderer({
   appState,

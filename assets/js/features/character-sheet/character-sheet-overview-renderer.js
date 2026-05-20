@@ -33,6 +33,7 @@ export function createCharacterSheetOverviewRenderer({
       <section class="sheet-grid">
         ${renderOverviewSummary()}
         ${renderCharacterBuilderChecklist()}
+        ${renderGuidedBuilder()}
 
         <div class="sheet-panel sheet-panel--identity">
           <h3>Identita</h3>
@@ -70,6 +71,151 @@ export function createCharacterSheetOverviewRenderer({
         </div>
       </section>
     `;
+  }
+
+  function renderGuidedBuilder() {
+    const next = nextGuidedStep();
+
+    return `
+      <div class="sheet-panel sheet-panel--wide sheet-guided-builder">
+        <div class="sheet-guide-heading">
+          <div>
+            <h3>Percorso guidato</h3>
+            <p>${escapeHtml(next.hint)}</p>
+          </div>
+          <a class="button button--ghost" href="${escapeAttr(next.href)}">${escapeHtml(next.action)}</a>
+        </div>
+        <div class="sheet-guide-grid">
+          ${renderClassGuideCard()}
+          ${renderSpeciesGuideCard()}
+          ${renderBackgroundGuideCard()}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderClassGuideCard() {
+    const classEntry = characterClassEntry();
+    const traits = classTraitsMap(classEntry);
+    const skillProgress = characterSkillChoiceProgress();
+
+    if (!classEntry) {
+      return renderGuideCard({
+        state: 'Da scegliere',
+        title: 'Classe',
+        body: 'Scegli la classe per importare dado vita, tiri salvezza, competenze, risorse e progressione.',
+        items: [],
+        href: '#/character_sheet/overview',
+        action: 'Scegli classe',
+      });
+    }
+
+    return renderGuideCard({
+      state: 'Classe',
+      title: classEntry.nome.replace(/^Classe:\s*/i, ''),
+      body: [traits['Caratteristica primaria'], traits['Dado Vita']].filter(Boolean).join(' · '),
+      items: [
+        traits['Tiri salvezza'] ? `TS: ${traits['Tiri salvezza']}` : '',
+        traits.Armi ? `Armi: ${traits.Armi}` : '',
+        traits.Armature ? `Armature: ${traits.Armature}` : '',
+        skillProgress.required ? `Abilita classe: ${skillProgress.classSelected}/${skillProgress.required}` : '',
+      ].filter(Boolean),
+      href: `#/classes/${encodeURIComponent(classEntry.id)}`,
+      action: 'Dettaglio classe',
+    });
+  }
+
+  function renderSpeciesGuideCard() {
+    const species = characterSpeciesEntry();
+
+    if (!species) {
+      return renderGuideCard({
+        state: 'Da scegliere',
+        title: 'Specie',
+        body: 'Scegli una specie per applicare velocita e collegare tratti, taglia e riferimenti SRD.',
+        items: [],
+        href: '#/character_sheet/overview',
+        action: 'Scegli specie',
+      });
+    }
+
+    return renderGuideCard({
+      state: 'Specie',
+      title: species.nome || species.id,
+      body: [species.tipo_creatura, species.taglia, species.velocita].filter(Boolean).join(' · '),
+      items: [species.tratti_sintesi || species.descrizione].filter(Boolean),
+      href: `#/species/${encodeURIComponent(species.id)}`,
+      action: 'Dettaglio specie',
+    });
+  }
+
+  function renderBackgroundGuideCard() {
+    const background = characterBackgroundEntry();
+    const feat = characterOriginFeat();
+
+    if (!background) {
+      return renderGuideCard({
+        state: 'Da scegliere',
+        title: 'Background',
+        body: 'Scegli un background per applicare abilita, strumenti, talento origine e monete alternative.',
+        items: [],
+        href: '#/character_sheet/overview',
+        action: 'Scegli background',
+      });
+    }
+
+    return renderGuideCard({
+      state: 'Background',
+      title: background.nome || background.id,
+      body: [
+        Array.isArray(background.punteggi_caratteristica) ? background.punteggi_caratteristica.join(', ') : '',
+        feat ? `Talento: ${feat.nome}` : background.talento_origine,
+      ].filter(Boolean).join(' · '),
+      items: [
+        background.competenze?.abilita?.length ? `Abilita: ${background.competenze.abilita.join(', ')}` : '',
+        background.competenze?.strumenti ? `Strumenti: ${background.competenze.strumenti}` : '',
+        background.equipaggiamento_alternativo ? `Alternativa: ${background.equipaggiamento_alternativo}` : '',
+      ].filter(Boolean),
+      href: `#/backgrounds/${encodeURIComponent(background.id)}`,
+      action: 'Dettaglio background',
+    });
+  }
+
+  function renderGuideCard({ state, title, body, items, href, action }) {
+    return `
+      <article class="sheet-guide-card">
+        <div>
+          <span>${escapeHtml(state)}</span>
+          <strong>${escapeHtml(title)}</strong>
+          <p>${escapeHtml(body)}</p>
+        </div>
+        ${items.length ? `
+          <ul>
+            ${items.slice(0, 4).map((item) => `<li>${escapeHtml(item)}</li>`).join('')}
+          </ul>
+        ` : ''}
+        <a class="button button--ghost" href="${escapeAttr(href)}">${escapeHtml(action)}</a>
+      </article>
+    `;
+  }
+
+  function nextGuidedStep() {
+    const checklist = characterBuilderChecklist();
+    const next = checklist.find((item) => !item.complete);
+
+    if (!next) {
+      return {
+        hint: 'La base del personaggio e pronta: puoi giocare o rifinire dettagli avanzati.',
+        href: '#/character_sheet/combat',
+        action: 'Vai al tavolo',
+      };
+    }
+
+    return {
+      hint: `${next.label}: ${next.hint}`,
+      href: next.href,
+      action: `Completa ${next.label.toLowerCase()}`,
+    };
   }
 
   function renderCharacterBuilderChecklist() {
@@ -176,6 +322,22 @@ export function createCharacterSheetOverviewRenderer({
   function characterBackgroundEntry() {
     const value = appState.characterSheet.background;
     return appState.data.backgrounds.find((entry) => entry.id === value || entry.nome === value) || null;
+  }
+
+  function characterSpeciesEntry() {
+    const value = appState.characterSheet.ancestry;
+    return appState.data.species.find((entry) => entry.id === value || entry.nome === value) || null;
+  }
+
+  function classTraitsMap(classEntry) {
+    const traits = classEntry?.sezioni?.find((section) => String(section.titolo || '').startsWith('Tratti '));
+
+    return Object.fromEntries((traits?.righe || [])
+      .map((row) => [
+        row.chiave || row.Voce,
+        String(row.valore || row.Riepilogo || '').replace(/\.$/, ''),
+      ])
+      .filter(([key]) => key));
   }
 
   function characterBackgroundSkills() {
@@ -385,12 +547,13 @@ export function createCharacterSheetOverviewRenderer({
     const rank = Number(appState.characterSheet.skillProficiencies[key]) || 0;
     const modifier = abilityModifier(appState.characterSheet.abilities[ability]) + skillProficiencyBonus(rank);
     const abilityShort = ABILITY_META.find(([abilityKey]) => abilityKey === ability)?.[2] || '';
+    const sources = skillSources(key);
 
     return `
       <div class="skill-control">
         <div>
           <strong>${escapeHtml(label)}</strong>
-          <span>${escapeHtml(abilityShort)}</span>
+          <span>${escapeHtml([abilityShort, ...sources].join(' · '))}</span>
         </div>
         <select data-sheet-skill="${escapeAttr(key)}" aria-label="Competenza ${escapeAttr(label)}">
           <option value="0"${rank === 0 ? ' selected' : ''}>-</option>
@@ -400,6 +563,13 @@ export function createCharacterSheetOverviewRenderer({
         <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, modifier))}">${escapeHtml(formatSigned(modifier))}</button>
       </div>
     `;
+  }
+
+  function skillSources(key) {
+    const sources = [];
+    if (characterBackgroundSkills().includes(key)) sources.push('Background');
+    if (classSkillOptions(characterClassEntry()).some(([skillKey]) => skillKey === key)) sources.push('Classe');
+    return sources;
   }
 
   function renderOtherProficiencies() {
