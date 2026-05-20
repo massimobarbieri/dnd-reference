@@ -20,6 +20,7 @@ export function createCharacterSheetOverviewRenderer({
   classProgressionSection,
   classProgressionRow,
   classProgressionResources,
+  classSkillChoiceCount,
   splitClassFeatures,
   classSubclassRows,
   nextLevelSummary,
@@ -31,6 +32,7 @@ export function createCharacterSheetOverviewRenderer({
     return `
       <section class="sheet-grid">
         ${renderOverviewSummary()}
+        ${renderCharacterBuilderChecklist()}
 
         <div class="sheet-panel sheet-panel--identity">
           <h3>Identita</h3>
@@ -68,6 +70,140 @@ export function createCharacterSheetOverviewRenderer({
         </div>
       </section>
     `;
+  }
+
+  function renderCharacterBuilderChecklist() {
+    const items = characterBuilderChecklist();
+    const complete = items.filter((item) => item.complete).length;
+
+    return `
+      <div class="sheet-panel sheet-panel--wide sheet-builder-checklist">
+        <div class="sheet-checklist-heading">
+          <div>
+            <h3>Checklist creazione</h3>
+            <p>${escapeHtml(`${complete}/${items.length} passaggi pronti`)}</p>
+          </div>
+          <a class="button button--ghost" href="#/character_sheet/combat">Rifinisci combattimento</a>
+        </div>
+        <div class="sheet-checklist-grid">
+          ${items.map((item) => `
+            <a class="sheet-checklist-item${item.complete ? ' is-complete' : ''}" href="${escapeAttr(item.href)}">
+              <span>${item.complete ? 'OK' : 'Da fare'}</span>
+              <strong>${escapeHtml(item.label)}</strong>
+              <small>${escapeHtml(item.hint)}</small>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function characterBuilderChecklist() {
+    const sheet = appState.characterSheet;
+    const hasAbilitySpread = ABILITY_META.some(([key]) => Number(sheet.abilities[key]) !== 10);
+    const skillProgress = characterSkillChoiceProgress();
+    const originFeat = characterOriginFeat();
+    const hasCombatReady = Number(sheet.maxHp) > 0 && Number(sheet.armorClass) > 0;
+    const hasClass = Boolean(characterClassEntry());
+
+    return [
+      {
+        label: 'Identita',
+        complete: Boolean(sheet.name && hasClass && sheet.ancestry && sheet.background),
+        hint: 'Nome, classe, specie e background',
+        href: '#/character_sheet/overview',
+      },
+      {
+        label: 'Caratteristiche',
+        complete: hasAbilitySpread,
+        hint: hasAbilitySpread ? 'Punteggi modificati' : 'Imposta i sei punteggi',
+        href: '#/character_sheet/overview',
+      },
+      {
+        label: 'Competenze',
+        complete: skillProgress.complete,
+        hint: skillProgress.required ? `${skillProgress.classSelected}/${skillProgress.required} scelte classe · ${skillProgress.backgroundSelected} background` : 'Scegli abilita da classe/background',
+        href: '#/character_sheet/overview',
+      },
+      {
+        label: 'Talento origine',
+        complete: Boolean(originFeat),
+        hint: originFeat ? originFeat.nome : 'Scegli un background con talento',
+        href: originFeat ? `#/feats/${encodeURIComponent(originFeat.id)}` : '#/character_sheet/overview',
+      },
+      {
+        label: 'Combattimento',
+        complete: hasCombatReady,
+        hint: hasCombatReady ? 'CA e PF presenti' : 'Applica PF e CA suggeriti',
+        href: '#/character_sheet/combat',
+      },
+      {
+        label: 'Equipaggiamento',
+        complete: sheet.equipmentItems.length > 0 || sheet.magicItems.length > 0 || String(sheet.equipment || '').trim(),
+        hint: 'Armi, armature, strumenti o note',
+        href: '#/character_sheet/inventory',
+      },
+      {
+        label: 'Riferimenti',
+        complete: sheet.references.length >= 3,
+        hint: 'Classe, specie, background e regole utili',
+        href: '#/character_sheet/notes',
+      },
+    ];
+  }
+
+  function characterSkillChoiceProgress() {
+    const classEntry = characterClassEntry();
+    const classOptions = new Set(classSkillOptions(classEntry).map(([key]) => key));
+    const backgroundSkills = new Set(characterBackgroundSkills());
+    const required = classSkillChoiceCount(classEntry);
+    const classSelected = [...classOptions]
+      .filter((key) => !backgroundSkills.has(key) && Number(appState.characterSheet.skillProficiencies[key]) > 0)
+      .length;
+    const backgroundSelected = [...backgroundSkills]
+      .filter((key) => Number(appState.characterSheet.skillProficiencies[key]) > 0)
+      .length;
+    const anySelected = Object.values(appState.characterSheet.skillProficiencies).some((rank) => Number(rank) > 0);
+
+    return {
+      required,
+      classSelected,
+      backgroundSelected,
+      complete: required ? classSelected >= required : anySelected,
+    };
+  }
+
+  function characterBackgroundEntry() {
+    const value = appState.characterSheet.background;
+    return appState.data.backgrounds.find((entry) => entry.id === value || entry.nome === value) || null;
+  }
+
+  function characterBackgroundSkills() {
+    const background = characterBackgroundEntry();
+    const skills = Array.isArray(background?.competenze?.abilita) ? background.competenze.abilita : [];
+
+    return skills
+      .map((label) => {
+        const normalized = normalizeLabel(label);
+        return SKILL_META.find(([, skillLabel]) => normalizeLabel(skillLabel) === normalized)?.[0] || '';
+      })
+      .filter(Boolean);
+  }
+
+  function characterOriginFeat() {
+    const background = characterBackgroundEntry();
+    const featName = String(background?.talento_origine || '').replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+    const key = normalizeLabel(featName);
+    if (!key) return null;
+
+    return appState.data.feats.find((feat) => normalizeLabel(feat.nome) === key) || null;
+  }
+
+  function normalizeLabel(value) {
+    return String(value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
   }
 
   function renderOverviewSummary() {
@@ -155,11 +291,15 @@ export function createCharacterSheetOverviewRenderer({
     const options = [
       { value: '', label: emptyLabel },
       ...entries
-        .map((entry) => ({ value: entry.nome || entry.id, label: entry.nome || entry.id }))
+        .map((entry) => ({
+          value: entry.id,
+          label: entry.nome || entry.id,
+          selected: value === entry.id || value === entry.nome,
+        }))
         .sort((a, b) => a.label.localeCompare(b.label, 'it')),
     ];
 
-    if (value && !options.some((option) => option.value === value)) {
+    if (value && !options.some((option) => option.value === value || option.label === value)) {
       options.splice(1, 0, { value, label: value });
     }
 
@@ -190,6 +330,7 @@ export function createCharacterSheetOverviewRenderer({
 
   function renderSkillProficiencies() {
     return `
+      ${renderBackgroundSkillSummary()}
       ${renderClassSkillSuggestions()}
       <div class="skill-grid">
         ${SKILL_META.map(([key, label, ability]) => renderSkillControl(key, label, ability)).join('')}
@@ -197,14 +338,36 @@ export function createCharacterSheetOverviewRenderer({
     `;
   }
 
+  function renderBackgroundSkillSummary() {
+    const background = characterBackgroundEntry();
+    const skills = characterBackgroundSkills();
+    const feat = characterOriginFeat();
+
+    if (!background && !feat) return '';
+
+    return `
+      <div class="skill-suggestions skill-suggestions--background">
+        <span>Origine applicata</span>
+        <div>
+          ${skills.map((key) => {
+            const label = SKILL_META.find(([skillKey]) => skillKey === key)?.[1] || key;
+            return `<button class="${appState.characterSheet.skillProficiencies[key] ? 'is-active' : ''}" type="button" data-sheet-suggest-skill="${escapeAttr(key)}">${escapeHtml(label)}</button>`;
+          }).join('')}
+          ${feat ? `<a class="button button--ghost" href="#/feats/${encodeURIComponent(feat.id)}">${escapeHtml(`Talento: ${feat.nome}`)}</a>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
   function renderClassSkillSuggestions() {
     const suggestions = classSkillOptions(characterClassEntry());
+    const progress = characterSkillChoiceProgress();
 
     if (!suggestions.length) return '';
 
     return `
       <div class="skill-suggestions">
-        <span>Abilita suggerite dalla classe</span>
+        <span>${escapeHtml(progress.required ? `Abilita di classe: scegli ${progress.required} (${progress.classSelected}/${progress.required})` : 'Abilita suggerite dalla classe')}</span>
         <div>
           ${suggestions.map(([key, label]) => `
             <button

@@ -1,8 +1,8 @@
-import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260519-entities';
-import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260519-entities';
-import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260519-entities';
-import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260519-entities';
-import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260519-entities';
+import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260520-starting2';
+import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260520-starting2';
+import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260520-starting2';
+import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260520-starting2';
+import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260520-starting2';
 
 export function createCharacterSheetRenderer({
   appState,
@@ -36,6 +36,7 @@ export function createCharacterSheetRenderer({
   classProgressionSection,
   classProgressionRow,
   classProgressionResources,
+  classSkillChoiceCount,
   splitClassFeatures,
   classSubclassRows,
   nextLevelSummary,
@@ -60,6 +61,7 @@ export function createCharacterSheetRenderer({
     escapeHtml,
     sheetTextArea,
     magicItemRequiresAttunement,
+    characterClassEntry,
   });
 
   const { renderCharacterSheetSpells } = createCharacterSheetSpellsRenderer({
@@ -92,6 +94,9 @@ export function createCharacterSheetRenderer({
     characterConditionOptions,
     characterProficiencyBonus,
     characterAttackBonus,
+    characterSpellSlots,
+    characterSpellOptions,
+    spellLevel,
   });
 
   const { renderCharacterSheetOverview } = createCharacterSheetOverviewRenderer({
@@ -116,6 +121,7 @@ export function createCharacterSheetRenderer({
     classProgressionSection,
     classProgressionRow,
     classProgressionResources,
+    classSkillChoiceCount,
     splitClassFeatures,
     classSubclassRows,
     nextLevelSummary,

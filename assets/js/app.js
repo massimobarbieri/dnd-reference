@@ -9,11 +9,11 @@
  * - Permette ricerca, filtri e preferiti.
  * - Salva i preferiti nel localStorage del browser.
  */
-import { loadConfig } from './data/loaders.js?v=20260519-entities';
+import { loadConfig } from './data/loaders.js?v=20260520-starting2';
 import {
   applyReferenceSources,
   loadReferenceSources,
-} from './data/reference-data.js?v=20260519-entities';
+} from './data/reference-data.js?v=20260520-starting2';
 import {
   escapeAttr,
   escapeHtml,
@@ -29,9 +29,9 @@ import {
 import {
   createReferenceViewController,
   renderReferenceSheetActions,
-} from './reference-view-controller.js?v=20260519-entities';
+} from './reference-view-controller.js?v=20260520-starting2';
 import { createInlineFormatter } from './inline-formatting.js';
-import { createReferenceDetailRenderer } from './reference-detail-renderer.js?v=20260519-entities';
+import { createReferenceDetailRenderer } from './reference-detail-renderer.js?v=20260520-starting2';
 
 import {
   normalizeCharacterSheet,
@@ -46,7 +46,7 @@ import {
   uniqueCharacterSheets,
   createCharacterSheetId,
   cloneJson,
-} from './features/character-sheet/character-sheet-normalizers.js?v=20260519-entities';
+} from './features/character-sheet/character-sheet-normalizers.js?v=20260520-starting2';
 
 import {
   readJsonStorage,
@@ -63,14 +63,14 @@ import {
   CHARACTER_SHEETS_STORAGE_KEY,
   ACTIVE_CHARACTER_SHEET_STORAGE_KEY,
   APP_STORAGE_PREFIX,
-} from './features/character-sheet/character-sheet-storage.js?v=20260519-entities';
+} from './features/character-sheet/character-sheet-storage.js?v=20260520-starting2';
 
-import { createCharacterSheetClassController } from './features/character-sheet/character-sheet-classes.js?v=20260519-entities';
-import { createCharacterSheetActionsController } from './features/character-sheet/character-sheet-actions.js?v=20260519-entities';
-import { createCharacterSheetEventsController } from './features/character-sheet/character-sheet-events.js?v=20260519-entities';
-import { createCharacterSheetRenderer } from './features/character-sheet/character-sheet-renderers.js?v=20260519-entities';
-import { createCharacterSheetSelectors } from './features/character-sheet/character-sheet-selectors.js?v=20260519-entities';
-import { createCharacterSheetBackupWorkflow } from './features/character-sheet/character-sheet-backup-workflow.js?v=20260519-entities';
+import { createCharacterSheetClassController } from './features/character-sheet/character-sheet-classes.js?v=20260520-starting2';
+import { createCharacterSheetActionsController } from './features/character-sheet/character-sheet-actions.js?v=20260520-starting2';
+import { createCharacterSheetEventsController } from './features/character-sheet/character-sheet-events.js?v=20260520-starting2';
+import { createCharacterSheetRenderer } from './features/character-sheet/character-sheet-renderers.js?v=20260520-starting2';
+import { createCharacterSheetSelectors } from './features/character-sheet/character-sheet-selectors.js?v=20260520-starting2';
+import { createCharacterSheetBackupWorkflow } from './features/character-sheet/character-sheet-backup-workflow.js?v=20260520-starting2';
 
 import {
   CONDITION_ALIASES,
@@ -79,7 +79,7 @@ import {
   CHARACTER_SHEET_TABS,
   CHARACTER_SHEET_SCHEMA_VERSION,
   DEFAULT_CHARACTER_SHEET,
-} from './features/character-sheet/character-sheet-view.js?v=20260519-entities';
+} from './features/character-sheet/character-sheet-view.js?v=20260520-starting2';
 
 (() => {
   'use strict';
@@ -201,6 +201,7 @@ import {
   const {
     applyClassToCharacterSheet,
     classProgressionResources,
+    classSkillChoiceCount,
     classProgressionRow,
     classProgressionSection,
     classSkillOptions,
@@ -341,10 +342,13 @@ import {
     renderCharacterSheet,
     characterClassEntry,
     applyClassToCharacterSheet,
+    applySpeciesToCharacterSheet,
+    applyBackgroundToCharacterSheet,
     syncCharacterSheetClassResources,
     normalizeIdList,
     resetCharacterResources,
     addSpellToCharacterSheet,
+    addEquipmentItemToCharacterSheet,
     characterSpellSlots,
     ...backupActions,
     switchCharacterSheet,
@@ -385,6 +389,7 @@ import {
     classProgressionSection,
     classProgressionRow,
     classProgressionResources,
+    classSkillChoiceCount,
     splitClassFeatures,
     classSubclassRows,
     nextLevelSummary,

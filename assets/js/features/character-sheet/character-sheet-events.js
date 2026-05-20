@@ -5,10 +5,13 @@ export function createCharacterSheetEventsController({
   renderCharacterSheet,
   characterClassEntry,
   applyClassToCharacterSheet,
+  applySpeciesToCharacterSheet,
+  applyBackgroundToCharacterSheet,
   syncCharacterSheetClassResources,
   normalizeIdList,
   resetCharacterResources,
   addSpellToCharacterSheet,
+  addEquipmentItemToCharacterSheet,
   characterSpellSlots,
   exportCharacterSheet,
   importCharacterSheet,
@@ -31,10 +34,28 @@ export function createCharacterSheetEventsController({
       });
 
       node.addEventListener('change', (event) => {
-        if (event.currentTarget.dataset.sheetField === 'classId') {
+        const field = event.currentTarget.dataset.sheetField;
+
+        if (field === 'classId') {
           const classEntry = characterClassEntry();
           if (classEntry) applyClassToCharacterSheet(classEntry);
           saveCharacterSheet();
+        } else if (field === 'ancestry') {
+          const species = originEntry(appState.data.species, event.currentTarget.value);
+          if (species) {
+            applySpeciesToCharacterSheet(species);
+          } else {
+            appState.characterSheet.ancestry = event.currentTarget.value;
+            saveCharacterSheet();
+          }
+        } else if (field === 'background') {
+          const background = originEntry(appState.data.backgrounds, event.currentTarget.value);
+          if (background) {
+            applyBackgroundToCharacterSheet(background);
+          } else {
+            appState.characterSheet.background = event.currentTarget.value;
+            saveCharacterSheet();
+          }
         }
         renderCharacterSheet(appState.characterSheetTab);
       });
@@ -196,9 +217,33 @@ export function createCharacterSheetEventsController({
     views.detail.querySelectorAll('[data-sheet-reset-resources]').forEach((node) => {
       node.addEventListener('click', (event) => {
         resetCharacterResources(event.currentTarget.dataset.sheetResetResources);
+        if (event.currentTarget.dataset.sheetResetResources === 'long') {
+          appState.characterSheet.spellSlotsUsed = {};
+          appState.characterSheet.currentHp = Number(appState.characterSheet.maxHp) || appState.characterSheet.currentHp;
+          appState.characterSheet.tempHp = 0;
+          appState.characterSheet.status.concentration = false;
+          appState.characterSheet.status.deathSaveSuccesses = 0;
+          appState.characterSheet.status.deathSaveFailures = 0;
+        }
         saveCharacterSheet();
         renderCharacterSheet('combat');
       });
+    });
+
+    views.detail.querySelector('[data-sheet-apply-derived-ac]')?.addEventListener('click', () => {
+      appState.characterSheet.armorClass = characterSuggestedArmorClass();
+      saveCharacterSheet();
+      renderCharacterSheet('combat');
+    });
+
+    views.detail.querySelector('[data-sheet-apply-derived-hp]')?.addEventListener('click', () => {
+      const hp = characterSuggestedHitPoints();
+      appState.characterSheet.maxHp = hp;
+      if (!Number(appState.characterSheet.currentHp)) {
+        appState.characterSheet.currentHp = hp;
+      }
+      saveCharacterSheet();
+      renderCharacterSheet('combat');
     });
 
     views.detail.querySelectorAll('[data-sheet-remove-resource]').forEach((node) => {
@@ -270,6 +315,14 @@ export function createCharacterSheetEventsController({
       node.addEventListener('input', (event) => {
         appState.characterSheet.coins[event.currentTarget.dataset.sheetCoin] = Number(event.currentTarget.value) || 0;
         saveCharacterSheet();
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-apply-starting-equipment]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        applyStartingEquipment(event.currentTarget.dataset.sheetApplyStartingEquipment);
+        saveCharacterSheet();
+        renderCharacterSheet('inventory');
       });
     });
 
@@ -479,6 +532,137 @@ export function createCharacterSheetEventsController({
     const dexBonus = maxMatch ? Math.min(dex, Number(maxMatch[1])) : dex;
 
     return base + dexBonus;
+  }
+
+  function applyStartingEquipment(mode) {
+    if (mode === 'background-coins') {
+      applyCoinsFromText(backgroundEntry()?.equipaggiamento_alternativo || '');
+      return;
+    }
+
+    const text = classStartingEquipmentText();
+    const optionText = startingEquipmentOptionText(text, mode);
+    const result = importEquipmentText(optionText || text, 'Equipaggiamento iniziale');
+
+    if (result.unmatched.length) {
+      appendEquipmentNote(`Da verificare (${result.source}): ${result.unmatched.join(', ')}`);
+    }
+  }
+
+  function importEquipmentText(text, source) {
+    const cleaned = String(text || '').replace(/^A\s*:\s*|^B\s*:\s*/i, '').trim();
+    const withoutCoins = applyCoinsFromText(cleaned);
+    const parts = withoutCoins
+      .split(/,|\se\s/gi)
+      .map((part) => part.trim().replace(/\.$/, ''))
+      .filter(Boolean);
+    const unmatched = [];
+
+    parts.forEach((part) => {
+      const quantityMatch = part.match(/^(\d+)\s+(.+)$/);
+      const quantity = quantityMatch ? Math.max(1, Number(quantityMatch[1]) || 1) : 1;
+      const name = quantityMatch ? quantityMatch[2] : part;
+      const item = equipmentEntryByName(name);
+
+      if (!item) {
+        unmatched.push(part);
+        return;
+      }
+
+      addEquipmentItemToCharacterSheet(item);
+      const added = appState.characterSheet.equipmentItems.find((entry) => normalizeLabel(entry.name) === normalizeLabel(item.nome));
+      if (added) {
+        added.quantity = Math.max(Number(added.quantity) || 1, quantity);
+      }
+    });
+
+    return { source, unmatched };
+  }
+
+  function applyCoinsFromText(text) {
+    return String(text || '').replace(/(\d+)\s*(pp|mo|ma|mr)\b/gi, (_match, amount, coin) => {
+      const key = String(coin).toLowerCase();
+      appState.characterSheet.coins[key] = Math.max(0, Number(appState.characterSheet.coins[key]) || 0) + Number(amount);
+      return '';
+    });
+  }
+
+  function equipmentEntryByName(name) {
+    const key = normalizeLabel(name);
+    return appState.data.equipment.find((item) => {
+      const itemName = normalizeLabel(item.nome);
+      return itemName === key || pluralAliases(itemName).includes(key);
+    }) || null;
+  }
+
+  function pluralAliases(value) {
+    const aliases = [];
+    if (value.endsWith('cia')) aliases.push(`${value.slice(0, -3)}ce`);
+    if (value.endsWith('gia')) aliases.push(`${value.slice(0, -3)}ge`);
+    if (value.endsWith('a')) aliases.push(`${value.slice(0, -1)}e`);
+    if (value.endsWith('o')) aliases.push(`${value.slice(0, -1)}i`);
+    if (value.endsWith('e')) aliases.push(`${value.slice(0, -1)}i`);
+    return aliases;
+  }
+
+  function classStartingEquipmentText() {
+    const traits = characterClassEntry()?.sezioni?.find((section) => String(section.titolo || '').startsWith('Tratti '));
+    const row = traits?.righe?.find((entry) => (entry.chiave || entry.Voce) === 'Equipaggiamento iniziale');
+    return String(row?.valore || row?.Riepilogo || '').replace(/\.$/, '').trim();
+  }
+
+  function startingEquipmentOptionText(text, mode) {
+    const match = String(text || '').match(/\bA\s*:\s*(.*?)(?:;\s*oppure\s*B\s*:\s*(.*)|$)/i);
+    if (!match) return text;
+    if (mode === 'class-a') return match[1] || '';
+    if (mode === 'class-b') return match[2] || '';
+    return text;
+  }
+
+  function backgroundEntry() {
+    const value = appState.characterSheet.background;
+    return appState.data.backgrounds.find((entry) => entry.id === value || entry.nome === value) || null;
+  }
+
+  function appendEquipmentNote(note) {
+    const text = String(appState.characterSheet.equipment || '').trim();
+    if (text.includes(note)) return;
+    appState.characterSheet.equipment = text ? `${text}\n\n${note}` : note;
+  }
+
+  function normalizeLabel(value) {
+    return String(value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[’']/g, '')
+      .trim();
+  }
+
+  function characterSuggestedHitPoints() {
+    const level = Math.min(20, Math.max(1, Number(appState.characterSheet.level) || 1));
+    const hitDie = Number(String(appState.characterSheet.hitDice || '').match(/d(\d+)/i)?.[1]) || 8;
+    const con = Math.floor(((Number(appState.characterSheet.abilities?.con) || 10) - 10) / 2);
+    const firstLevel = Math.max(1, hitDie + con);
+    const laterLevel = Math.max(1, Math.floor(hitDie / 2) + 1 + con);
+
+    return firstLevel + Math.max(0, level - 1) * laterLevel;
+  }
+
+  function characterSuggestedArmorClass() {
+    const equippedArmor = appState.characterSheet.equipmentItems.find((item) => item.equipped && item.armorClass);
+    const armorClass = armorClassFromEquipment(equippedArmor);
+    if (armorClass !== null) return armorClass;
+
+    const dex = Math.floor(((Number(appState.characterSheet.abilities?.dex) || 10) - 10) / 2);
+    return 10 + dex;
+  }
+
+  function originEntry(entries, value) {
+    const selected = String(value || '');
+    if (!selected || !Array.isArray(entries)) return null;
+
+    return entries.find((entry) => entry.id === selected || entry.nome === selected) || null;
   }
 
   return { bindCharacterSheetEvents };

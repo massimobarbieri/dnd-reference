@@ -13,10 +13,15 @@ export function createCharacterSheetCombatRenderer({
   characterConditionOptions,
   characterProficiencyBonus,
   characterAttackBonus,
+  characterSpellSlots,
+  characterSpellOptions,
+  spellLevel,
 }) {
   function renderCharacterSheetCombat() {
     const sheet = appState.characterSheet;
     const initiative = abilityModifier(sheet.abilities.dex) + (Number(sheet.initiativeBonus) || 0);
+    const suggestedArmorClass = characterSuggestedArmorClass();
+    const suggestedHitPoints = characterSuggestedHitPoints();
 
     return `
       <section class="sheet-grid">
@@ -32,6 +37,12 @@ export function createCharacterSheetCombatRenderer({
             ${sheetField('hitDice', 'Dadi Vita', sheet.hitDice)}
             ${sheetNumberField('speed', 'Velocita (m)', sheet.speed, 0)}
             ${sheetNumberField('initiativeBonus', 'Bonus iniziativa extra', sheet.initiativeBonus)}
+          </div>
+          <div class="sheet-derived-actions">
+            <div class="sheet-derived"><span>CA suggerita</span><strong>${escapeHtml(String(suggestedArmorClass))}</strong></div>
+            <div class="sheet-derived"><span>PF suggeriti</span><strong>${escapeHtml(String(suggestedHitPoints))}</strong></div>
+            <button class="button button--ghost" type="button" data-sheet-apply-derived-ac>Applica CA</button>
+            <button class="button button--ghost" type="button" data-sheet-apply-derived-hp>Applica PF</button>
           </div>
         </div>
 
@@ -61,6 +72,11 @@ export function createCharacterSheetCombatRenderer({
         <div class="sheet-panel sheet-panel--wide">
           <h3>Risorse</h3>
           ${renderCharacterResources()}
+        </div>
+
+        <div class="sheet-panel sheet-panel--wide">
+          <h3>Azioni rapide</h3>
+          ${renderQuickActions()}
         </div>
 
         <div class="sheet-panel sheet-panel--wide">
@@ -353,6 +369,110 @@ export function createCharacterSheetCombatRenderer({
         </div>
       </article>
     `;
+  }
+
+  function renderQuickActions() {
+    const actions = [
+      ...appState.characterSheet.attacks.map((attack) => quickAttackAction(attack)),
+      ...appState.characterSheet.resources
+        .filter((resource) => Math.max(0, Number(resource.max) || 0) > 0)
+        .map(quickResourceAction),
+      ...preparedSpellActions(),
+    ].filter(Boolean);
+
+    if (!actions.length) {
+      return '<p class="sheet-empty">Aggiungi attacchi, risorse o incantesimi preparati per avere pulsanti operativi qui.</p>';
+    }
+
+    return `
+      <div class="sheet-action-card-grid">
+        ${actions.map((action) => `
+          <article class="sheet-action-card">
+            <div>
+              <span>${escapeHtml(action.type)}</span>
+              <strong>${escapeHtml(action.name)}</strong>
+              <p>${escapeHtml(action.detail || '')}</p>
+            </div>
+            <div class="sheet-action-card-buttons">
+              ${action.roll ? `<button type="button" data-dice-roll="${escapeAttr(action.roll)}">${escapeHtml(action.rollLabel)}</button>` : ''}
+              ${action.damage ? `<button type="button" data-dice-roll="${escapeAttr(action.damage)}">Danni</button>` : ''}
+              ${action.href ? `<a class="button button--ghost" href="${escapeAttr(action.href)}">Apri</a>` : ''}
+            </div>
+          </article>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function quickAttackAction(attack) {
+    const attackBonus = characterAttackBonus(attack);
+    return {
+      type: 'Azione',
+      name: attack.name || 'Attacco',
+      detail: [attack.damage ? `Danni ${attack.damage}` : null, attack.damageType].filter(Boolean).join(' · '),
+      roll: rollFormula(20, attackBonus),
+      rollLabel: `Colpire ${formatSigned(attackBonus)}`,
+      damage: String(attack.damage || '').trim(),
+    };
+  }
+
+  function quickResourceAction(resource) {
+    const max = Math.max(0, Number(resource.max) || 0);
+    const used = Math.min(max, Math.max(0, Number(resource.used) || 0));
+    return {
+      type: 'Risorsa',
+      name: resource.name || 'Risorsa',
+      detail: [`${Math.max(0, max - used)}/${max} disponibili`, resource.recovery].filter(Boolean).join(' · '),
+    };
+  }
+
+  function preparedSpellActions() {
+    const slotLabels = new Set(characterSpellSlots().map(([label]) => label.replace(/^Slot\s+/i, '')));
+
+    return appState.characterSheet.preparedSpells
+      .map((id) => appState.data.spells.find((spell) => spell.id === id))
+      .filter(Boolean)
+      .slice(0, 8)
+      .map((spell) => ({
+        type: spell.livello === 0 ? 'Trucchetto' : 'Incantesimo',
+        name: spell.nome || spell.id,
+        detail: [spellLevel(spell), spell.scuola, slotLabels.has(String(spell.livello)) ? 'slot disponibile' : null].filter(Boolean).join(' · '),
+        href: `#/spells/${encodeURIComponent(spell.id)}`,
+      }));
+  }
+
+  function characterSuggestedHitPoints() {
+    const level = Math.min(20, Math.max(1, Number(appState.characterSheet.level) || 1));
+    const hitDie = Number(String(appState.characterSheet.hitDice || '').match(/d(\d+)/i)?.[1]) || 8;
+    const con = abilityModifier(appState.characterSheet.abilities.con);
+    const firstLevel = Math.max(1, hitDie + con);
+    const laterLevel = Math.max(1, Math.floor(hitDie / 2) + 1 + con);
+
+    return firstLevel + Math.max(0, level - 1) * laterLevel;
+  }
+
+  function characterSuggestedArmorClass() {
+    const equippedArmor = appState.characterSheet.equipmentItems.find((item) => item.equipped && item.armorClass);
+    const armorClass = armorClassFromText(equippedArmor?.armorClass);
+    if (armorClass !== null) return armorClass;
+
+    return 10 + abilityModifier(appState.characterSheet.abilities.dex);
+  }
+
+  function armorClassFromText(value) {
+    const text = String(value || '').trim();
+    if (!text) return null;
+
+    const dex = abilityModifier(appState.characterSheet.abilities.dex);
+    const shield = text.match(/^\+(\d+)/);
+    if (shield) return (Number(appState.characterSheet.armorClass) || 10) + Number(shield[1]);
+
+    const base = Number(text.match(/\d+/)?.[0]);
+    if (!Number.isFinite(base)) return null;
+    if (!/des/i.test(text)) return base;
+
+    const maxMatch = text.match(/max\s*(\d+)/i);
+    return base + (maxMatch ? Math.min(dex, Number(maxMatch[1])) : dex);
   }
 
   return { renderCharacterSheetCombat };

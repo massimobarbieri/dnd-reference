@@ -1106,6 +1106,76 @@ h1 {
   gap: .32rem;
 }
 
+.sheet-builder-checklist {
+  display: grid;
+  gap: .6rem;
+}
+
+.sheet-checklist-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+}
+
+.sheet-checklist-heading h3 {
+  margin-bottom: .15rem;
+}
+
+.sheet-checklist-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: .86rem;
+}
+
+.sheet-checklist-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .45rem;
+}
+
+.sheet-checklist-item {
+  display: grid;
+  gap: .12rem;
+  min-width: 0;
+  border: 1px solid rgba(138,63,35,.18);
+  border-radius: 8px;
+  background: rgba(255,255,255,.5);
+  color: inherit;
+  padding: .55rem;
+  text-decoration: none;
+}
+
+.sheet-checklist-item span {
+  color: var(--muted);
+  font-size: .68rem;
+  font-weight: 820;
+  text-transform: uppercase;
+}
+
+.sheet-checklist-item strong {
+  color: var(--accent);
+  font-size: .95rem;
+}
+
+.sheet-checklist-item small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: .78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheet-checklist-item.is-complete {
+  border-color: rgba(64,115,78,.32);
+  background: rgba(238,247,238,.58);
+}
+
+.sheet-checklist-item.is-complete span {
+  color: #40734e;
+}
+
 .sheet-form-grid,
 .ability-grid,
 .save-grid,
@@ -1192,6 +1262,16 @@ h1 {
   color: var(--accent);
   font-size: 1.25rem;
   line-height: 1;
+}
+
+.sheet-derived-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto auto;
+  gap: .45rem;
+  align-items: center;
+  border-top: 1px solid rgba(217,199,179,.56);
+  margin-top: .6rem;
+  padding-top: .55rem;
 }
 
 .ability-card {
@@ -1680,6 +1760,54 @@ h1 {
   min-height: 1.9rem;
 }
 
+.sheet-action-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .45rem;
+}
+
+.sheet-action-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .55rem;
+  align-items: center;
+  border: 1px solid rgba(217,199,179,.62);
+  border-radius: 8px;
+  background: rgba(255,255,255,.48);
+  padding: .58rem;
+}
+
+.sheet-action-card span {
+  display: block;
+  color: var(--muted);
+  font-size: .68rem;
+  font-weight: 820;
+  text-transform: uppercase;
+}
+
+.sheet-action-card strong {
+  display: block;
+  color: var(--accent);
+  font-size: .94rem;
+}
+
+.sheet-action-card p {
+  margin: .12rem 0 0;
+  color: var(--muted);
+  font-size: .82rem;
+}
+
+.sheet-action-card-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .3rem;
+}
+
+.sheet-action-card-buttons button {
+  min-height: 1.9rem;
+}
+
 .sheet-slot-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(4.8rem, 1fr));
@@ -1829,6 +1957,56 @@ h1 {
   align-items: end;
   gap: .45rem;
   margin-bottom: .6rem;
+}
+
+.sheet-starting-equipment {
+  display: grid;
+  gap: .55rem;
+}
+
+.sheet-starting-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .5rem;
+}
+
+.sheet-starting-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .65rem;
+  align-items: center;
+  border: 1px solid rgba(138,63,35,.18);
+  border-radius: 8px;
+  background: rgba(255,255,255,.48);
+  padding: .6rem;
+}
+
+.sheet-starting-card span {
+  display: block;
+  color: var(--muted);
+  font-size: .68rem;
+  font-weight: 820;
+  text-transform: uppercase;
+}
+
+.sheet-starting-card strong {
+  display: block;
+  color: var(--accent);
+  font-size: .96rem;
+}
+
+.sheet-starting-card p {
+  margin: .14rem 0 0;
+  color: var(--muted);
+  font-size: .84rem;
+  line-height: 1.3;
+}
+
+.sheet-starting-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .35rem;
 }
 
 .sheet-equipment-list {
@@ -2520,6 +2698,19 @@ code {
     grid-template-columns: 1fr;
   }
 
+  .sheet-checklist-heading {
+    align-items: stretch;
+  }
+
+  .sheet-checklist-heading .button,
+  .sheet-checklist-grid {
+    width: 100%;
+  }
+
+  .sheet-checklist-grid {
+    grid-template-columns: 1fr;
+  }
+
   .sheet-grid,
   .sheet-form-grid,
   .sheet-form-grid--compact,
@@ -2547,6 +2738,15 @@ code {
 
   .sheet-status {
     grid-template-columns: 1fr;
+  }
+
+  .sheet-derived-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sheet-derived-actions .button {
+    width: 100%;
+    justify-content: center;
   }
 
   .sheet-condition-list {
@@ -2643,12 +2843,40 @@ code {
     grid-template-columns: 1fr;
   }
 
+  .sheet-action-card-grid,
+  .sheet-action-card {
+    grid-template-columns: 1fr;
+  }
+
+  .sheet-action-card-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+    width: 100%;
+  }
+
+  .sheet-action-card-buttons .button,
+  .sheet-action-card-buttons button {
+    width: 100%;
+    justify-content: center;
+  }
+
   .sheet-check {
     min-height: 1.8rem;
   }
 
   .sheet-attunement {
     grid-template-columns: 1fr;
+  }
+
+  .sheet-starting-grid,
+  .sheet-starting-card {
+    grid-template-columns: 1fr;
+  }
+
+  .sheet-starting-actions,
+  .sheet-starting-actions .button {
+    width: 100%;
   }
 
   .sheet-item-actions {

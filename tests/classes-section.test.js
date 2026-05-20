@@ -46,6 +46,6 @@ assert.match(configSource, /classes: Classi/);
 assert.match(configSource, /classes: data\/srd\/5\.2\.1\/json\/srd_5_2_1_classes\.json/);
 assert.match(configSource, /species: Specie/);
 assert.match(configSource, /backgrounds: Background/);
-assert.match(indexSource, /20260519-entities/);
+assert.match(indexSource, /20260520-starting2/);
 
 console.log('Sezione classi OK');

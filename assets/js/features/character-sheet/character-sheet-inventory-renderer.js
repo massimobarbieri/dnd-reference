@@ -4,6 +4,7 @@ export function createCharacterSheetInventoryRenderer({
   escapeHtml,
   sheetTextArea,
   magicItemRequiresAttunement,
+  characterClassEntry,
 }) {
   function renderCharacterSheetInventory() {
     const sheet = appState.characterSheet;
@@ -11,6 +12,7 @@ export function createCharacterSheetInventoryRenderer({
     return `
       <section class="sheet-grid">
         ${renderInventorySummary()}
+        ${renderStartingEquipmentPanel()}
 
         <div class="sheet-panel sheet-panel--control">
           <h3>Monete</h3>
@@ -41,6 +43,70 @@ export function createCharacterSheetInventoryRenderer({
         </div>
       </section>
     `;
+  }
+
+  function renderStartingEquipmentPanel() {
+    const classText = classStartingEquipmentText();
+    const classOptions = classStartingEquipmentOptions(classText);
+    const background = backgroundEntry();
+    const backgroundCoins = String(background?.equipaggiamento_alternativo || '').trim();
+
+    if (!classText && !backgroundCoins) return '';
+
+    return `
+      <div class="sheet-panel sheet-panel--wide sheet-starting-equipment">
+        <h3>Equipaggiamento iniziale</h3>
+        <div class="sheet-starting-grid">
+          ${classText ? `
+            <article class="sheet-starting-card">
+              <div>
+                <span>Classe</span>
+                <strong>${escapeHtml(characterClassEntry()?.nome?.replace(/^Classe:\s*/i, '') || 'Classe')}</strong>
+                <p>${escapeHtml(classText)}</p>
+              </div>
+              <div class="sheet-starting-actions">
+                ${classOptions.map((option) => `
+                  <button class="button button--ghost" type="button" data-sheet-apply-starting-equipment="${escapeAttr(option.key)}">
+                    ${escapeHtml(option.label)}
+                  </button>
+                `).join('')}
+              </div>
+            </article>
+          ` : ''}
+          ${backgroundCoins ? `
+            <article class="sheet-starting-card">
+              <div>
+                <span>Background</span>
+                <strong>${escapeHtml(background?.nome || 'Background')}</strong>
+                <p>${escapeHtml(`Alternativa: ${backgroundCoins}`)}</p>
+              </div>
+              <div class="sheet-starting-actions">
+                <button class="button button--ghost" type="button" data-sheet-apply-starting-equipment="background-coins">Applica monete</button>
+              </div>
+            </article>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function classStartingEquipmentText() {
+    const traits = characterClassEntry()?.sezioni?.find((section) => String(section.titolo || '').startsWith('Tratti '));
+    const row = traits?.righe?.find((entry) => (entry.chiave || entry.Voce) === 'Equipaggiamento iniziale');
+    return String(row?.valore || row?.Riepilogo || '').replace(/\.$/, '').trim();
+  }
+
+  function classStartingEquipmentOptions(text) {
+    const options = [];
+    if (/\bA\s*:/i.test(text)) options.push({ key: 'class-a', label: 'Importa opzione A' });
+    if (/\bB\s*:/i.test(text)) options.push({ key: 'class-b', label: 'Importa opzione B' });
+    if (!options.length && text) options.push({ key: 'class-all', label: 'Importa equipaggiamento' });
+    return options;
+  }
+
+  function backgroundEntry() {
+    const value = appState.characterSheet.background;
+    return appState.data.backgrounds.find((entry) => entry.id === value || entry.nome === value) || null;
   }
 
   function renderInventorySummary() {

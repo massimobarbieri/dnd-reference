@@ -103,6 +103,7 @@ export function createCharacterSheetActionsController({
     appState.characterSheet.background = background.nome || background.id;
     applyBackgroundProficiencies(background);
     addReferenceToCharacterSheet('backgrounds', background, { save: false });
+    applyBackgroundOriginFeat(background);
     saveCharacterSheet();
     return true;
   }
@@ -234,6 +235,22 @@ export function createCharacterSheetActionsController({
     if (tools && appState.characterSheet.proficiencies) {
       appState.characterSheet.proficiencies.tools = appendUniqueText(appState.characterSheet.proficiencies.tools, tools);
     }
+  }
+
+  function applyBackgroundOriginFeat(background) {
+    const feat = originFeatEntry(background);
+    if (!feat) return false;
+
+    addReferenceToCharacterSheet('feats', feat, { save: false });
+    return true;
+  }
+
+  function originFeatEntry(background) {
+    const featName = String(background?.talento_origine || '').replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+    const key = normalizeText(featName);
+    if (!key || !Array.isArray(appState.data.feats)) return null;
+
+    return appState.data.feats.find((feat) => normalizeText(feat.nome) === key) || null;
   }
 
   function speedMeters(value) {

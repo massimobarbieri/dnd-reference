@@ -9,6 +9,8 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
     name: 'Renderer',
     level: 3,
     classId: 'wizard',
+    ancestry: 'Elfo',
+    background: 'Accolito',
     spellcastingAbility: 'int',
     preparedSpells: ['magic-missile'],
     magicItems: [{ id: 'wand', name: 'Bacchetta', summary: 'rara · richiede sintonia' }],
@@ -31,11 +33,26 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   api.appState.data.rules = [
     { id: 'cover', nome: 'Copertura', categoria: 'Combattimento' },
   ];
+  api.appState.data.species = [
+    { id: 'elfo', nome: 'Elfo', velocita: '9 m' },
+  ];
+  api.appState.data.backgrounds = [
+    { id: 'accolito', nome: 'Accolito', talento_origine: 'Iniziato alla magia', equipaggiamento_alternativo: '50 mo' },
+  ];
+  api.appState.data.feats = [
+    { id: 'iniziato_alla_magia', nome: 'Iniziato alla magia', categoria: 'Origini' },
+  ];
   api.appState.data.classes = [
     {
       id: 'wizard',
       nome: 'Classe: Mago',
       sezioni: [
+        {
+          titolo: 'Tratti di classe',
+          righe: [
+            { Voce: 'Equipaggiamento iniziale', Riepilogo: 'A: pugnale e dotazione da studioso; oppure B: 55 mo.' },
+          ],
+        },
         {
           titolo: 'Progressione di classe',
           colonne: ['Livello', 'Bonus di competenza', 'Privilegi di classe'],
@@ -58,6 +75,10 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
 
   api.renderCharacterSheet('overview');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-field="name"/);
+  assert.match(views['#detail-view'].innerHTML, /<option value="elfo" selected>Elfo<\/option>/);
+  assert.match(views['#detail-view'].innerHTML, /<option value="accolito" selected>Accolito<\/option>/);
+  assert.match(views['#detail-view'].innerHTML, /Talento origine/);
+  assert.match(views['#detail-view'].innerHTML, /Talento: Iniziato alla magia/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-ability="str"/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-skill="arcana"/);
   assert.match(views['#detail-view'].innerHTML, /Tradizione Arcana/);
@@ -76,6 +97,9 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /sheet-spell-slots/);
 
   api.renderCharacterSheet('inventory');
+  assert.match(views['#detail-view'].innerHTML, /Equipaggiamento iniziale/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-apply-starting-equipment="class-a"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-apply-starting-equipment="background-coins"/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-coin="mo"/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-add-equipment/);
   assert.match(views['#detail-view'].innerHTML, /Armatura di cuoio/);

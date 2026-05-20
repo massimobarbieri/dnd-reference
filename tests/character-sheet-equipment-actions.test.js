@@ -6,6 +6,11 @@ const { pathToFileURL } = require('node:url');
   const { createCharacterSheetActionsController } = await import(actionsUrl);
 
   const appState = {
+    data: {
+      feats: [
+        { id: 'iniziato_alla_magia', nome: 'Iniziato alla magia', categoria: 'Origini' },
+      ],
+    },
     characterSheet: {
       ancestry: '',
       background: '',
@@ -102,6 +107,7 @@ const { pathToFileURL } = require('node:url');
   assert.equal(appState.characterSheet.skillProficiencies.religion, 1);
   assert.equal(appState.characterSheet.proficiencies.tools, 'scorte da calligrafo.');
   assert.ok(appState.characterSheet.references.some((entry) => entry.section === 'backgrounds' && entry.id === 'accolito'));
+  assert.ok(appState.characterSheet.references.some((entry) => entry.section === 'feats' && entry.id === 'iniziato_alla_magia'));
 
   actions.addEquipmentItemToCharacterSheet({
     id: 'pugnale',

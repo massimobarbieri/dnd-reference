@@ -1,4 +1,4 @@
-import { createCharacterSheetBackupController } from './character-sheet-backup.js?v=20260519-entities';
+import { createCharacterSheetBackupController } from './character-sheet-backup.js?v=20260520-starting2';
 
 export const CHARACTER_SHEET_BACKUP_ACTIONS = [
   'applyAppBackupImport',

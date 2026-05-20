@@ -29,7 +29,7 @@ export function createCharacterSheetFields({ escapeAttr, escapeHtml }) {
         <span>${escapeHtml(label)}</span>
         <select data-sheet-field="${escapeAttr(key)}">
           ${options.map((option) => `
-            <option value="${escapeAttr(option.value)}"${option.value === value ? ' selected' : ''}>${escapeHtml(option.label)}</option>
+            <option value="${escapeAttr(option.value)}"${option.selected || option.value === value ? ' selected' : ''}>${escapeHtml(option.label)}</option>
           `).join('')}
         </select>
       </label>
