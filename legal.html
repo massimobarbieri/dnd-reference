@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://5e.tools data:; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'self';">
   <meta name="theme-color" content="#251a12">
   <title>D&D Reference</title>
   <link rel="stylesheet" href="assets/css/styles.css">
@@ -80,7 +81,7 @@
   <section>
     <h2>Contenuti di terze parti</h2>
     <p>
-      L’applicazione può includere o visualizzare immagini e altri contenuti provenienti da fonti esterne, tra cui:
+      L’applicazione visualizza immagini di mostri provenienti da fonti esterne, tra cui:
       <a href="https://5e.tools/" target="_blank" rel="noopener noreferrer">5e.tools</a>.
     </p>
     <p>
@@ -91,6 +92,9 @@
       L’utilizzo di contenuti esterni avviene tramite collegamenti (link) a risorse pubblicamente disponibili. 
       La disponibilità di tali contenuti dipende esclusivamente dai rispettivi fornitori.
     </p>
+    <p>Sono escluse dal questa logica le immagini delle creature Oggetto animato, Cavalcatura ultraterrena, Insetto gigante e Spirito draconico le cui immagine sono prodotte per questo progetto mediate l'uso di IA e sono pubblicate con Licenza Creative Commons Attibution Share Alike 4.0.</p>
+
+    <p>L'immagine di PayPal è prodotta da Kaung71 ed è pubblicata su https://commons.wikimedia.org con licenza Creative Commons Attribution-Share Alike 4.0</p>
   </section>
 
   <section>
@@ -103,6 +107,25 @@
       Gli sviluppatori non si assumono alcuna responsabilità per eventuali errori, omissioni o per l’uso improprio dei contenuti.
     </p>
   </section>
+  <section>
+	  <h2>Come contribuire</h2>
+
+	  <p>D&D Reference è un progetto libero e aperto, sviluppato con passione per mettere a disposizione della community uno strumento semplice, accessibile e utile.
+	  L’applicazione rimarrà sempre gratuita e liberamente utilizzabile da chiunque. Se vuoi supportare il progetto, puoi contribuire in diversi modi.</p>
+
+	  <p><b>Segnalare bug e proporre nuove funzionalità.</b> Uno dei modi più utili per contribuire è aiutare a migliorare l’applicazione attraverso feedback e test. Se trovi un bug, un errore oppure hai un’idea per una nuova funzionalità, puoi partecipare come beta tester aprendo una issue sul <a href="https://github.com/massimobarbieri/dnd-reference">repository GitHub del progetto</a>. Oppure scrivi a bugs@dnd-reference.it Le segnalazioni degli utenti aiutano a rendere l’app più stabile, completa e utile per tutta la community.
+	  </p>
+
+	  <p><b>Diffondere il progetto.</b> Anche parlare dell’app ad altre persone è un contributo importante. Condividere D&D Reference con amici, gruppi di gioco, community online o social network aiuta il progetto a crescere e permette a più giocatori e master di scoprire e utilizzare lo strumento.
+	  </p>
+
+	  <p><b>Contribuire allo sviluppo.</b> Il progetto è open source e chiunque può contribuire direttamente al codice. Puoi effettuare un fork del <a href="https://github.com/massimobarbieri/dnd-reference">repository GitHub</a>, sviluppare miglioramenti o correzioni e inviare una Pull Request per proporre le modifiche. Ogni contributo, piccolo o grande, è benvenuto.
+	  </p>
+	  <p><b>Supportare le spese di hosting.</b> Se desideri supportare economicamente il progetto, puoi effettuare una <a href="https://www.paypal.com/pool/9pe1OvpRW2?sr=wccr">donazione volontaria</a>. Le donazioni non servono a monetizzare l’applicazione: D&D Reference resterà sempre libera e gratuita. Gli eventuali contributi economici saranno utilizzati esclusivamente per coprire i costi di hosting, infrastruttura e mantenimento del servizio.<br/>
+	  <a href="https://www.paypal.com/pool/9pe1OvpRW2?sr=wccr"><img src="/assets/img/paypal.jpg" width="150px"/></a>
+	  </p>
+  </section>
+
   </main>
 
   <template id="loading-template">

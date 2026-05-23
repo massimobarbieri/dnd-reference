@@ -1,6 +1,6 @@
 /*
  * D&D Reference
- * Applicazione statica per consultare mostri, incantesimi e oggetti magici.
+ * Applicazione statica per consultare mostri, incantesimi, oggetti magici, regole e glossario.
  *
  * Caratteristiche principali:
  * - Non usa framework JavaScript.
@@ -24,7 +24,10 @@
     data: {
       monsters: [],
       spells: [],
+      classes: [],
       magic_items: [],
+      rules: [],
+      rules_glossary: [],
     },
 
     // Mappa id mostro -> dati immagine.
@@ -43,7 +46,10 @@
     filters: {
       monsters: '',
       spells: '',
+      classes: '',
       magic_items: '',
+      rules: '',
+      rules_glossary: '',
     },
 
     // Se true mostra solo gli elementi preferiti.
@@ -85,11 +91,44 @@
       singular: 'incantesimo',
       titleKey: 'spells',
     },
+    classes: {
+      icon: '🧙',
+      singular: 'classe',
+      titleKey: 'classes',
+    },
     magic_items: {
       icon: '🗡️',
       singular: 'oggetto magico',
       titleKey: 'magic_items',
     },
+    rules: {
+      icon: '📖',
+      singular: 'regola',
+      titleKey: 'rules',
+    },
+    rules_glossary: {
+      icon: '🔎',
+      singular: 'voce',
+      titleKey: 'rules_glossary',
+    },
+  };
+
+  const CONDITION_ALIASES = {
+    accecato: ['accecato', 'accecata', 'accecati', 'accecate'],
+    affascinato: ['affascinato', 'affascinata', 'affascinati', 'affascinate'],
+    afferrato: ['afferrato', 'afferrata', 'afferrati', 'afferrate'],
+    assordato: ['assordato', 'assordata', 'assordati', 'assordate'],
+    avvelenato: ['avvelenato', 'avvelenata', 'avvelenati', 'avvelenate'],
+    incapacitato: ['incapacitato', 'incapacitata', 'incapacitati', 'incapacitate'],
+    indebolimento: ['indebolimento'],
+    invisibile: ['invisibile', 'invisibili'],
+    paralizzato: ['paralizzato', 'paralizzata', 'paralizzati', 'paralizzate'],
+    pietrificato: ['pietrificato', 'pietrificata', 'pietrificati', 'pietrificate'],
+    privo_di_sensi: ['privo di sensi', 'priva di sensi', 'privi di sensi', 'prive di sensi'],
+    prono: ['prono', 'prona', 'proni', 'prone'],
+    spaventato: ['spaventato', 'spaventata', 'spaventati', 'spaventate'],
+    stordito: ['stordito', 'stordita', 'storditi', 'stordite'],
+    trattenuto: ['trattenuto', 'trattenuta', 'trattenuti', 'trattenute'],
   };
 
   /*
@@ -132,10 +171,12 @@
        * Carica in parallelo tutti i dati.
        * Promise.all migliora i tempi perché non aspetta un file alla volta.
        */
-      const [monsters, spells, magicItems, monsterImageYaml] = await Promise.all([
+      const [monsters, spells, magicItems, rules, rulesGlossary, monsterImageYaml] = await Promise.all([
         fetchJson(paths.monsters),
         fetchJson(paths.spells),
         fetchJson(paths.magic_items),
+        fetchJson(paths.rules),
+        fetchJson(paths.rules_glossary),
 
         // Se il file immagini manca o fallisce, usa una stringa vuota.
         fetchText(paths.monster_images).catch(() => ''),
@@ -147,6 +188,9 @@
 
       // Gli oggetti magici vengono anche normalizzati nella rarità.
       appState.data.magic_items = normalizeArray(magicItems).map(normalizeMagicItem);
+      appState.data.classes = normalizeArray(rules).filter(isClassRule);
+      appState.data.rules = normalizeArray(rules).filter((rule) => !isClassRule(rule));
+      appState.data.rules_glossary = normalizeArray(rulesGlossary);
 
       // Converte il piccolo YAML delle immagini in una Map.
       appState.monsterImages = parseMonsterImages(monsterImageYaml);
@@ -163,7 +207,7 @@
    * Scarica un file JSON e lo converte in oggetto JavaScript.
    */
   async function fetchJson(path) {
-    const response = await fetch(path);
+    const response = await fetch(path, { cache: 'no-store' });
     if (!response.ok) throw new Error(`Errore caricamento JSON: ${path}`);
     return response.json();
   }
@@ -173,7 +217,7 @@
    * Usato per config.yml e monster-images.yml.
    */
   async function fetchText(path) {
-    const response = await fetch(path);
+    const response = await fetch(path, { cache: 'no-store' });
     if (!response.ok) throw new Error(`Errore caricamento testo: ${path}`);
     return response.text();
   }
@@ -184,6 +228,14 @@
    */
   function normalizeArray(value) {
     return Array.isArray(value) ? value : [];
+  }
+
+  /*
+   * Le classi sono mantenute nei dati regole SRD, ma nell'app hanno una
+   * sezione principale dedicata.
+   */
+  function isClassRule(rule) {
+    return String(rule?.id || '').startsWith('classe_');
   }
 
   /*
@@ -345,6 +397,11 @@
       return;
     }
 
+    if (route.section === 'rules' && route.id && isClassRule({ id: route.id })) {
+      location.hash = `#/classes/${encodeURIComponent(route.id)}`;
+      return;
+    }
+
     // Se la sezione non esiste, torna alla home.
     if (!SECTION_META[route.section]) {
       location.hash = '';
@@ -385,7 +442,7 @@
   }
 
   /*
-   * Renderizza la schermata iniziale con le tre card principali.
+   * Renderizza la schermata iniziale con le card principali.
    */
   function renderHome() {
     setView('home');
@@ -394,9 +451,9 @@
 
     views.home.innerHTML = `
       <div class="home-grid">
-        ${sectionHomeCard('monsters', labels.monsters, appState.data.monsters.length)}
-        ${sectionHomeCard('spells', labels.spells, appState.data.spells.length)}
-        ${sectionHomeCard('magic_items', labels.magic_items, appState.data.magic_items.length)}
+        ${Object.keys(SECTION_META)
+          .map((section) => sectionHomeCard(section, labels[section], appState.data[section].length))
+          .join('')}
       </div>
     `;
   }
@@ -519,7 +576,18 @@
       .filter((item) => !appState.showOnlyFavorites || isFavorite(section, item.id))
       .filter((item) => matchesSectionFilter(section, item, filter))
       .filter((item) => !term || normalizeText(searchableText(section, item)).includes(term))
-      .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'it'));
+      .sort((a, b) => sortItems(section, a, b));
+  }
+
+  /*
+   * Mantiene le regole nell'ordine del PDF; le altre sezioni restano alfabetiche.
+   */
+  function sortItems(section, a, b) {
+    if (section === 'rules') {
+      return sourcePageValue(a.pagine_sorgente) - sourcePageValue(b.pagine_sorgente);
+    }
+
+    return String(a.nome || '').localeCompare(String(b.nome || ''), 'it');
   }
 
   /*
@@ -536,7 +604,10 @@
     const labels = {
       monsters: 'Tutti i GS',
       spells: 'Tutti i livelli',
+      classes: 'Tutte le classi',
       magic_items: 'Tutte le rarità',
+      rules: 'Tutte le categorie',
+      rules_glossary: 'Tutti i descrittori',
     };
 
     return `
@@ -572,6 +643,27 @@
         }));
     }
 
+    if (section === 'rules') {
+      return uniqueValues(appState.data.rules, 'categoria')
+        .map((value) => ({
+          value,
+          label: value,
+        }));
+    }
+
+    if (section === 'classes') {
+      return [];
+    }
+
+    if (section === 'rules_glossary') {
+      return uniqueValues(appState.data.rules_glossary, 'descrittore')
+        .sort((a, b) => a.localeCompare(b, 'it'))
+        .map((value) => ({
+          value,
+          label: capitalizeFirst(value),
+        }));
+    }
+
     return uniqueValues(appState.data.magic_items, 'rarita')
       .sort((a, b) => a.localeCompare(b, 'it'))
       .map((value) => ({
@@ -594,6 +686,18 @@
       return String(item.livello ?? '') === filter;
     }
 
+    if (section === 'rules') {
+      return String(item.categoria || '') === filter;
+    }
+
+    if (section === 'classes') {
+      return true;
+    }
+
+    if (section === 'rules_glossary') {
+      return String(item.descrittore || '') === filter;
+    }
+
     return String(item.rarita || '') === filter;
   }
 
@@ -608,6 +712,15 @@
           .filter((value) => value !== null && value !== undefined && value !== '')
       )
     ).map(String);
+  }
+
+  /*
+   * Prima pagina sorgente di una voce, usata per ordinare le regole come nel PDF.
+   */
+  function sourcePageValue(value) {
+    const [page] = String(value || '').match(/\d+/) || [];
+
+    return page ? Number(page) : Number.POSITIVE_INFINITY;
   }
 
   /*
@@ -654,6 +767,49 @@
       ].join(' ');
     }
 
+    if (section === 'rules' || section === 'classes') {
+      return [
+        item.nome,
+        item.capitolo,
+        item.categoria,
+        item.descrizione,
+        ...(Array.isArray(item.sezioni)
+          ? item.sezioni.flatMap((sectionEntry) => [
+            sectionEntry.titolo,
+            sectionEntry.descrizione,
+            ...(Array.isArray(sectionEntry.righe)
+              ? sectionEntry.righe.map((row) => Object.values(row || {}).join(' '))
+              : []),
+            ...(Array.isArray(sectionEntry.blocchi)
+              ? sectionEntry.blocchi.map((block) => `${block.nome || ''} ${block.descrizione || ''}`)
+              : []),
+          ])
+          : []),
+      ].join(' ');
+    }
+
+    if (section === 'rules_glossary') {
+      return [
+        item.nome,
+        item.lettera,
+        item.descrittore,
+        item.descrizione,
+        item.vedi_anche?.join(' '),
+        ...(Array.isArray(item.sezioni)
+          ? item.sezioni.flatMap((sectionEntry) => [
+            sectionEntry.titolo,
+            sectionEntry.descrizione,
+            ...(Array.isArray(sectionEntry.righe)
+              ? sectionEntry.righe.map((row) => Object.values(row || {}).join(' '))
+              : []),
+            ...(Array.isArray(sectionEntry.blocchi)
+              ? sectionEntry.blocchi.map((block) => `${block.nome || ''} ${block.descrizione || ''}`)
+              : []),
+          ])
+          : []),
+      ].join(' ');
+    }
+
     return [
       item.nome,
       item.tipo,
@@ -692,6 +848,20 @@
         spellLevel(item),
         item.scuola,
         item.tempo_lancio,
+      ].filter(Boolean).join(' · ');
+    }
+
+    if (section === 'rules' || section === 'classes') {
+      return [
+        item.categoria,
+        item.pagine_sorgente ? `pag. ${item.pagine_sorgente}` : null,
+      ].filter(Boolean).join(' · ');
+    }
+
+    if (section === 'rules_glossary') {
+      return [
+        item.descrittore ? capitalizeFirst(item.descrittore) : `Lettera ${item.lettera}`,
+        item.pagine_sorgente ? `pag. ${item.pagine_sorgente}` : null,
       ].filter(Boolean).join(' · ');
     }
 
@@ -858,6 +1028,9 @@
   function renderDetailContent(section, item) {
     if (section === 'monsters') return renderMonster(item);
     if (section === 'spells') return renderSpell(item);
+    if (section === 'classes') return renderClass(item);
+    if (section === 'rules') return renderRule(item);
+    if (section === 'rules_glossary') return renderGlossaryEntry(item);
     return renderMagicItem(item);
   }
 
@@ -987,6 +1160,32 @@
 
       ${renderScalingEntries('Slot superiori', spell.scaling, spell)}
       ${renderSections('Sezioni', spell.sezioni)}
+      ${renderSummonedCreatureLink(spell)}
+    `;
+  }
+
+  /*
+   * Se l'incantesimo rimanda a una creatura evocata presente nel catalogo
+   * mostri, aggiunge un link diretto in fondo alla scheda.
+   */
+  function renderSummonedCreatureLink(spell) {
+    const summonedCreatureId = spell?.creatura_evocata?.id;
+
+    if (!summonedCreatureId || spell?.creatura_evocata?.fonte !== 'mostri') {
+      return '';
+    }
+
+    const monster = appState.data.monsters.find((entry) => entry.id === summonedCreatureId);
+
+    if (!monster) {
+      return '';
+    }
+
+    return `
+      <p class="summoned-creature-link">
+        <strong>Creatura evocata:</strong>
+        <a href="#/monsters/${encodeURIComponent(monster.id)}">${escapeHtml(monster.nome)}</a>
+      </p>
     `;
   }
 
@@ -1054,6 +1253,75 @@
 
       ${renderEntries('Proprietà', item.proprieta)}
       ${renderSections('Tabelle e sezioni', item.sezioni)}
+    `;
+  }
+
+  /*
+   * Renderizza una voce delle regole SRD.
+   */
+  function renderRule(rule) {
+    return `
+      ${renderHeader(
+        'rules',
+        rule,
+        [rule.categoria, rule.pagine_sorgente ? `pag. ${rule.pagine_sorgente}` : null].filter(Boolean).join(' · ')
+      )}
+
+      ${compactMeta([
+        ['Capitolo', rule.capitolo],
+        ['Categoria', rule.categoria],
+        ['Pagine SRD', rule.pagine_sorgente],
+      ])}
+
+      <div class="description">${formatInline(rule.descrizione || '')}</div>
+
+      ${renderSections('Dettagli', rule.sezioni)}
+    `;
+  }
+
+  /*
+   * Renderizza una classe come scheda autonoma.
+   */
+  function renderClass(rule) {
+    return `
+      ${renderHeader(
+        'classes',
+        rule,
+        [rule.categoria, rule.pagine_sorgente ? `pag. ${rule.pagine_sorgente}` : null].filter(Boolean).join(' · ')
+      )}
+
+      ${compactMeta([
+        ['Capitolo', rule.capitolo],
+        ['Pagine SRD', rule.pagine_sorgente],
+      ])}
+
+      <div class="description">${formatInline(rule.descrizione || '')}</div>
+
+      ${renderSections('Dettagli', rule.sezioni)}
+    `;
+  }
+
+  /*
+   * Renderizza una voce del glossario delle regole.
+   */
+  function renderGlossaryEntry(entry) {
+    return `
+      ${renderHeader(
+        'rules_glossary',
+        entry,
+        [entry.descrittore ? capitalizeFirst(entry.descrittore) : null, entry.pagine_sorgente ? `pag. ${entry.pagine_sorgente}` : null].filter(Boolean).join(' · ')
+      )}
+
+      ${compactMeta([
+        ['Lettera', entry.lettera],
+        ['Descrittore', entry.descrittore ? capitalizeFirst(entry.descrittore) : null],
+        ['Pagine SRD', entry.pagine_sorgente],
+        ['Vedi anche', Array.isArray(entry.vedi_anche) ? entry.vedi_anche.join(', ') : null],
+      ])}
+
+      <div class="description">${formatInline(entry.descrizione || '')}</div>
+
+      ${renderSections('Dettagli', entry.sezioni)}
     `;
   }
 
@@ -1242,8 +1510,9 @@
     const rows = Array.isArray(section.righe) ? section.righe : [];
     const blocks = Array.isArray(section.blocchi) ? section.blocchi : [];
     const entries = Array.isArray(section.voci) ? section.voci : [];
+    const columns = Array.isArray(section.colonne) ? section.colonne : [];
     const body = [
-      rows.length ? renderTableRows(rows) : '',
+      rows.length ? renderSectionRows(section, rows, columns) : '',
       blocks.length ? blocks.map(renderEntry).filter(Boolean).join('') : '',
       entries.length ? entries.map(renderEntry).filter(Boolean).join('') : '',
       section.descrizione ? `<div class="description">${formatInline(section.descrizione)}</div>` : '',
@@ -1260,21 +1529,111 @@
   }
 
   /*
-   * Renderizza righe chiave/valore come tabella responsive.
+   * Alcune sezioni tabellari hanno un rendering specifico, ad esempio le
+   * liste incantesimi delle classi raggruppate per livello.
    */
-  function renderTableRows(rows) {
-    const visibleRows = rows.filter((row) => row && (row.chiave || row.valore));
-    if (!visibleRows.length) return '';
+  function renderSectionRows(section, rows, columns) {
+    if (isClassSpellListSection(section)) {
+      return renderClassSpellListTables(rows, columns);
+    }
+
+    return renderTableRows(rows, columns);
+  }
+
+  /*
+   * Riconosce le liste incantesimi delle classi SRD.
+   */
+  function isClassSpellListSection(section) {
+    return (
+      String(section?.titolo || '').startsWith('Lista degli incantesimi da ') &&
+      Array.isArray(section?.colonne) &&
+      section.colonne.includes('Livello') &&
+      section.colonne.includes('Incantesimo')
+    );
+  }
+
+  /*
+   * Divide una lista incantesimi di classe in tabelle piu piccole, una per
+   * ciascun livello di incantesimo.
+   */
+  function renderClassSpellListTables(rows, columns) {
+    const visibleRows = rows.filter((row) => row && Object.keys(row).length);
+    const tableColumns = columns.filter((column) => column !== 'Livello');
+    const groups = groupRowsBySpellLevel(visibleRows);
+
+    if (!groups.length) return '';
 
     return `
-      <div class="table-wrap">
-        <table class="data-table">
+      <div class="spell-level-groups">
+        ${groups.map((group) => `
+          <section class="spell-level-group">
+            <h5>${escapeHtml(spellLevelTableHeading(group.level))}</h5>
+            ${renderMatrixRows(group.rows, tableColumns, 'data-table-spell-list')}
+          </section>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  /*
+   * Mantiene l'ordine originale dei livelli cosi come arriva dai dati SRD.
+   */
+  function groupRowsBySpellLevel(rows) {
+    const groups = [];
+    const byLevel = new Map();
+
+    rows.forEach((row) => {
+      const level = String(row.Livello || '').trim();
+
+      if (!byLevel.has(level)) {
+        const group = { level, rows: [] };
+        byLevel.set(level, group);
+        groups.push(group);
+      }
+
+      byLevel.get(level).rows.push(row);
+    });
+
+    return groups;
+  }
+
+  /*
+   * Titolo leggibile per il gruppo di livello nella lista incantesimi.
+   */
+  function spellLevelTableHeading(level) {
+    const text = String(level || '').trim();
+    if (normalizeText(text) === 'trucchetto') return 'Trucchetti';
+
+    const number = Number(text);
+    if (Number.isFinite(number)) return `${number}° livello`;
+
+    return text || 'Livello non indicato';
+  }
+
+  /*
+   * Renderizza righe chiave/valore come tabella responsive.
+   */
+  function renderTableRows(rows, columns = []) {
+    const visibleRows = rows.filter((row) => row && Object.keys(row).length);
+    if (!visibleRows.length) return '';
+
+    const matrixColumns = normalizeTableColumns(visibleRows, columns);
+    if (matrixColumns.length) {
+      return renderMatrixRows(visibleRows, matrixColumns);
+    }
+
+    const keyColumnClass = tableColumnWrapClass(shouldWrapTableColumn(visibleRows, 'chiave'));
+    const valueColumnClass = tableColumnWrapClass(shouldWrapTableColumn(visibleRows, 'valore'));
+
+    return `
+      <div class="table-wrap" tabindex="0" aria-label="Tabella scorrevole">
+        <table class="data-table data-table-key-value">
           <tbody>
             ${visibleRows
               .map((row) => `
                 <tr>
-                  <th scope="row">${formatInline(row.chiave || '', { dice: false })}</th>
-                  <td>${formatInline(row.valore || '')}</td>
+                  <th scope="row"${keyColumnClass}>${formatInline(row.chiave || '', { dice: false })}</th>
+                  <td${valueColumnClass}>${formatInline(row.valore || '')}</td>
                 </tr>
               `)
               .join('')}
@@ -1282,6 +1641,133 @@
         </table>
       </div>
     `;
+  }
+
+  /*
+   * Le tabelle SRD estratte dal PDF possono arrivare con colonne esplicite
+   * oppure come oggetti gia multi-chiave. Mantiene l'ordine dichiarato e
+   * preserva comunque tutte le celle presenti nei dati.
+   */
+  function normalizeTableColumns(rows, columns) {
+    const explicitColumns = Array.isArray(columns)
+      ? columns.map((column) => String(column || '').trim()).filter(Boolean)
+      : [];
+
+    if (explicitColumns.length) return explicitColumns;
+
+    const inferredColumns = [];
+    rows.forEach((row) => {
+      Object.keys(row || {}).forEach((key) => {
+        if (key !== 'chiave' && key !== 'valore' && !inferredColumns.includes(key)) {
+          inferredColumns.push(key);
+        }
+      });
+    });
+
+    return inferredColumns.length > 1 ? inferredColumns : [];
+  }
+
+  /*
+   * Renderizza tabelle multi-colonna, usate per progressioni di classe
+   * e altre matrici che nel PDF hanno intestazioni proprie.
+   */
+  function renderMatrixRows(rows, columns, tableClass = '') {
+    const className = ['data-table', 'data-table-matrix', tableClass].filter(Boolean).join(' ');
+    const wrapColumns = columns.map((column) => shouldWrapTableColumn(rows, column));
+
+    return `
+      <div class="table-wrap table-wrap-wide" tabindex="0" aria-label="Tabella scorrevole">
+        <table class="${escapeAttr(className)}" data-column-count="${columns.length}">
+          <thead>
+            <tr>
+              ${columns.map((column, index) => `<th scope="col"${tableColumnWrapClass(wrapColumns[index])}>${formatInline(displayTableColumn(column), { dice: false })}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${rows
+              .map((row) => `
+                <tr>
+                  ${columns
+                    .map((column, index) => {
+                      const className = tableColumnWrapClass(wrapColumns[index]);
+                      const tag = index === 0 ? `th scope="row"${className}` : `td${className}`;
+                      const closeTag = index === 0 ? 'th' : 'td';
+                      return `<${tag}>${renderTableCell(row[column] ?? '', column)}</${closeTag}>`;
+                    })
+                    .join('')}
+                </tr>
+              `)
+              .join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+
+  /*
+   * Se almeno una cella supera la soglia, tutta la colonna puo andare a capo.
+   * La regola vale per le tabelle di Regole, Classi e Glossario, incluse le
+   * tabelle chiave/valore e quelle multi-colonna.
+   */
+  function shouldWrapTableColumn(rows, column) {
+    const threshold = getTableWrapThreshold();
+    return rows.some((row) => tableCellTextLength(row?.[column]) > threshold);
+  }
+
+  function getTableWrapThreshold() {
+    const threshold = Number(appState.config?.ui?.table_wrap_threshold);
+    return Number.isFinite(threshold) && threshold >= 0 ? threshold : 20;
+  }
+
+  function tableColumnWrapClass(shouldWrap) {
+    return shouldWrap ? ' class="data-table-cell-wrap"' : '';
+  }
+
+  function tableCellTextLength(value) {
+    if (Array.isArray(value)) {
+      return value.map(tableCellTextLength).join(' ').length;
+    }
+
+    if (value && typeof value === 'object') {
+      return Object.values(value).map(tableCellTextLength).join(' ').length;
+    }
+
+    return String(value ?? '').trim().length;
+  }
+
+  /*
+   * Le tabelle di classe contengono liste incantesimi: la cella Incantesimo
+   * diventa un link diretto alla scheda quando il nome esiste nel catalogo.
+   */
+  function renderTableCell(value, column) {
+    if (normalizeText(column) !== 'incantesimo') {
+      return formatInline(value, { dice: false });
+    }
+
+    const spell = spellByName(value);
+
+    if (!spell) {
+      return formatInline(value, { dice: false });
+    }
+
+    return `<a class="table-spell-link" href="#/spells/${encodeURIComponent(spell.id)}">${escapeHtml(value)}</a>`;
+  }
+
+  /*
+   * Lookup tollerante ad accenti e maiuscole per i nomi incantesimo presenti
+   * nelle tabelle SRD.
+   */
+  function spellByName(name) {
+    const normalizedName = normalizeText(name).trim();
+
+    if (!normalizedName) return null;
+
+    return appState.data.spells.find((spell) => normalizeText(spell.nome).trim() === normalizedName) || null;
+  }
+
+  function displayTableColumn(column) {
+    return String(column || '').replace(/\s+2$/, '');
   }
 
   /*
@@ -1658,9 +2144,11 @@
   function formatInline(text, options = {}) {
     const withDice = options.dice !== false;
     const withAttacks = options.attacks !== false;
+    const withGlossary = options.glossary !== false;
     const value = String(text);
     const formatted = formatMarkdownInline(value);
-    const withAttackRolls = withAttacks ? enrichAttackRolls(formatted) : formatted;
+    const withGlossaryLinks = withGlossary ? enrichGlossaryLinks(formatted) : formatted;
+    const withAttackRolls = withAttacks ? enrichAttackRolls(withGlossaryLinks) : withGlossaryLinks;
 
     return withDice ? enrichDiceFormulas(withAttackRolls) : withAttackRolls;
   }
@@ -1672,6 +2160,49 @@
     return escapeHtml(String(text))
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>');
+  }
+
+  /*
+   * Collega le condizioni citate nel testo alla relativa voce di glossario.
+   */
+  function enrichGlossaryLinks(html) {
+    const terms = glossaryConditionTerms();
+
+    if (!terms.length) return String(html);
+
+    const pattern = new RegExp(`\\b(${terms.map((term) => escapeRegExp(term.label)).join('|')})\\b`, 'gi');
+
+    return String(html).replace(pattern, (match, _term, offset, fullText) => {
+      if (isInsideHtmlTag(fullText, offset)) return match;
+
+      const condition = terms.find((term) => normalizeText(term.label) === normalizeText(match));
+      if (!condition) return match;
+
+      return glossaryLink(match, condition.id);
+    });
+  }
+
+  /*
+   * Crea la lista di alias delle condizioni presenti davvero nel glossario.
+   */
+  function glossaryConditionTerms() {
+    const conditionIds = new Set(
+      appState.data.rules_glossary
+        .filter((entry) => entry.descrittore === 'condizione')
+        .map((entry) => entry.id)
+    );
+
+    return Object.entries(CONDITION_ALIASES)
+      .filter(([id]) => conditionIds.has(id))
+      .flatMap(([id, aliases]) => aliases.map((label) => ({ id, label })))
+      .sort((a, b) => b.label.length - a.label.length);
+  }
+
+  /*
+   * Link interno a una voce del glossario.
+   */
+  function glossaryLink(label, id) {
+    return `<a class="glossary-link" href="#/rules_glossary/${encodeURIComponent(id)}" title="Apri definizione: ${escapeAttr(label)}">${escapeHtml(label)}</a>`;
   }
 
   /*
@@ -1750,6 +2281,13 @@
    */
   function escapeAttr(value) {
     return escapeHtml(value).replace(/'/g, '&#39;');
+  }
+
+  /*
+   * Escapa una stringa da usare in una RegExp dinamica.
+   */
+  function escapeRegExp(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   /*

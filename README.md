@@ -1,66 +1,146 @@
-# DND-Reference
-**dnd-reference** è una web app pensata per supportare le sessioni di *Dungeons & Dragons* (il gioco più bello del Mondo di [Wizards of the Coast](https://company.wizards.com/it)), permettendo a Dungeon Master e giocatori di consultare rapidamente tutte le informazioni principali del gioco.
+# D&D Reference
 
-L’app raccoglie in un’unica interfaccia:
-- incantesimi
+Web app statica per consultare rapidamente il materiale SRD 5.2.1 in italiano durante una sessione di Dungeons & Dragons.
+
+L'app raccoglie in un'unica interfaccia:
+
 - mostri
+- incantesimi
+- classi
 - oggetti magici
+- regole
+- glossario delle regole
 
-Tutto è organizzato in modo semplice e leggibile, ottimizzato sia per desktop che per dispositivi mobile, così da essere utilizzabile direttamente al tavolo di gioco.
-L'app fa uso del System Reference Document 5.2.1 rilasciato gratuitamente da Wizards. Si rimanda al documento di Licenza per i dettagli.
+I dati SRD sono mantenuti nel submodule `data` e vengono caricati dal browser come file JSON statici. L'app non richiede backend, account o database: preferiti e impostazioni locali restano nel browser dell'utente.
 
-## Come usarla
+## Funzionalita
 
-Scarica tutto il progetto. Puoi clonarlo con git oppure scaricalo a mano. Per clonarlo con git usa il comando
+- Navigazione per categoria.
+- Ricerca full text nelle schede.
+- Schede dettagliate per mostri, incantesimi, classi, oggetti magici, regole e glossario.
+- Preferiti locali per sezione.
+- Dice roller integrato.
+- Riconoscimento di formule di dado nel testo, per esempio `d20`, `2d6 + 3`, `2d20kh1`, `4d6dl1`.
+- Tabelle SRD renderizzate in formato tabellare, incluse le tabelle multi-colonna estratte dal PDF.
+- Link diretti dagli incantesimi nelle tabelle di classe alle relative schede, con liste divise per livello.
 
-``git clone https://github.com/massimobarbieri/dnd-reference.git``
+## Requisiti
 
-``git submodule update --init --recursive``
+Serve solo un browser moderno e un web server statico.
 
-**dnd-reference** è una webapp quindi ti serve un webserver qualunque (nginx o apache sono i più comuni) oppure puoi usare python3 durante le tue sessioni di gioco.
-Se usi python, accedi alla cartella del progetto con il terminale e digita il seguente comando:
+Per sviluppo locale sono utili:
 
-``python3 -m http.server 8080``
+- `git`
+- `python3`, per servire rapidamente i file statici
+- `node`, per eseguire i test
 
-Il tuo pc diventerà un server web all'interno della tua rete locale. I tuoi utenti potranno collegarsi al tuo server locale all'indirizzo http://ip-del-tuo-server:8080
+## Installazione
 
-Una volta avviata sulla tua rete locale, puoi accedere all’app da qualsiasi dispositivo collegato alla tua rete (PC, tablet o smartphone) tramite browser.
+Clona il repository e inizializza il submodule dei dati:
+
+```bash
+git clone https://github.com/massimobarbieri/dnd-reference.git
+cd dnd-reference
+git submodule update --init --recursive
+```
+
+## Avvio locale
+
+Avvia un web server statico dalla root del progetto:
+
+```bash
+python3 -m http.server 8080
+```
+
+Poi apri:
+
+```text
+http://localhost:8080
+```
+
+Non aprire `index.html` direttamente con `file://`: l'app carica `config.yml` e i JSON SRD con `fetch()`, quindi deve essere servita via HTTP.
+
+Se i dati non vengono trovati, l'app rimanda alla pagina locale [fallback.html](fallback.html) con le istruzioni per inizializzare il submodule e avviare il server statico.
+
+Su rete locale, altri dispositivi possono collegarsi all'indirizzo IP del computer che sta servendo il progetto, per esempio:
+
+```text
+http://ip-del-tuo-server:8080
+```
+
+## Struttura
+
+```text
+.
+├── assets/
+│   ├── css/styles.css
+│   └── js/
+│       ├── app.js
+│       └── dice-roller.js
+├── data/                  # submodule con dati SRD
+├── docs/
+├── tests/
+├── config.yml
+├── index.html
+├── legal.html
+└── monster-images.yml
+```
+
+## Dati SRD
+
+Il submodule `data` punta al repository `DND-SRD-IT` e contiene i dati strutturati. I JSON non vanno duplicati nel repository principale.
+
+```text
+data/srd/5.2.1/
+├── json/   # dati caricati dall'app
+├── md/     # sorgenti Markdown strutturate
+└── pdf/    # PDF SRD completo originale
+```
+
+I JSON usati dall'app sono configurati in [config.yml](config.yml).
+
+Quando modifichi contenuto SRD:
+
+1. Aggiorna il Markdown sorgente in `data/srd/5.2.1/md/`.
+2. Aggiorna il JSON corrispondente in `data/srd/5.2.1/json/`.
+3. Mantieni le tabelle multi-colonna con `colonne` e righe indicizzate dagli stessi nomi colonna.
+4. Esegui i test sui dati.
+
+## Test
+
+Esegui tutta la suite:
+
+```bash
+for test in tests/*.test.js; do node "$test" || exit 1; done
+```
+
+Test utili durante lo sviluppo:
+
+```bash
+node tests/dice-roller.test.js
+node tests/classes-section.test.js
+node tests/monster-rolls-data.test.js
+node tests/rules-data.test.js
+node tests/rules-glossary-data.test.js
+node tests/rules-list-order.test.js
+node tests/roll-accessibility.test.js
+node tests/roll-tray-markup.test.js
+node tests/glossary-links.test.js
+node tests/table-spell-links.test.js
+```
 
 ## Sviluppo
 
-Per verificare le fixture del dice roller:
+L'app e' volutamente semplice:
 
-``node tests/dice-roller.test.js``
+- `index.html` carica CSS, dice roller e app principale.
+- `assets/js/app.js` gestisce caricamento dati, routing hash, ricerca, rendering schede e preferiti.
+- `assets/js/dice-roller.js` contiene parser e logica dei tiri.
+- `assets/css/styles.css` contiene layout e componenti visuali.
+- `config.yml` definisce titoli, label e percorsi dei dati.
 
-Per verificare il markup del tray:
+Non c'e' una fase di build. Dopo ogni modifica a CSS, JS o dati, ricarica la pagina servita dal web server locale.
 
-``node tests/roll-tray-markup.test.js``
+## Licenza e contenuti
 
-Per verificare i dati mostri arricchiti:
-
-``node tests/monster-rolls-data.test.js``
-
-Per verificare i requisiti base di accessibilità del dice roller:
-
-``node tests/roll-accessibility.test.js``
-
-All’interno dell’app puoi:
-
-- navigare tra le categorie (incantesimi, mostri, ecc.)
-- cercare rapidamente un elemento per nome
-- consultare le schede dettagliate durante la sessione
-- salvare i tuoi elementi preferiti per averli sempre a portata di mano
-- tirare formule di dado direttamente dalle schede o dal dice roller
-
-L’app non richiede registrazione e salva i preferiti direttamente nel browser, così ogni giocatore può personalizzare la propria esperienza.
-
-## Dice roller
-
-Il dice roller riconosce formule come `d20`, `2d6 + 3`, `2d20kh1` e `4d6dl1` nel testo delle schede.
-
-Per gli incantesimi con più bersagli, danni ripetuti o scaling non numerico, l’app non moltiplica automaticamente i risultati: mostra una nota situazionale e lascia al tavolo la scelta di quando ripetere il tiro.
-
-### Schermate
-![Menu principale](screenshots/1.png "Menu principale")
-![Incantesimi](screenshots/2.png "Incantesimi")
-![Preferiti](screenshots/3.png "Preferiti")
+Il progetto usa materiale tratto dal System Reference Document 5.2.1. Consulta [legal.html](legal.html), [LICENSE](LICENSE) e i file di licenza nel submodule `data` per i dettagli.

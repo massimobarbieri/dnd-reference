@@ -67,7 +67,7 @@ mostri:
   immagine: https://5e.tools/img/bestiary/tokens/XMM/Blink%20Dog.webp
 - id: cavalcatura_ultraterrena
   nome: Cavalcatura ultraterrena
-  immagine: https://5e.tools/img/bestiary/tokens/XMM/Otherworldly%20Steed.webp
+  immagine: /assets/img/cavalcatura_ultraterrena.png
 - id: cavaliere
   nome: Cavaliere
   immagine: https://5e.tools/img/bestiary/tokens/XMM/Knight.webp
@@ -418,7 +418,7 @@ mostri:
   immagine: https://5e.tools/img/bestiary/tokens/XMM/Incubus.webp
 - id: insetto_gigante
   nome: Insetto gigante
-  immagine: https://5e.tools/img/bestiary/tokens/XMM/Giant%20Insect.webp
+  immagine: /assets/img/insetto_gigante.png
 - id: ippogrifo
   nome: Ippogrifo
   immagine: https://5e.tools/img/bestiary/tokens/XMM/Hippogriff.webp
@@ -526,7 +526,7 @@ mostri:
   immagine: https://5e.tools/img/bestiary/tokens/XMM/Animated%20Armor.webp
 - id: oggetto_animato
   nome: Oggetto animato
-  immagine: https://5e.tools/img/bestiary/tokens/XMM/Animated%20Object.webp
+  immagine: /assets/img/oggetto_animato.png
 - id: spada_volante_animata
   nome: Spada volante animata
   immagine: https://5e.tools/img/bestiary/tokens/XMM/Animated%20Flying%20Sword.webp
@@ -643,7 +643,7 @@ mostri:
   immagine: https://5e.tools/img/bestiary/tokens/XMM/Sprite.webp
 - id: spirito_draconico
   nome: Spirito draconico
-  immagine: https://5e.tools/img/bestiary/tokens/XMM/Draconic%20Spirit.webp
+  immagine: /assets/img/spirito_draconico.png
 - id: succube
   nome: Succube
   immagine: https://5e.tools/img/bestiary/tokens/XMM/Succubus.webp
