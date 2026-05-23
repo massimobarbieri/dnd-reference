@@ -171,9 +171,10 @@
        * Carica in parallelo tutti i dati.
        * Promise.all migliora i tempi perché non aspetta un file alla volta.
        */
-      const [monsters, spells, magicItems, rules, rulesGlossary, monsterImageYaml] = await Promise.all([
+      const [monsters, spells, classes, magicItems, rules, rulesGlossary, monsterImageYaml] = await Promise.all([
         fetchJson(paths.monsters),
         fetchJson(paths.spells),
+        fetchJson(paths.classes),
         fetchJson(paths.magic_items),
         fetchJson(paths.rules),
         fetchJson(paths.rules_glossary),
@@ -185,11 +186,11 @@
       // Normalizza i dati per evitare errori se un file non contiene un array.
       appState.data.monsters = normalizeArray(monsters);
       appState.data.spells = normalizeArray(spells);
+      appState.data.classes = normalizeArray(classes);
 
       // Gli oggetti magici vengono anche normalizzati nella rarità.
       appState.data.magic_items = normalizeArray(magicItems).map(normalizeMagicItem);
-      appState.data.classes = normalizeArray(rules).filter(isClassRule);
-      appState.data.rules = normalizeArray(rules).filter((rule) => !isClassRule(rule));
+      appState.data.rules = normalizeArray(rules);
       appState.data.rules_glossary = normalizeArray(rulesGlossary);
 
       // Converte il piccolo YAML delle immagini in una Map.
@@ -228,14 +229,6 @@
    */
   function normalizeArray(value) {
     return Array.isArray(value) ? value : [];
-  }
-
-  /*
-   * Le classi sono mantenute nei dati regole SRD, ma nell'app hanno una
-   * sezione principale dedicata.
-   */
-  function isClassRule(rule) {
-    return String(rule?.id || '').startsWith('classe_');
   }
 
   /*
@@ -394,11 +387,6 @@
 
     if (!route.section) {
       renderHome();
-      return;
-    }
-
-    if (route.section === 'rules' && route.id && isClassRule({ id: route.id })) {
-      location.hash = `#/classes/${encodeURIComponent(route.id)}`;
       return;
     }
 
