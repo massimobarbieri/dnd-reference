@@ -617,7 +617,14 @@
    */
   function filterOptions(section) {
     if (section === 'monsters') {
-      return uniqueValues(appState.data.monsters, 'grado_sfida')
+      return Array.from(
+        new Set(
+          appState.data.monsters
+            .map((monster) => monsterChallengeRatingValue(monster))
+            .filter((value) => value !== null && value !== undefined && value !== '')
+            .map(String)
+        )
+      )
         .sort((a, b) => challengeRatingValue(a) - challengeRatingValue(b))
         .map((value) => ({ value, label: `GS ${value}` }));
     }
@@ -667,7 +674,7 @@
     if (!filter) return true;
 
     if (section === 'monsters') {
-      return String(item.grado_sfida || '') === filter;
+      return String(monsterChallengeRatingValue(item) || '') === filter;
     }
 
     if (section === 'spells') {
@@ -742,7 +749,7 @@
    */
   function searchableText(section, item) {
     if (section === 'monsters') {
-      return [item.nome, item.tipo, item.dimensione, item.gruppo, item.grado_sfida].join(' ');
+      return [item.nome, item.tipo, item.dimensione, item.gruppo, monsterChallengeRatingValue(item)].join(' ');
     }
 
     if (section === 'spells') {
@@ -827,7 +834,7 @@
       return [
         item.tipo,
         item.dimensione,
-        item.grado_sfida ? `GS ${item.grado_sfida}` : null,
+        monsterChallengeRatingValue(item) ? `GS ${monsterChallengeRatingValue(item)}` : null,
       ].filter(Boolean).join(' · ');
     }
 
@@ -1065,14 +1072,14 @@
           )}
 
           ${compactMeta([
-            ['CA', monster.statistiche?.classe_armatura],
-            ['PF', monster.statistiche?.punti_ferita],
-            ['Vel.', monster.statistiche?.velocita],
-            ['Iniz.', monster.statistiche?.iniziativa],
-            ['GS', monster.grado_sfida_raw || monster.grado_sfida],
+            ['CA', formatMonsterArmorClass(monster.classe_armatura)],
+            ['PF', formatMonsterHitPoints(monster.punti_ferita)],
+            ['Vel.', formatMonsterSpeed(monster.velocita)],
+            ['Iniz.', formatMonsterInitiative(monster.iniziativa)],
+            ['GS', formatMonsterChallengeRating(monster.grado_sfida)],
             ['BC', monster.bonus_competenza],
-            ['Sensi', monster.sensi],
-            ['Lingue', monster.lingue],
+            ['Sensi', formatMonsterSenses(monster.sensi)],
+            ['Lingue', formatMonsterLanguages(monster.lingue)],
           ])}
         </div>
 
@@ -1082,12 +1089,12 @@
       ${renderAbilityScores(monster.caratteristiche)}
 
       ${compactMeta([
-        ['Abilità', monster.abilita],
-        ['Resistenze', monster.resistenze],
-        ['Immunità danni', monster.immunita_danni],
-        ['Immunità condizioni', monster.immunita_condizione],
-        ['Vulnerabilità', monster.vulnerabilita],
-        ['Attrezzatura', monster.attrezzatura],
+        ['Abilità', formatMonsterSkills(monster.abilita)],
+        ['Resistenze', formatMonsterList(monster.resistenze)],
+        ['Immunità danni', formatMonsterList(monster.immunita_danni)],
+        ['Immunità condizioni', formatMonsterList(monster.immunita_condizione)],
+        ['Vulnerabilità', formatMonsterList(monster.vulnerabilita)],
+        ['Attrezzatura', formatMonsterList(monster.attrezzatura || monster.equipaggiamento)],
       ])}
 
       ${renderEntries('Tratti', monster.tratti)}
@@ -1364,7 +1371,7 @@
             return `
               <div class="stat">
                 <b>${label}</b>
-                ${escapeHtml(String(stat.valore ?? '-'))}
+                ${escapeHtml(String(stat.punteggio ?? stat.valore ?? '-'))}
                 <span>${escapeHtml(formatAbilityModifier(stat.modificatore))}</span>
               </div>
             `;
@@ -1385,6 +1392,116 @@
     return text.startsWith('(') && text.endsWith(')')
       ? text
       : `(${text})`;
+  }
+
+  function monsterChallengeRatingValue(monster) {
+    const challengeRating = monster?.grado_sfida;
+
+    if (challengeRating && typeof challengeRating === 'object') {
+      return challengeRating.valore ?? challengeRating.raw ?? '';
+    }
+
+    return challengeRating ?? '';
+  }
+
+  function formatMonsterChallengeRating(challengeRating) {
+    if (challengeRating && typeof challengeRating === 'object') {
+      return challengeRating.raw || String(challengeRating.valore ?? '');
+    }
+
+    return challengeRating ? String(challengeRating) : '';
+  }
+
+  function formatMonsterArmorClass(armorClass) {
+    return armorClass === null || armorClass === undefined ? '' : String(armorClass);
+  }
+
+  function formatMonsterHitPoints(hitPoints) {
+    if (!hitPoints || typeof hitPoints !== 'object') {
+      return hitPoints ? String(hitPoints) : '';
+    }
+
+    const parts = [
+      hitPoints.media ?? null,
+      hitPoints.formula ? `(${hitPoints.formula})` : null,
+    ].filter((value) => value !== null && value !== undefined && value !== '');
+
+    return parts.join(' ');
+  }
+
+  function formatMonsterSpeed(speed) {
+    if (!speed || typeof speed !== 'object') {
+      return speed ? String(speed) : '';
+    }
+
+    const order = ['camminata', 'scalata', 'nuoto', 'volo', 'scavo'];
+    const labels = {
+      camminata: null,
+      scalata: 'scalata',
+      nuoto: 'nuoto',
+      volo: 'volo',
+      scavo: 'scavo',
+    };
+
+    return order
+      .filter((key) => speed[key])
+      .map((key) => (labels[key] ? `${labels[key]} ${speed[key]}` : speed[key]))
+      .join(', ');
+  }
+
+  function formatMonsterInitiative(initiative) {
+    if (!initiative || typeof initiative !== 'object') {
+      return initiative ? String(initiative) : '';
+    }
+
+    const value = initiative.valore ?? '';
+    const bonus = initiative.bonus;
+
+    if (bonus === null || bonus === undefined || bonus === '') {
+      return value ? String(value) : '';
+    }
+
+    const signedBonus = Number(bonus) > 0 ? `+${bonus}` : String(bonus);
+    return value ? `${value} (${signedBonus})` : signedBonus;
+  }
+
+  function formatMonsterSenses(senses) {
+    if (!senses || typeof senses !== 'object' || Array.isArray(senses)) {
+      return senses ? String(senses) : '';
+    }
+
+    const labelMap = {
+      percezione_passiva: 'Percezione passiva',
+    };
+
+    return Object.entries(senses)
+      .map(([key, value]) => {
+        const label = labelMap[key] || key.replace(/_/g, ' ');
+        return `${label} ${value}`;
+      })
+      .join(', ');
+  }
+
+  function formatMonsterLanguages(languages) {
+    return formatMonsterList(languages);
+  }
+
+  function formatMonsterSkills(skills) {
+    if (!skills || typeof skills !== 'object' || Array.isArray(skills)) {
+      return skills ? String(skills) : '';
+    }
+
+    return Object.entries(skills)
+      .map(([key, value]) => `${capitalizeFirst(key.replace(/_/g, ' '))} ${value}`)
+      .join(', ');
+  }
+
+  function formatMonsterList(values) {
+    if (Array.isArray(values)) {
+      return values.join(', ');
+    }
+
+    return values ? String(values) : '';
   }
 
   /*
