@@ -88,10 +88,30 @@ export function createCharacterSheetOverviewRenderer({
           <a class="button button--ghost" href="${escapeAttr(next.href)}">${escapeHtml(next.action)}</a>
         </div>
         ${renderGuidedNextActions()}
+        ${renderBuilderIssues()}
         <div class="sheet-guide-grid">
           ${renderClassGuideCard()}
           ${renderSpeciesGuideCard()}
           ${renderBackgroundGuideCard()}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderBuilderIssues() {
+    const issues = characterSheetDerived.characterBuilderIssues();
+    if (!issues.length) return '';
+
+    return `
+      <div class="sheet-builder-issues">
+        <strong>Azioni consigliate</strong>
+        <div>
+          ${issues.map((issue) => `
+            <a class="sheet-builder-issue is-${escapeAttr(issue.severity)}" href="${escapeAttr(issue.href)}">
+              <span>${escapeHtml(issue.label)}</span>
+              <small>${escapeHtml(issue.hint)}</small>
+            </a>
+          `).join('')}
         </div>
       </div>
     `;
@@ -447,10 +467,43 @@ export function createCharacterSheetOverviewRenderer({
 
   function renderSkillProficiencies() {
     return `
+      ${renderSkillChoiceState()}
       ${renderBackgroundSkillSummary()}
       ${renderClassSkillSuggestions()}
       <div class="skill-grid">
         ${SKILL_META.map(([key, label, ability]) => renderSkillControl(key, label, ability)).join('')}
+      </div>
+    `;
+  }
+
+  function renderSkillChoiceState() {
+    const state = characterSheetDerived.characterSkillChoiceState();
+    const messages = [];
+
+    if (state.required) {
+      if (state.remaining > 0) messages.push(`Mancano ${state.remaining} scelte abilita dalla classe.`);
+      if (state.complete && !state.overLimit) messages.push(`Scelte classe complete: ${state.selected}/${state.required}.`);
+      if (state.overLimit) messages.push(`Troppe abilita di classe: ${state.selected}/${state.required}.`);
+    }
+    if (state.missingBackgroundKeys.length) {
+      messages.push(`Background da applicare: ${state.missingBackgroundKeys.map(skillLabel).join(', ')}.`);
+    }
+    if (state.selectedOtherKeys.length) {
+      messages.push(`Fuori da classe/background: ${state.selectedOtherKeys.map(skillLabel).join(', ')}.`);
+    }
+
+    if (!messages.length) return '';
+
+    return `
+      <div class="skill-validation${state.overLimit ? ' is-warning' : ''}">
+        ${messages.map((message) => `<p>${escapeHtml(message)}</p>`).join('')}
+        ${state.missingBackgroundKeys.length ? `
+          <div class="skill-validation-actions">
+            <button class="button button--ghost" type="button" data-sheet-apply-background-skills>
+              Applica abilita background
+            </button>
+          </div>
+        ` : ''}
       </div>
     `;
   }
@@ -477,21 +530,22 @@ export function createCharacterSheetOverviewRenderer({
   }
 
   function renderClassSkillSuggestions() {
-    const suggestions = classSkillOptions(characterClassEntry());
-    const progress = characterSkillChoiceProgress();
+    const state = characterSheetDerived.characterSkillChoiceState();
+    const suggestions = state.classOptions;
 
     if (!suggestions.length) return '';
 
     return `
       <div class="skill-suggestions">
-        <span>${escapeHtml(progress.required ? `Abilita di classe: scegli ${progress.required} (${progress.classSelected}/${progress.required})` : 'Abilita suggerite dalla classe')}</span>
+        <span>${escapeHtml(state.required ? `Abilita di classe: scegli ${state.required} (${state.selected}/${state.required})` : 'Abilita suggerite dalla classe')}</span>
         <div>
-          ${suggestions.map(([key, label]) => `
+          ${suggestions.map((option) => `
             <button
-              class="${appState.characterSheet.skillProficiencies[key] ? 'is-active' : ''}"
+              class="${option.selected ? 'is-active' : ''}"
               type="button"
-              data-sheet-suggest-skill="${escapeAttr(key)}"
-            >${escapeHtml(label)}</button>
+              data-sheet-suggest-skill="${escapeAttr(option.key)}"
+              ${option.disabled ? 'disabled' : ''}
+            >${escapeHtml(option.label)}</button>
           `).join('')}
         </div>
       </div>
@@ -522,6 +576,10 @@ export function createCharacterSheetOverviewRenderer({
 
   function skillSources(key) {
     return characterSheetDerived.skillSources(key);
+  }
+
+  function skillLabel(key) {
+    return SKILL_META.find(([skillKey]) => skillKey === key)?.[1] || key;
   }
 
   function renderOtherProficiencies() {

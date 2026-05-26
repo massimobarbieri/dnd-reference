@@ -110,6 +110,14 @@ export function createCharacterSheetEventsController({
       });
     });
 
+    views.detail.querySelector('[data-sheet-apply-background-skills]')?.addEventListener('click', () => {
+      characterSheetDerived.characterSkillChoiceState().missingBackgroundKeys.forEach((key) => {
+        appState.characterSheet.skillProficiencies[key] = 1;
+      });
+      saveCharacterSheet();
+      renderCharacterSheet(appState.characterSheetTab);
+    });
+
     views.detail.querySelectorAll('[data-sheet-proficiency]').forEach((node) => {
       node.addEventListener('input', (event) => {
         appState.characterSheet.proficiencies[event.currentTarget.dataset.sheetProficiency] = event.currentTarget.value;

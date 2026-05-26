@@ -69,6 +69,50 @@ export function createCharacterSheetDerivedModel({
     };
   }
 
+  function characterSkillChoiceState() {
+    /*
+     * Stato leggibile del picker abilita.
+     * Serve al renderer per guidare l'utente senza imporre blocchi rigidi:
+     * la select resta libera, mentre i pulsanti suggeriti rispettano il limite.
+     */
+    const classOptions = classSkillOptions(characterClassEntry());
+    const classOptionKeys = new Set(classOptions.map(([key]) => key));
+    const backgroundKeys = new Set(characterBackgroundSkills());
+    const required = classSkillChoiceCount(characterClassEntry());
+    const selectedClassKeys = classOptions
+      .map(([key]) => key)
+      .filter((key) => !backgroundKeys.has(key) && Number(appState.characterSheet.skillProficiencies[key]) > 0);
+    const selectedBackgroundKeys = [...backgroundKeys]
+      .filter((key) => Number(appState.characterSheet.skillProficiencies[key]) > 0);
+    const missingBackgroundKeys = [...backgroundKeys]
+      .filter((key) => !Number(appState.characterSheet.skillProficiencies[key]));
+    const selectedOtherKeys = skillMeta
+      .map(([key]) => key)
+      .filter((key) => Number(appState.characterSheet.skillProficiencies[key]) > 0)
+      .filter((key) => !classOptionKeys.has(key) && !backgroundKeys.has(key));
+    const selected = selectedClassKeys.length;
+    const remaining = Math.max(0, required - selected);
+    const overLimit = Boolean(required && selected > required);
+
+    return {
+      required,
+      selected,
+      remaining,
+      complete: required ? selected >= required : selectedClassKeys.length + selectedBackgroundKeys.length + selectedOtherKeys.length > 0,
+      overLimit,
+      selectedClassKeys,
+      selectedBackgroundKeys,
+      missingBackgroundKeys,
+      selectedOtherKeys,
+      classOptions: classOptions.map(([key, label]) => ({
+        key,
+        label,
+        selected: Number(appState.characterSheet.skillProficiencies[key]) > 0,
+        disabled: Boolean(required && selected >= required && !Number(appState.characterSheet.skillProficiencies[key])),
+      })),
+    };
+  }
+
   function skillSources(key) {
     const sources = [];
     if (characterBackgroundSkills().includes(key)) sources.push('Background');
@@ -130,6 +174,55 @@ export function createCharacterSheetDerivedModel({
     ];
   }
 
+  function characterBuilderIssues() {
+    /*
+     * Elenco sintetico per il futuro wizard: ogni problema ha testo,
+     * destinazione e severita, cosi la UI puo diventare una coda di azioni.
+     */
+    const sheet = appState.characterSheet;
+    const issues = [];
+    const checklist = characterBuilderChecklist();
+    const skillState = characterSkillChoiceState();
+
+    checklist
+      .filter((item) => !item.complete)
+      .forEach((item) => {
+        issues.push({
+          severity: 'todo',
+          label: item.label,
+          hint: item.hint,
+          href: item.href,
+        });
+      });
+
+    if (skillState.overLimit) {
+      issues.push({
+        severity: 'warning',
+        label: 'Competenze',
+        hint: `Troppe abilita di classe: ${skillState.selected}/${skillState.required}.`,
+        href: '#/character_sheet/overview',
+      });
+    }
+    if (skillState.missingBackgroundKeys.length) {
+      issues.push({
+        severity: 'todo',
+        label: 'Background',
+        hint: `Applica abilita: ${skillState.missingBackgroundKeys.map(skillLabel).join(', ')}.`,
+        href: '#/character_sheet/overview',
+      });
+    }
+    if (Number(sheet.maxHp) > 0 && Number(sheet.maxHp) !== characterSuggestedHitPoints()) {
+      issues.push({
+        severity: 'notice',
+        label: 'Punti ferita',
+        hint: `PF suggeriti ${characterSuggestedHitPoints()}, attuali massimi ${Number(sheet.maxHp) || 0}.`,
+        href: '#/character_sheet/combat',
+      });
+    }
+
+    return issues.slice(0, 8);
+  }
+
   function characterAbilityGuidance() {
     /*
      * Incrocia caratteristica primaria della classe e suggerimenti del background.
@@ -168,6 +261,10 @@ export function createCharacterSheetDerivedModel({
     return abilityMeta
       .filter(([, label]) => text.includes(normalizeSheetLabel(label)))
       .map(([key]) => key);
+  }
+
+  function skillLabel(key) {
+    return skillMeta.find(([skillKey]) => skillKey === key)?.[1] || key;
   }
 
   function characterInitiative() {
@@ -283,9 +380,11 @@ export function createCharacterSheetDerivedModel({
     characterBackgroundEntry,
     characterBackgroundSkills,
     characterBuilderChecklist,
+    characterBuilderIssues,
     characterInitiative,
     characterOriginFeat,
     characterSkillChoiceProgress,
+    characterSkillChoiceState,
     characterSpeciesEntry,
     characterSuggestedArmorClass,
     characterSuggestedHitPoints,
