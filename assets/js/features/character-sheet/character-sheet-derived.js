@@ -1,5 +1,6 @@
 export function createCharacterSheetDerivedModel({
   appState,
+  abilityModifier,
   abilityMeta,
   skillMeta,
   classSkillOptions,
@@ -7,6 +8,11 @@ export function createCharacterSheetDerivedModel({
   characterClassEntry,
   classTraitsMap,
 }) {
+  /*
+   * Modello derivato della scheda.
+   * Qui vivono calcoli e lookup che devono restare coerenti tra renderer,
+   * eventi e futuri wizard: la UI legge risultati, non ricostruisce regole.
+   */
   function selectedClassTraits() {
     return classTraitsMap(characterClassEntry());
   }
@@ -124,15 +130,131 @@ export function createCharacterSheetDerivedModel({
     ];
   }
 
+  function characterInitiative() {
+    return abilityModifier(appState.characterSheet.abilities.dex) + (Number(appState.characterSheet.initiativeBonus) || 0);
+  }
+
+  function characterSuggestedHitPoints() {
+    const level = Math.min(20, Math.max(1, Number(appState.characterSheet.level) || 1));
+    const hitDie = Number(String(appState.characterSheet.hitDice || '').match(/d(\d+)/i)?.[1]) || 8;
+    const con = abilityModifier(appState.characterSheet.abilities.con);
+    const firstLevel = Math.max(1, hitDie + con);
+    const laterLevel = Math.max(1, Math.floor(hitDie / 2) + 1 + con);
+
+    return firstLevel + Math.max(0, level - 1) * laterLevel;
+  }
+
+  function characterSuggestedArmorClass() {
+    const equippedArmor = appState.characterSheet.equipmentItems.find((item) => item.equipped && item.armorClass);
+    const armorClass = armorClassFromEquipment(equippedArmor);
+    if (armorClass !== null) return armorClass;
+
+    return 10 + abilityModifier(appState.characterSheet.abilities.dex);
+  }
+
+  function armorClassFromEquipment(item) {
+    return armorClassFromText(item?.armorClass);
+  }
+
+  function classStartingEquipmentText() {
+    const traits = characterClassEntry()?.sezioni?.find((section) => String(section.titolo || '').startsWith('Tratti '));
+    const row = traits?.righe?.find((entry) => (entry.chiave || entry.Voce) === 'Equipaggiamento iniziale');
+    return String(row?.valore || row?.Riepilogo || '').replace(/\.$/, '').trim();
+  }
+
+  function classStartingEquipmentOptions(text = classStartingEquipmentText()) {
+    const options = [];
+    if (/\bA\s*:/i.test(text)) options.push(startingEquipmentOption('class-a', 'Importa opzione A'));
+    if (/\bB\s*:/i.test(text)) options.push(startingEquipmentOption('class-b', 'Importa opzione B'));
+    if (!options.length && text) options.push(startingEquipmentOption('class-all', 'Importa equipaggiamento'));
+    return options;
+  }
+
+  function backgroundStartingCoinsText() {
+    return String(characterBackgroundEntry()?.equipaggiamento_alternativo || '').trim();
+  }
+
+  function backgroundStartingCoinsOption() {
+    const text = backgroundStartingCoinsText();
+    if (!text) return null;
+    return startingEquipmentOption('background-coins', 'Applica monete');
+  }
+
+  function startingEquipmentOptionText(text, mode) {
+    const match = String(text || '').match(/\bA\s*:\s*(.*?)(?:;\s*oppure\s*B\s*:\s*(.*)|$)/i);
+    if (!match) return text;
+    if (mode === 'class-a') return match[1] || '';
+    if (mode === 'class-b') return match[2] || '';
+    return text;
+  }
+
+  function startingEquipmentImportMarker(mode) {
+    if (mode === 'class-a') return 'Importato equipaggiamento iniziale: Classe opzione A';
+    if (mode === 'class-b') return 'Importato equipaggiamento iniziale: Classe opzione B';
+    if (mode === 'background-coins') return 'Importato equipaggiamento iniziale: Monete background';
+    return 'Importato equipaggiamento iniziale: Classe';
+  }
+
+  function startingEquipmentAlreadyImported(modeOrMarker) {
+    const marker = String(modeOrMarker || '').startsWith('Importato equipaggiamento iniziale:')
+      ? modeOrMarker
+      : startingEquipmentImportMarker(modeOrMarker);
+    return Boolean(marker && String(appState.characterSheet.equipment || '').includes(marker));
+  }
+
+  /*
+   * Prepara i comandi importabili dall'inventario con stato gia risolto:
+   * il renderer non deve conoscere marker tecnici o logica di parsing.
+   */
+  function startingEquipmentOption(key, label) {
+    return {
+      key,
+      label,
+      marker: startingEquipmentImportMarker(key),
+      imported: startingEquipmentAlreadyImported(startingEquipmentImportMarker(key)),
+    };
+  }
+
+  /*
+   * Interpreta le formule CA dei dati equipaggiamento SRD, ad esempio
+   * "11 + Des", "14 + Des (max 2)" o "+2" per uno scudo.
+   */
+  function armorClassFromText(value) {
+    const text = String(value || '').trim();
+    if (!text) return null;
+
+    const dex = abilityModifier(appState.characterSheet.abilities.dex);
+    const shield = text.match(/^\+(\d+)/);
+    if (shield) return (Number(appState.characterSheet.armorClass) || 10) + Number(shield[1]);
+
+    const base = Number(text.match(/\d+/)?.[0]);
+    if (!Number.isFinite(base)) return null;
+    if (!/des/i.test(text)) return base;
+
+    const maxMatch = text.match(/max\s*(\d+)/i);
+    return base + (maxMatch ? Math.min(dex, Number(maxMatch[1])) : dex);
+  }
+
   return {
+    armorClassFromEquipment,
+    backgroundStartingCoinsOption,
+    backgroundStartingCoinsText,
     characterBackgroundEntry,
     characterBackgroundSkills,
     characterBuilderChecklist,
+    characterInitiative,
     characterOriginFeat,
     characterSkillChoiceProgress,
     characterSpeciesEntry,
+    characterSuggestedArmorClass,
+    characterSuggestedHitPoints,
+    classStartingEquipmentOptions,
+    classStartingEquipmentText,
     selectedClassTraits,
     skillSources,
+    startingEquipmentAlreadyImported,
+    startingEquipmentImportMarker,
+    startingEquipmentOptionText,
   };
 }
 

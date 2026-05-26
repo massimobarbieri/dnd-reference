@@ -70,6 +70,7 @@ import { createCharacterSheetActionsController } from './features/character-shee
 import { createCharacterSheetEventsController } from './features/character-sheet/character-sheet-events.js?v=20260520-guided';
 import { createCharacterSheetRenderer } from './features/character-sheet/character-sheet-renderers.js?v=20260520-guided';
 import { createCharacterSheetSelectors } from './features/character-sheet/character-sheet-selectors.js?v=20260520-guided';
+import { createCharacterSheetDerivedModel } from './features/character-sheet/character-sheet-derived.js?v=20260520-guided';
 import { createCharacterSheetBackupWorkflow } from './features/character-sheet/character-sheet-backup-workflow.js?v=20260520-guided';
 
 import {
@@ -238,6 +239,17 @@ import {
     saveCharacterSheet,
   });
 
+  const characterSheetDerived = createCharacterSheetDerivedModel({
+    appState,
+    abilityModifier,
+    abilityMeta: ABILITY_META,
+    skillMeta: SKILL_META,
+    classSkillOptions,
+    classSkillChoiceCount,
+    characterClassEntry,
+    classTraitsMap,
+  });
+
   const {
     analyzeRollContext,
     DICE_LIMITS,
@@ -356,6 +368,7 @@ import {
     createNewCharacterSheet,
     duplicateCharacterSheet,
     deleteActiveCharacterSheet,
+    characterSheetDerived,
   });
 
   const characterSheetRenderer = createCharacterSheetRenderer({
@@ -369,6 +382,7 @@ import {
     CHARACTER_SHEET_TABS,
     ABILITY_META,
     SKILL_META,
+    characterSheetDerived,
     characterSheetClassName,
     characterLevel,
     characterProficiencyBonus,

@@ -1,5 +1,3 @@
-import { createCharacterSheetDerivedModel } from './character-sheet-derived.js?v=20260520-guided';
-
 export function createCharacterSheetOverviewRenderer({
   appState,
   escapeAttr,
@@ -23,22 +21,12 @@ export function createCharacterSheetOverviewRenderer({
   classProgressionRow,
   classProgressionResources,
   classSkillChoiceCount,
-  classTraitsMap,
   splitClassFeatures,
   classSubclassRows,
   nextLevelSummary,
   renderLevelAdvancementSummary,
+  characterSheetDerived,
 }) {
-  const derived = createCharacterSheetDerivedModel({
-    appState,
-    abilityMeta: ABILITY_META,
-    skillMeta: SKILL_META,
-    classSkillOptions,
-    classSkillChoiceCount,
-    characterClassEntry,
-    classTraitsMap,
-  });
-
   function renderCharacterSheetOverview() {
     const sheet = appState.characterSheet;
 
@@ -140,7 +128,7 @@ export function createCharacterSheetOverviewRenderer({
 
   function renderClassGuideCard() {
     const classEntry = characterClassEntry();
-    const traits = derived.selectedClassTraits();
+    const traits = characterSheetDerived.selectedClassTraits();
     const skillProgress = characterSkillChoiceProgress();
 
     if (!classEntry) {
@@ -289,27 +277,27 @@ export function createCharacterSheetOverviewRenderer({
   }
 
   function characterBuilderChecklist() {
-    return derived.characterBuilderChecklist();
+    return characterSheetDerived.characterBuilderChecklist();
   }
 
   function characterSkillChoiceProgress() {
-    return derived.characterSkillChoiceProgress();
+    return characterSheetDerived.characterSkillChoiceProgress();
   }
 
   function characterBackgroundEntry() {
-    return derived.characterBackgroundEntry();
+    return characterSheetDerived.characterBackgroundEntry();
   }
 
   function characterSpeciesEntry() {
-    return derived.characterSpeciesEntry();
+    return characterSheetDerived.characterSpeciesEntry();
   }
 
   function characterBackgroundSkills() {
-    return derived.characterBackgroundSkills();
+    return characterSheetDerived.characterBackgroundSkills();
   }
 
   function characterOriginFeat() {
-    return derived.characterOriginFeat();
+    return characterSheetDerived.characterOriginFeat();
   }
 
   function renderOverviewSummary() {
@@ -510,7 +498,7 @@ export function createCharacterSheetOverviewRenderer({
   }
 
   function skillSources(key) {
-    return derived.skillSources(key);
+    return characterSheetDerived.skillSources(key);
   }
 
   function renderOtherProficiencies() {

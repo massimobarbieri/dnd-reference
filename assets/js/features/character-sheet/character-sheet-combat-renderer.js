@@ -16,12 +16,13 @@ export function createCharacterSheetCombatRenderer({
   characterSpellSlots,
   characterSpellOptions,
   spellLevel,
+  characterSheetDerived,
 }) {
   function renderCharacterSheetCombat() {
     const sheet = appState.characterSheet;
-    const initiative = abilityModifier(sheet.abilities.dex) + (Number(sheet.initiativeBonus) || 0);
-    const suggestedArmorClass = characterSuggestedArmorClass();
-    const suggestedHitPoints = characterSuggestedHitPoints();
+    const initiative = characterSheetDerived.characterInitiative();
+    const suggestedArmorClass = characterSheetDerived.characterSuggestedArmorClass();
+    const suggestedHitPoints = characterSheetDerived.characterSuggestedHitPoints();
 
     return `
       <section class="sheet-grid">
@@ -439,40 +440,6 @@ export function createCharacterSheetCombatRenderer({
         detail: [spellLevel(spell), spell.scuola, slotLabels.has(String(spell.livello)) ? 'slot disponibile' : null].filter(Boolean).join(' · '),
         href: `#/spells/${encodeURIComponent(spell.id)}`,
       }));
-  }
-
-  function characterSuggestedHitPoints() {
-    const level = Math.min(20, Math.max(1, Number(appState.characterSheet.level) || 1));
-    const hitDie = Number(String(appState.characterSheet.hitDice || '').match(/d(\d+)/i)?.[1]) || 8;
-    const con = abilityModifier(appState.characterSheet.abilities.con);
-    const firstLevel = Math.max(1, hitDie + con);
-    const laterLevel = Math.max(1, Math.floor(hitDie / 2) + 1 + con);
-
-    return firstLevel + Math.max(0, level - 1) * laterLevel;
-  }
-
-  function characterSuggestedArmorClass() {
-    const equippedArmor = appState.characterSheet.equipmentItems.find((item) => item.equipped && item.armorClass);
-    const armorClass = armorClassFromText(equippedArmor?.armorClass);
-    if (armorClass !== null) return armorClass;
-
-    return 10 + abilityModifier(appState.characterSheet.abilities.dex);
-  }
-
-  function armorClassFromText(value) {
-    const text = String(value || '').trim();
-    if (!text) return null;
-
-    const dex = abilityModifier(appState.characterSheet.abilities.dex);
-    const shield = text.match(/^\+(\d+)/);
-    if (shield) return (Number(appState.characterSheet.armorClass) || 10) + Number(shield[1]);
-
-    const base = Number(text.match(/\d+/)?.[0]);
-    if (!Number.isFinite(base)) return null;
-    if (!/des/i.test(text)) return base;
-
-    const maxMatch = text.match(/max\s*(\d+)/i);
-    return base + (maxMatch ? Math.min(dex, Number(maxMatch[1])) : dex);
   }
 
   return { renderCharacterSheetCombat };

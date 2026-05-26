@@ -15,6 +15,7 @@ export function createCharacterSheetRenderer({
   CHARACTER_SHEET_TABS,
   ABILITY_META,
   SKILL_META,
+  characterSheetDerived,
   characterSheetClassName,
   characterLevel,
   characterProficiencyBonus,
@@ -63,6 +64,7 @@ export function createCharacterSheetRenderer({
     sheetTextArea,
     magicItemRequiresAttunement,
     characterClassEntry,
+    characterSheetDerived,
   });
 
   const { renderCharacterSheetSpells } = createCharacterSheetSpellsRenderer({
@@ -98,6 +100,7 @@ export function createCharacterSheetRenderer({
     characterSpellSlots,
     characterSpellOptions,
     spellLevel,
+    characterSheetDerived,
   });
 
   const { renderCharacterSheetOverview } = createCharacterSheetOverviewRenderer({
@@ -123,11 +126,11 @@ export function createCharacterSheetRenderer({
     classProgressionRow,
     classProgressionResources,
     classSkillChoiceCount,
-    classTraitsMap,
     splitClassFeatures,
     classSubclassRows,
     nextLevelSummary,
     renderLevelAdvancementSummary,
+    characterSheetDerived,
   });
 
   function renderCharacterSheetArchiveImportPrompt() {

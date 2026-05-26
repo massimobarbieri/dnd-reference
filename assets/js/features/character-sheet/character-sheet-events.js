@@ -25,6 +25,7 @@ export function createCharacterSheetEventsController({
   createNewCharacterSheet,
   duplicateCharacterSheet,
   deleteActiveCharacterSheet,
+  characterSheetDerived,
 }) {
   function bindCharacterSheetEvents() {
     views.detail.querySelectorAll('[data-sheet-field]').forEach((node) => {
@@ -231,13 +232,13 @@ export function createCharacterSheetEventsController({
     });
 
     views.detail.querySelector('[data-sheet-apply-derived-ac]')?.addEventListener('click', () => {
-      appState.characterSheet.armorClass = characterSuggestedArmorClass();
+      appState.characterSheet.armorClass = characterSheetDerived.characterSuggestedArmorClass();
       saveCharacterSheet();
       renderCharacterSheet('combat');
     });
 
     views.detail.querySelector('[data-sheet-apply-derived-hp]')?.addEventListener('click', () => {
-      const hp = characterSuggestedHitPoints();
+      const hp = characterSheetDerived.characterSuggestedHitPoints();
       appState.characterSheet.maxHp = hp;
       if (!Number(appState.characterSheet.currentHp)) {
         appState.characterSheet.currentHp = hp;
@@ -372,7 +373,7 @@ export function createCharacterSheetEventsController({
       node.addEventListener('click', (event) => {
         const id = event.currentTarget.dataset.sheetApplyArmor;
         const item = appState.characterSheet.equipmentItems.find((entry) => entry.id === id);
-        const armorClass = armorClassFromEquipment(item);
+        const armorClass = characterSheetDerived.armorClassFromEquipment(item);
 
         if (!item || armorClass === null) return;
 
@@ -516,36 +517,18 @@ export function createCharacterSheetEventsController({
     });
   }
 
-  function armorClassFromEquipment(item) {
-    const text = String(item?.armorClass || '').trim();
-    if (!text) return null;
-
-    const dex = Math.floor(((Number(appState.characterSheet.abilities?.dex) || 10) - 10) / 2);
-    const shield = text.match(/^\+(\d+)/);
-    if (shield) return Math.max(0, Number(appState.characterSheet.armorClass) || 10) + Number(shield[1]);
-
-    const base = Number(text.match(/\d+/)?.[0]);
-    if (!Number.isFinite(base)) return null;
-    if (!/des/i.test(text)) return base;
-
-    const maxMatch = text.match(/max\s*(\d+)/i);
-    const dexBonus = maxMatch ? Math.min(dex, Number(maxMatch[1])) : dex;
-
-    return base + dexBonus;
-  }
-
   function applyStartingEquipment(mode) {
-    const marker = startingEquipmentImportMarker(mode);
-    if (marker && startingEquipmentAlreadyImported(marker)) return;
+    const marker = characterSheetDerived.startingEquipmentImportMarker(mode);
+    if (marker && characterSheetDerived.startingEquipmentAlreadyImported(marker)) return;
 
     if (mode === 'background-coins') {
-      applyCoinsFromText(backgroundEntry()?.equipaggiamento_alternativo || '');
+      applyCoinsFromText(characterSheetDerived.backgroundStartingCoinsText());
       appendEquipmentNote(marker);
       return;
     }
 
-    const text = classStartingEquipmentText();
-    const optionText = startingEquipmentOptionText(text, mode);
+    const text = characterSheetDerived.classStartingEquipmentText();
+    const optionText = characterSheetDerived.startingEquipmentOptionText(text, mode);
     const result = importEquipmentText(optionText || text, 'Equipaggiamento iniziale');
 
     if (result.unmatched.length) {
@@ -610,41 +593,11 @@ export function createCharacterSheetEventsController({
     return aliases;
   }
 
-  function classStartingEquipmentText() {
-    const traits = characterClassEntry()?.sezioni?.find((section) => String(section.titolo || '').startsWith('Tratti '));
-    const row = traits?.righe?.find((entry) => (entry.chiave || entry.Voce) === 'Equipaggiamento iniziale');
-    return String(row?.valore || row?.Riepilogo || '').replace(/\.$/, '').trim();
-  }
-
-  function startingEquipmentOptionText(text, mode) {
-    const match = String(text || '').match(/\bA\s*:\s*(.*?)(?:;\s*oppure\s*B\s*:\s*(.*)|$)/i);
-    if (!match) return text;
-    if (mode === 'class-a') return match[1] || '';
-    if (mode === 'class-b') return match[2] || '';
-    return text;
-  }
-
-  function backgroundEntry() {
-    const value = appState.characterSheet.background;
-    return appState.data.backgrounds.find((entry) => entry.id === value || entry.nome === value) || null;
-  }
-
   function appendEquipmentNote(note) {
     if (!note) return;
     const text = String(appState.characterSheet.equipment || '').trim();
     if (text.includes(note)) return;
     appState.characterSheet.equipment = text ? `${text}\n\n${note}` : note;
-  }
-
-  function startingEquipmentImportMarker(mode) {
-    if (mode === 'class-a') return 'Importato equipaggiamento iniziale: Classe opzione A';
-    if (mode === 'class-b') return 'Importato equipaggiamento iniziale: Classe opzione B';
-    if (mode === 'background-coins') return 'Importato equipaggiamento iniziale: Monete background';
-    return 'Importato equipaggiamento iniziale: Classe';
-  }
-
-  function startingEquipmentAlreadyImported(marker) {
-    return Boolean(marker && String(appState.characterSheet.equipment || '').includes(marker));
   }
 
   function normalizeLabel(value) {
@@ -654,25 +607,6 @@ export function createCharacterSheetEventsController({
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[’']/g, '')
       .trim();
-  }
-
-  function characterSuggestedHitPoints() {
-    const level = Math.min(20, Math.max(1, Number(appState.characterSheet.level) || 1));
-    const hitDie = Number(String(appState.characterSheet.hitDice || '').match(/d(\d+)/i)?.[1]) || 8;
-    const con = Math.floor(((Number(appState.characterSheet.abilities?.con) || 10) - 10) / 2);
-    const firstLevel = Math.max(1, hitDie + con);
-    const laterLevel = Math.max(1, Math.floor(hitDie / 2) + 1 + con);
-
-    return firstLevel + Math.max(0, level - 1) * laterLevel;
-  }
-
-  function characterSuggestedArmorClass() {
-    const equippedArmor = appState.characterSheet.equipmentItems.find((item) => item.equipped && item.armorClass);
-    const armorClass = armorClassFromEquipment(equippedArmor);
-    if (armorClass !== null) return armorClass;
-
-    const dex = Math.floor(((Number(appState.characterSheet.abilities?.dex) || 10) - 10) / 2);
-    return 10 + dex;
   }
 
   function originEntry(entries, value) {

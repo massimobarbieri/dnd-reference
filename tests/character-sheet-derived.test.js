@@ -13,6 +13,7 @@ const { pathToFileURL } = require('node:url');
           nome: 'Accolito',
           talento_origine: 'Iniziato alla magia (chierico)',
           competenze: { abilita: ['Intuizione', 'Religione'] },
+          equipaggiamento_alternativo: '50 mo',
         },
       ],
       species: [{ id: 'elfo', nome: 'Elfo' }],
@@ -23,6 +24,9 @@ const { pathToFileURL } = require('node:url');
       classId: 'mago',
       ancestry: 'elfo',
       background: 'Accolito',
+      level: 3,
+      hitDice: '1d6',
+      initiativeBonus: 1,
       abilities: { str: 10, dex: 14, con: 10, int: 16, wis: 10, cha: 10 },
       skillProficiencies: {
         arcana: 1,
@@ -32,16 +36,31 @@ const { pathToFileURL } = require('node:url');
       },
       maxHp: 8,
       armorClass: 12,
-      equipmentItems: [{ name: 'Pugnale' }],
+      equipmentItems: [
+        { name: 'Pugnale' },
+        { name: 'Armatura di cuoio', armorClass: '11 + Des', equipped: true },
+      ],
       magicItems: [],
-      equipment: '',
+      equipment: 'Importato equipaggiamento iniziale: Classe opzione A',
       references: [{}, {}, {}],
     },
   };
-  const classEntry = { id: 'mago', nome: 'Classe: Mago' };
+  const classEntry = {
+    id: 'mago',
+    nome: 'Classe: Mago',
+    sezioni: [
+      {
+        titolo: 'Tratti di classe',
+        righe: [
+          { Voce: 'Equipaggiamento iniziale', Riepilogo: 'A: pugnale; oppure B: 55 mo.' },
+        ],
+      },
+    ],
+  };
 
   const derived = createCharacterSheetDerivedModel({
     appState,
+    abilityModifier: (score) => Math.floor(((Number(score) || 10) - 10) / 2),
     abilityMeta: [
       ['str', 'Forza'],
       ['dex', 'Destrezza'],
@@ -69,6 +88,15 @@ const { pathToFileURL } = require('node:url');
   assert.deepEqual(derived.skillSources('religion'), ['Background', 'Classe']);
   assert.equal(derived.characterSkillChoiceProgress().complete, true);
   assert.equal(derived.characterBuilderChecklist().every((item) => item.complete), true);
+  assert.equal(derived.characterInitiative(), 3);
+  assert.equal(derived.characterSuggestedHitPoints(), 14);
+  assert.equal(derived.characterSuggestedArmorClass(), 13);
+  assert.equal(derived.armorClassFromEquipment({ armorClass: '14 + Des (max 2)' }), 16);
+  assert.equal(derived.classStartingEquipmentText(), 'A: pugnale; oppure B: 55 mo');
+  assert.deepEqual(derived.classStartingEquipmentOptions().map((option) => [option.key, option.imported]), [['class-a', true], ['class-b', false]]);
+  assert.equal(derived.backgroundStartingCoinsText(), '50 mo');
+  assert.equal(derived.backgroundStartingCoinsOption().imported, false);
+  assert.equal(derived.startingEquipmentOptionText(derived.classStartingEquipmentText(), 'class-b'), '55 mo');
   assert.deepEqual(derived.selectedClassTraits(), { 'Dado Vita': 'D6', 'Caratteristica primaria': 'Intelligenza' });
 
   console.log('Modello derivato scheda personaggio OK');
