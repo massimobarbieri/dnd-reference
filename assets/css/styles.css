@@ -1327,6 +1327,56 @@ h1 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.sheet-ability-guide {
+  display: grid;
+  gap: .4rem;
+  margin-bottom: .55rem;
+  border: 1px solid rgba(138,63,35,.16);
+  border-radius: 8px;
+  background: rgba(252,248,240,.68);
+  padding: .55rem;
+}
+
+.sheet-ability-guide > span {
+  color: var(--accent);
+  font-size: .74rem;
+  font-weight: 820;
+  text-transform: uppercase;
+}
+
+.sheet-ability-guide > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .35rem;
+}
+
+.sheet-ability-guide article {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .35rem;
+  min-width: 0;
+}
+
+.sheet-ability-guide strong {
+  color: var(--accent);
+  font-size: .95rem;
+}
+
+.sheet-ability-guide small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: .76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheet-ability-guide em {
+  color: var(--accent);
+  font-style: normal;
+  font-weight: 780;
+}
+
 .save-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -2877,6 +2927,10 @@ code {
 
   .ability-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sheet-ability-guide > div {
+    grid-template-columns: 1fr;
   }
 
   .sheet-field input,

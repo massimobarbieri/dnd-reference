@@ -46,7 +46,7 @@ import {
   uniqueCharacterSheets,
   createCharacterSheetId,
   cloneJson,
-} from './features/character-sheet/character-sheet-normalizers.js?v=20260520-guided';
+} from './features/character-sheet/character-sheet-normalizers.js?v=20260526-builder';
 
 import {
   readJsonStorage,
@@ -63,15 +63,15 @@ import {
   CHARACTER_SHEETS_STORAGE_KEY,
   ACTIVE_CHARACTER_SHEET_STORAGE_KEY,
   APP_STORAGE_PREFIX,
-} from './features/character-sheet/character-sheet-storage.js?v=20260520-guided';
+} from './features/character-sheet/character-sheet-storage.js?v=20260526-builder';
 
-import { createCharacterSheetClassController } from './features/character-sheet/character-sheet-classes.js?v=20260520-guided';
-import { createCharacterSheetActionsController } from './features/character-sheet/character-sheet-actions.js?v=20260520-guided';
-import { createCharacterSheetEventsController } from './features/character-sheet/character-sheet-events.js?v=20260520-guided';
-import { createCharacterSheetRenderer } from './features/character-sheet/character-sheet-renderers.js?v=20260520-guided';
-import { createCharacterSheetSelectors } from './features/character-sheet/character-sheet-selectors.js?v=20260520-guided';
-import { createCharacterSheetDerivedModel } from './features/character-sheet/character-sheet-derived.js?v=20260520-guided';
-import { createCharacterSheetBackupWorkflow } from './features/character-sheet/character-sheet-backup-workflow.js?v=20260520-guided';
+import { createCharacterSheetClassController } from './features/character-sheet/character-sheet-classes.js?v=20260526-builder';
+import { createCharacterSheetActionsController } from './features/character-sheet/character-sheet-actions.js?v=20260526-builder';
+import { createCharacterSheetEventsController } from './features/character-sheet/character-sheet-events.js?v=20260526-builder';
+import { createCharacterSheetRenderer } from './features/character-sheet/character-sheet-renderers.js?v=20260526-builder';
+import { createCharacterSheetSelectors } from './features/character-sheet/character-sheet-selectors.js?v=20260526-builder';
+import { createCharacterSheetDerivedModel } from './features/character-sheet/character-sheet-derived.js?v=20260526-builder';
+import { createCharacterSheetBackupWorkflow } from './features/character-sheet/character-sheet-backup-workflow.js?v=20260526-builder';
 
 import {
   CONDITION_ALIASES,
@@ -80,7 +80,7 @@ import {
   CHARACTER_SHEET_TABS,
   CHARACTER_SHEET_SCHEMA_VERSION,
   DEFAULT_CHARACTER_SHEET,
-} from './features/character-sheet/character-sheet-view.js?v=20260520-guided';
+} from './features/character-sheet/character-sheet-view.js?v=20260526-builder';
 
 (() => {
   'use strict';

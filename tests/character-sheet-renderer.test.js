@@ -97,6 +97,8 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /D6 per ogni livello da mago/);
   assert.match(views['#detail-view'].innerHTML, /scurovisione e retaggio fatato/);
   assert.match(views['#detail-view'].innerHTML, /Intelligenza, Saggezza, Carisma/);
+  assert.match(views['#detail-view'].innerHTML, /Priorita consigliate/);
+  assert.match(views['#detail-view'].innerHTML, /Intelligenza · Classe · Background/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-ability="str"/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-skill="arcana"/);
   assert.match(views['#detail-view'].innerHTML, /Tradizione Arcana/);

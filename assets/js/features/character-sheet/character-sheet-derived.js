@@ -130,6 +130,46 @@ export function createCharacterSheetDerivedModel({
     ];
   }
 
+  function characterAbilityGuidance() {
+    /*
+     * Incrocia caratteristica primaria della classe e suggerimenti del background.
+     * Non assegna punteggi: prepara solo indicazioni leggibili per il builder.
+     */
+    const classAbilities = abilityKeysFromText(selectedClassTraits()['Caratteristica primaria']);
+    const backgroundAbilities = Array.isArray(characterBackgroundEntry()?.punteggi_caratteristica)
+      ? characterBackgroundEntry().punteggi_caratteristica.flatMap(abilityKeysFromText)
+      : [];
+    const relevant = new Set([...classAbilities, ...backgroundAbilities]);
+
+    return abilityMeta
+      .filter(([key]) => relevant.has(key))
+      .map(([key, label, short]) => {
+        const sources = [];
+        if (classAbilities.includes(key)) sources.push('Classe');
+        if (backgroundAbilities.includes(key)) sources.push('Background');
+
+        return {
+          key,
+          label,
+          short,
+          value: Number(appState.characterSheet.abilities[key]) || 10,
+          modifier: abilityModifier(appState.characterSheet.abilities[key]),
+          sources,
+          priority: classAbilities.includes(key) ? 0 : 1,
+        };
+      })
+      .sort((a, b) => a.priority - b.priority || a.label.localeCompare(b.label, 'it'));
+  }
+
+  function abilityKeysFromText(value) {
+    const text = normalizeSheetLabel(value);
+    if (!text) return [];
+
+    return abilityMeta
+      .filter(([, label]) => text.includes(normalizeSheetLabel(label)))
+      .map(([key]) => key);
+  }
+
   function characterInitiative() {
     return abilityModifier(appState.characterSheet.abilities.dex) + (Number(appState.characterSheet.initiativeBonus) || 0);
   }
@@ -239,6 +279,7 @@ export function createCharacterSheetDerivedModel({
     armorClassFromEquipment,
     backgroundStartingCoinsOption,
     backgroundStartingCoinsText,
+    characterAbilityGuidance,
     characterBackgroundEntry,
     characterBackgroundSkills,
     characterBuilderChecklist,

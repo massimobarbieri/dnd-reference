@@ -13,6 +13,7 @@ const { pathToFileURL } = require('node:url');
           nome: 'Accolito',
           talento_origine: 'Iniziato alla magia (chierico)',
           competenze: { abilita: ['Intuizione', 'Religione'] },
+          punteggi_caratteristica: ['Intelligenza', 'Saggezza', 'Carisma'],
           equipaggiamento_alternativo: '50 mo',
         },
       ],
@@ -97,6 +98,11 @@ const { pathToFileURL } = require('node:url');
   assert.equal(derived.backgroundStartingCoinsText(), '50 mo');
   assert.equal(derived.backgroundStartingCoinsOption().imported, false);
   assert.equal(derived.startingEquipmentOptionText(derived.classStartingEquipmentText(), 'class-b'), '55 mo');
+  assert.deepEqual(derived.characterAbilityGuidance().map((ability) => [ability.key, ability.sources]), [
+    ['int', ['Classe', 'Background']],
+    ['cha', ['Background']],
+    ['wis', ['Background']],
+  ]);
   assert.deepEqual(derived.selectedClassTraits(), { 'Dado Vita': 'D6', 'Caratteristica primaria': 'Intelligenza' });
 
   console.log('Modello derivato scheda personaggio OK');

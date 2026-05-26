@@ -51,6 +51,7 @@ export function createCharacterSheetOverviewRenderer({
 
         <div class="sheet-panel">
           <h3>Caratteristiche</h3>
+          ${renderAbilityGuidance()}
           <div class="ability-grid">
             ${ABILITY_META.map(([key, label, short]) => renderAbilityCard(key, label, short)).join('')}
           </div>
@@ -369,6 +370,28 @@ export function createCharacterSheetOverviewRenderer({
         <span>${escapeHtml(label)}</span>
         <strong>${escapeHtml(String(value))}</strong>
         <small>${escapeHtml(hint)}</small>
+      </div>
+    `;
+  }
+
+  function renderAbilityGuidance() {
+    const guidance = characterSheetDerived.characterAbilityGuidance();
+    if (!guidance.length) {
+      return '<p class="sheet-empty">Scegli classe e background per vedere priorita consigliate sui punteggi.</p>';
+    }
+
+    return `
+      <div class="sheet-ability-guide">
+        <span>Priorita consigliate</span>
+        <div>
+          ${guidance.map((ability) => `
+            <article>
+              <strong>${escapeHtml(ability.short || ability.label)}</strong>
+              <small>${escapeHtml([ability.label, ...ability.sources].join(' · '))}</small>
+              <em>${escapeHtml(formatSigned(ability.modifier))}</em>
+            </article>
+          `).join('')}
+        </div>
       </div>
     `;
   }
