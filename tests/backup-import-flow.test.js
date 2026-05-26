@@ -12,6 +12,11 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   api.appState.activeCharacterSheetId = localSheet.id;
   api.saveCharacterSheet();
 
+  api.exportCharacterSheet();
+  const exportedLink = context.createdElements.at(-1);
+  assert.match(exportedLink.download, /^dnd-reference-personaggio-locale-\d{4}-\d{2}-\d{2}\.json$/);
+  assert.match(api.appState.characterSheetNotice, /Esportato Locale/);
+
   api.appState.pendingCharacterSheetArchive = api.normalizeCharacterSheetArchive({
     activeCharacterSheetId: 'sheet-imported',
     sheets: [{ id: 'sheet-imported', schemaVersion: 8, name: 'Importata', level: 2 }],
@@ -24,6 +29,7 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   api.applyCharacterSheetArchiveImport('unisci');
   assert.equal(api.appState.characterSheets.length, 2);
   assert.equal(api.appState.characterSheet.id, 'sheet-imported');
+  assert.match(api.appState.characterSheetNotice, /Archivio unito/);
   assert.equal(JSON.parse(context.localStorage.getItem('dnd-reference:character-sheets')).length, 2);
 
   api.appState.pendingCharacterSheetArchive = api.normalizeCharacterSheetArchive({
@@ -33,6 +39,7 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   api.applyCharacterSheetArchiveImport('sostituisci');
   assert.deepEqual(api.appState.characterSheets.map((sheet) => sheet.id), ['sheet-replacement']);
   assert.equal(api.appState.characterSheet.name, 'Sostituita');
+  assert.match(api.appState.characterSheetNotice, /Archivio sostituito/);
 
   context.localStorage.setItem('external:key', 'preserve');
   context.localStorage.setItem('dnd-reference:old', 'remove');
@@ -48,8 +55,10 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
       'external:key': 'ignored',
     },
   });
+  api.appState.characterSheetNotice = 'Backup app caricato: controlla il riepilogo prima di ripristinare.';
   api.renderCharacterSheet('overview');
   assert.match(views['#detail-view'].innerHTML, /Import backup app/);
+  assert.match(views['#detail-view'].innerHTML, /Backup app caricato/);
   assert.match(views['#detail-view'].innerHTML, /data-app-import-backup-apply/);
   assert.match(views['#detail-view'].innerHTML, /data-app-import-backup-cancel/);
 

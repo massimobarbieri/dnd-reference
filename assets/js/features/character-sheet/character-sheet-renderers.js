@@ -1,8 +1,8 @@
-import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260526-level-plan';
-import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260526-level-plan';
-import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260526-level-plan';
-import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260526-level-plan';
-import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260526-level-plan';
+import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260526-backup-ux';
+import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260526-backup-ux';
+import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260526-backup-ux';
+import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260526-backup-ux';
+import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260526-backup-ux';
 
 export function createCharacterSheetRenderer({
   appState,
@@ -192,6 +192,17 @@ export function createCharacterSheetRenderer({
     `;
   }
 
+  function renderCharacterSheetNotice() {
+    if (!appState.characterSheetNotice) return '';
+
+    return `
+      <section class="sheet-notice" role="status" aria-live="polite">
+        <span>${escapeHtml(appState.characterSheetNotice)}</span>
+        <button class="button button--ghost" type="button" data-sheet-notice-dismiss>Chiudi</button>
+      </section>
+    `;
+  }
+
   /*
    * Renderizza la scheda personaggio nativa.
    */
@@ -213,6 +224,7 @@ export function createCharacterSheetRenderer({
       </nav>
 
       <article class="detail-card detail-card--flat character-sheet">
+        ${renderCharacterSheetNotice()}
         ${renderCharacterSheetArchiveImportPrompt()}
         ${renderAppBackupImportPrompt()}
         ${renderCharacterSheetHeader()}
@@ -232,6 +244,7 @@ export function createCharacterSheetRenderer({
       </nav>
 
       <article class="detail-card character-roster">
+        ${renderCharacterSheetNotice()}
         ${renderCharacterSheetArchiveImportPrompt()}
         ${renderAppBackupImportPrompt()}
         <header class="detail-header character-roster-header">

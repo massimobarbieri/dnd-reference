@@ -9,11 +9,11 @@
  * - Permette ricerca, filtri e preferiti.
  * - Salva i preferiti nel localStorage del browser.
  */
-import { loadConfig } from './data/loaders.js?v=20260526-level-plan';
+import { loadConfig } from './data/loaders.js?v=20260526-backup-ux';
 import {
   applyReferenceSources,
   loadReferenceSources,
-} from './data/reference-data.js?v=20260526-level-plan';
+} from './data/reference-data.js?v=20260526-backup-ux';
 import {
   escapeAttr,
   escapeHtml,
@@ -29,9 +29,9 @@ import {
 import {
   createReferenceViewController,
   renderReferenceSheetActions,
-} from './reference-view-controller.js?v=20260526-level-plan';
+} from './reference-view-controller.js?v=20260526-backup-ux';
 import { createInlineFormatter } from './inline-formatting.js';
-import { createReferenceDetailRenderer } from './reference-detail-renderer.js?v=20260526-level-plan';
+import { createReferenceDetailRenderer } from './reference-detail-renderer.js?v=20260526-backup-ux';
 
 import {
   normalizeCharacterSheet,
@@ -46,7 +46,7 @@ import {
   uniqueCharacterSheets,
   createCharacterSheetId,
   cloneJson,
-} from './features/character-sheet/character-sheet-normalizers.js?v=20260526-level-plan';
+} from './features/character-sheet/character-sheet-normalizers.js?v=20260526-backup-ux';
 
 import {
   readJsonStorage,
@@ -63,15 +63,15 @@ import {
   CHARACTER_SHEETS_STORAGE_KEY,
   ACTIVE_CHARACTER_SHEET_STORAGE_KEY,
   APP_STORAGE_PREFIX,
-} from './features/character-sheet/character-sheet-storage.js?v=20260526-level-plan';
+} from './features/character-sheet/character-sheet-storage.js?v=20260526-backup-ux';
 
-import { createCharacterSheetClassController } from './features/character-sheet/character-sheet-classes.js?v=20260526-level-plan';
-import { createCharacterSheetActionsController } from './features/character-sheet/character-sheet-actions.js?v=20260526-level-plan';
-import { createCharacterSheetEventsController } from './features/character-sheet/character-sheet-events.js?v=20260526-level-plan';
-import { createCharacterSheetRenderer } from './features/character-sheet/character-sheet-renderers.js?v=20260526-level-plan';
-import { createCharacterSheetSelectors } from './features/character-sheet/character-sheet-selectors.js?v=20260526-level-plan';
-import { createCharacterSheetDerivedModel } from './features/character-sheet/character-sheet-derived.js?v=20260526-level-plan';
-import { createCharacterSheetBackupWorkflow } from './features/character-sheet/character-sheet-backup-workflow.js?v=20260526-level-plan';
+import { createCharacterSheetClassController } from './features/character-sheet/character-sheet-classes.js?v=20260526-backup-ux';
+import { createCharacterSheetActionsController } from './features/character-sheet/character-sheet-actions.js?v=20260526-backup-ux';
+import { createCharacterSheetEventsController } from './features/character-sheet/character-sheet-events.js?v=20260526-backup-ux';
+import { createCharacterSheetRenderer } from './features/character-sheet/character-sheet-renderers.js?v=20260526-backup-ux';
+import { createCharacterSheetSelectors } from './features/character-sheet/character-sheet-selectors.js?v=20260526-backup-ux';
+import { createCharacterSheetDerivedModel } from './features/character-sheet/character-sheet-derived.js?v=20260526-backup-ux';
+import { createCharacterSheetBackupWorkflow } from './features/character-sheet/character-sheet-backup-workflow.js?v=20260526-backup-ux';
 
 import {
   CONDITION_ALIASES,
@@ -80,7 +80,7 @@ import {
   CHARACTER_SHEET_TABS,
   CHARACTER_SHEET_SCHEMA_VERSION,
   DEFAULT_CHARACTER_SHEET,
-} from './features/character-sheet/character-sheet-view.js?v=20260526-level-plan';
+} from './features/character-sheet/character-sheet-view.js?v=20260526-backup-ux';
 
 (() => {
   'use strict';
@@ -146,6 +146,7 @@ import {
       level: '',
       school: '',
     },
+    characterSheetNotice: '',
     pendingCharacterSheetArchive: null,
     pendingAppBackup: null,
 
@@ -509,6 +510,8 @@ import {
       appState,
       applyAppBackupImport: backupActions.applyAppBackupImport,
       applyCharacterSheetArchiveImport: backupActions.applyCharacterSheetArchiveImport,
+      exportCharacterSheet: backupActions.exportCharacterSheet,
+      exportCharacterSheetArchive: backupActions.exportCharacterSheetArchive,
       loadCharacterSheetArchive,
       mergeCharacterSheetArchives,
       normalizeAppBackup: backupActions.normalizeAppBackup,

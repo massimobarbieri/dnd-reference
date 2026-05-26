@@ -1182,6 +1182,29 @@ body:has(.character-roster) .app-shell {
   padding: .75rem;
 }
 
+.sheet-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .65rem;
+  border: 1px solid rgba(64,115,78,.28);
+  border-radius: 8px;
+  background: rgba(238,247,238,.72);
+  color: #315b3b;
+  padding: .65rem .75rem;
+}
+
+.sheet-notice span {
+  min-width: 0;
+  font-size: .9rem;
+  font-weight: 720;
+}
+
+.sheet-notice .button {
+  min-height: 1.9rem;
+}
+
 .sheet-archive-confirm strong {
   display: block;
   margin-bottom: .18rem;
@@ -3750,6 +3773,11 @@ code {
 
   .sheet-archive-confirm {
     align-items: stretch;
+  }
+
+  .sheet-notice,
+  .sheet-notice .button {
+    width: 100%;
   }
 
   .sheet-archive-actions,

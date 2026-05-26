@@ -21,10 +21,12 @@ export function createCharacterSheetBackupController({
    * Esporta solo la scheda attiva.
    */
   function exportCharacterSheet() {
+    const filename = characterSheetFilename(appState.characterSheet);
     downloadJson(
       appState.characterSheet,
-      `${fileSafeName(appState.characterSheet.name || 'personaggio')}-dnd-reference.json`
+      filename
     );
+    setNotice(`Esportato ${appState.characterSheet.name || 'personaggio'} in ${filename}.`);
   }
 
   /*
@@ -39,6 +41,7 @@ export function createCharacterSheetBackupController({
         });
         appState.characterSheets.push(appState.characterSheet);
         saveCharacterSheet();
+        setNotice(`Importato ${appState.characterSheet.name || 'personaggio'} come nuova scheda.`);
         renderCharacterSheet('overview');
       } catch {
         alert('File scheda non valido.');
@@ -51,12 +54,14 @@ export function createCharacterSheetBackupController({
    */
   function exportCharacterSheetArchive() {
     saveCharacterSheet();
+    const filename = `dnd-reference-schede-${dateStamp()}.json`;
     downloadJson({
       kind: 'dnd-reference:character-sheets',
       schemaVersion: CHARACTER_SHEET_SCHEMA_VERSION,
       activeCharacterSheetId: appState.activeCharacterSheetId,
       sheets: appState.characterSheets,
-    }, 'dnd-reference-schede-personaggio.json');
+    }, filename);
+    setNotice(`Archivio esportato: ${appState.characterSheets.length} schede in ${filename}.`);
   }
 
   /*
@@ -66,6 +71,7 @@ export function createCharacterSheetBackupController({
     readUploadedJson(event, (value) => {
       try {
         appState.pendingCharacterSheetArchive = normalizeCharacterSheetArchive(value);
+        setNotice('Archivio caricato: scegli se unire o sostituire le schede locali.');
         renderCharacterSheet(appState.characterSheetTab);
       } catch {
         alert('Archivio schede non valido.');
@@ -89,6 +95,9 @@ export function createCharacterSheetBackupController({
     appState.characterSheet = appState.characterSheets.find((sheet) => sheet.id === appState.activeCharacterSheetId) || appState.characterSheets[0];
     appState.activeCharacterSheetId = appState.characterSheet.id;
     saveCharacterSheet();
+    setNotice(mode === 'unisci'
+      ? `Archivio unito: ora hai ${appState.characterSheets.length} schede.`
+      : `Archivio sostituito: ora hai ${appState.characterSheets.length} schede.`);
     renderCharacterSheet('overview');
   }
 
@@ -112,6 +121,7 @@ export function createCharacterSheetBackupController({
       exportedAt: new Date().toISOString(),
       storage,
     }, `dnd-reference-backup-${new Date().toISOString().slice(0, 10)}.json`);
+    setNotice('Backup app esportato.');
   }
 
   /*
@@ -121,6 +131,7 @@ export function createCharacterSheetBackupController({
     readUploadedJson(event, (value) => {
       try {
         appState.pendingAppBackup = normalizeAppBackup(value);
+        setNotice('Backup app caricato: controlla il riepilogo prima di ripristinare.');
         renderCharacterSheet(appState.characterSheetTab);
       } catch {
         alert('Backup app non valido.');
@@ -136,6 +147,7 @@ export function createCharacterSheetBackupController({
 
     restoreAppBackup(appState.pendingAppBackup);
     appState.pendingAppBackup = null;
+    setNotice('Backup app ripristinato.');
     renderRoute();
   }
 
@@ -172,6 +184,10 @@ export function createCharacterSheetBackupController({
     Object.entries(backup.storage).forEach(([key, value]) => localStorage.setItem(key, value));
     appState.favorites = loadFavorites();
     loadCharacterSheetArchive();
+  }
+
+  function setNotice(message) {
+    appState.characterSheetNotice = message;
   }
 
   return {
@@ -212,6 +228,14 @@ function downloadJson(value, filename) {
   link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+function characterSheetFilename(sheet) {
+  return `dnd-reference-personaggio-${fileSafeName(sheet?.name || 'personaggio')}-${dateStamp()}.json`;
+}
+
+function dateStamp() {
+  return new Date().toISOString().slice(0, 10);
 }
 
 /*

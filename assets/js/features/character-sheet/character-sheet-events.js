@@ -64,6 +64,11 @@ export function createCharacterSheetEventsController({
       });
     });
 
+    views.detail.querySelector('[data-sheet-notice-dismiss]')?.addEventListener('click', () => {
+      appState.characterSheetNotice = '';
+      renderCharacterSheet(appState.characterSheetTab);
+    });
+
     views.detail.querySelectorAll('[data-sheet-number]').forEach((node) => {
       node.addEventListener('input', (event) => {
         appState.characterSheet[event.currentTarget.dataset.sheetNumber] = Number(event.currentTarget.value) || 0;
@@ -144,6 +149,7 @@ export function createCharacterSheetEventsController({
         const name = prompt('Nome personaggio', appState.characterSheet.name || '');
         if (name === null) return;
         appState.characterSheet.name = name.trim() || 'Nuovo personaggio';
+        appState.characterSheetNotice = `Scheda rinominata in ${appState.characterSheet.name}.`;
         saveCharacterSheet();
         renderCharacterSheet('characters');
       });
@@ -153,6 +159,7 @@ export function createCharacterSheetEventsController({
       node.addEventListener('click', (event) => {
         if (!switchCharacterSheet(event.currentTarget.dataset.sheetDuplicateCharacter)) return;
         duplicateCharacterSheet();
+        appState.characterSheetNotice = `Duplicata ${appState.characterSheet.name || 'scheda personaggio'}.`;
         location.hash = '#/character_sheet/overview';
       });
     });
@@ -177,6 +184,7 @@ export function createCharacterSheetEventsController({
           return;
         }
         deleteActiveCharacterSheet();
+        appState.characterSheetNotice = 'Scheda eliminata.';
         renderCharacterSheet('characters');
       });
     });
@@ -634,6 +642,7 @@ export function createCharacterSheetEventsController({
     });
     views.detail.querySelector('[data-sheet-duplicate]')?.addEventListener('click', () => {
       duplicateCharacterSheet();
+      appState.characterSheetNotice = `Duplicata ${appState.characterSheet.name || 'scheda personaggio'}.`;
       renderCharacterSheet('overview');
     });
     views.detail.querySelector('[data-sheet-delete]')?.addEventListener('click', () => {

@@ -3,7 +3,7 @@ import {
   uniqueCharacterSheets,
   createCharacterSheetId,
   cloneJson,
-} from './character-sheet-normalizers.js?v=20260526-level-plan';
+} from './character-sheet-normalizers.js?v=20260526-backup-ux';
 
 let appState = null;
 
