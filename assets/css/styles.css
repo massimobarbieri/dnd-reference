@@ -2108,6 +2108,84 @@ body:has(.character-roster) .app-shell {
   padding-top: .55rem;
 }
 
+.sheet-hp-console {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: .55rem;
+  align-items: center;
+  border: 1px solid rgba(138,63,35,.18);
+  border-radius: 8px;
+  background: rgba(255,250,242,.58);
+  margin-bottom: .65rem;
+  padding: .55rem;
+}
+
+.sheet-hp-meter {
+  display: grid;
+  place-items: center;
+  min-width: 5.2rem;
+  border: 1px solid rgba(138,63,35,.16);
+  border-radius: 8px;
+  background: rgba(255,255,255,.6);
+  padding: .42rem;
+}
+
+.sheet-hp-meter span,
+.sheet-hp-meter small {
+  color: var(--muted);
+  font-size: .68rem;
+  font-weight: 780;
+}
+
+.sheet-hp-meter strong {
+  color: var(--accent);
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.sheet-hp-actions {
+  display: grid;
+  grid-template-columns: minmax(4.5rem, .8fr) repeat(3, minmax(0, 1fr));
+  gap: .35rem;
+  align-items: end;
+}
+
+.sheet-hp-actions label {
+  display: grid;
+  gap: .12rem;
+  min-width: 0;
+}
+
+.sheet-hp-actions label span {
+  color: var(--accent);
+  font-size: .68rem;
+  font-weight: 780;
+}
+
+.sheet-hp-actions input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255,255,255,.74);
+  color: var(--ink);
+  font: inherit;
+  min-height: 2.1rem;
+  padding: 0 .45rem;
+}
+
+.sheet-hp-actions button {
+  min-height: 2.1rem;
+  border: 1px solid rgba(138,63,35,.28);
+  border-radius: 8px;
+  background: rgba(255,255,255,.62);
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  font-size: .84rem;
+  font-weight: 780;
+}
+
 .ability-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -2759,6 +2837,13 @@ body:has(.character-roster) .app-shell {
   align-items: center;
   justify-content: space-between;
   gap: .5rem;
+}
+
+.sheet-class-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .35rem;
 }
 
 .sheet-class-heading strong {
@@ -3730,6 +3815,18 @@ code {
     justify-content: center;
   }
 
+  .sheet-hp-console {
+    grid-template-columns: 1fr;
+  }
+
+  .sheet-hp-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .sheet-hp-actions label {
+    grid-column: 1 / -1;
+  }
+
   .sheet-condition-list {
     display: grid;
   }
@@ -3898,6 +3995,11 @@ code {
 
   .sheet-class-heading {
     align-items: stretch;
+  }
+
+  .sheet-class-actions,
+  .sheet-class-actions .button {
+    width: 100%;
   }
 
   .sheet-class-heading .button {

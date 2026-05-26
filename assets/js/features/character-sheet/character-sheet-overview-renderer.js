@@ -1114,7 +1114,10 @@ export function createCharacterSheetOverviewRenderer({
             <strong>${escapeHtml(classEntry.nome.replace(/^Classe:\s*/i, ''))}</strong>
             <span>${escapeHtml(`Livello ${level}`)}</span>
           </div>
-          <a class="button button--ghost" href="#/classes/${encodeURIComponent(classEntry.id)}">Apri classe</a>
+          <div class="sheet-class-actions">
+            ${nextRow ? '<button class="button button--ghost" type="button" data-sheet-level-up>Aumenta livello</button>' : ''}
+            <a class="button button--ghost" href="#/classes/${encodeURIComponent(classEntry.id)}">Apri classe</a>
+          </div>
         </div>
 
         ${currentRow ? `

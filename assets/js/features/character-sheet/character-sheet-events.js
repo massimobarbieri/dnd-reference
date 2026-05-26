@@ -232,6 +232,16 @@ export function createCharacterSheetEventsController({
       });
     });
 
+    views.detail.querySelector('[data-sheet-hp-form]')?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const amount = Math.max(0, Number(new FormData(form).get('amount')) || 0);
+      const action = event.submitter?.dataset.sheetHpAction || 'damage';
+      applyHitPointAction(action, amount);
+      saveCharacterSheet();
+      renderCharacterSheet('combat');
+    });
+
     views.detail.querySelector('[data-sheet-add-condition]')?.addEventListener('change', (event) => {
       const id = event.currentTarget.value;
       if (!id) return;
@@ -282,6 +292,10 @@ export function createCharacterSheetEventsController({
         saveCharacterSheet();
         renderCharacterSheet('combat');
       });
+    });
+
+    views.detail.querySelector('[data-sheet-level-up]')?.addEventListener('click', () => {
+      applyLevelUp();
     });
 
     views.detail.querySelectorAll('[data-sheet-resource-field]').forEach((node) => {
@@ -713,6 +727,46 @@ export function createCharacterSheetEventsController({
       appendEquipmentNote(`Da verificare (${result.source}): ${result.unmatched.join(', ')}`);
     }
     appendEquipmentNote(marker);
+  }
+
+  function applyHitPointAction(action, amount) {
+    const max = Math.max(0, Number(appState.characterSheet.maxHp) || 0);
+    const current = Math.max(0, Number(appState.characterSheet.currentHp) || 0);
+    const temp = Math.max(0, Number(appState.characterSheet.tempHp) || 0);
+
+    if (action === 'heal') {
+      appState.characterSheet.currentHp = max ? Math.min(max, current + amount) : current + amount;
+      return;
+    }
+
+    if (action === 'temp') {
+      appState.characterSheet.tempHp = Math.max(temp, amount);
+      return;
+    }
+
+    const tempAbsorbed = Math.min(temp, amount);
+    appState.characterSheet.tempHp = temp - tempAbsorbed;
+    appState.characterSheet.currentHp = Math.max(0, current - Math.max(0, amount - tempAbsorbed));
+  }
+
+  function applyLevelUp() {
+    const currentLevel = Math.min(20, Math.max(1, Number(appState.characterSheet.level) || 1));
+    if (currentLevel >= 20) return;
+
+    const previousSuggestedHp = characterSheetDerived.characterSuggestedHitPoints();
+    const previousMaxHp = Math.max(0, Number(appState.characterSheet.maxHp) || 0);
+    const previousCurrentHp = Math.max(0, Number(appState.characterSheet.currentHp) || 0);
+
+    appState.characterSheet.level = currentLevel + 1;
+    syncCharacterSheetClassResources();
+
+    const nextSuggestedHp = characterSheetDerived.characterSuggestedHitPoints();
+    const hpIncrease = Math.max(1, nextSuggestedHp - previousSuggestedHp);
+    appState.characterSheet.maxHp = previousMaxHp ? previousMaxHp + hpIncrease : nextSuggestedHp;
+    appState.characterSheet.currentHp = Math.min(appState.characterSheet.maxHp, previousCurrentHp + hpIncrease);
+
+    saveCharacterSheet();
+    renderCharacterSheet('overview');
   }
 
   function nextBuilderStepForActiveSheet() {

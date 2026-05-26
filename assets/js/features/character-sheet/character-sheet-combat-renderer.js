@@ -30,6 +30,7 @@ export function createCharacterSheetCombatRenderer({
 
         <div class="sheet-panel sheet-panel--control">
           <h3>Difesa e punti ferita</h3>
+          ${renderHitPointQuickControls()}
           <div class="sheet-form-grid sheet-form-grid--compact">
             ${sheetNumberField('armorClass', 'Classe Armatura', sheet.armorClass, 0)}
             ${sheetNumberField('currentHp', 'PF attuali', sheet.currentHp, 0)}
@@ -118,6 +119,33 @@ export function createCharacterSheetCombatRenderer({
           ${renderCombatStat('DV', sheet.hitDice || '-', 'Dadi vita')}
           ${renderCombatStat('Iniz.', formatSigned(initiative), 'Totale')}
         </div>
+      </div>
+    `;
+  }
+
+  function renderHitPointQuickControls() {
+    const sheet = appState.characterSheet;
+    const current = Math.max(0, Number(sheet.currentHp) || 0);
+    const max = Math.max(0, Number(sheet.maxHp) || 0);
+    const temp = Math.max(0, Number(sheet.tempHp) || 0);
+    const percent = max ? Math.round((current / max) * 100) : 0;
+
+    return `
+      <div class="sheet-hp-console" aria-label="Punti ferita rapidi">
+        <div class="sheet-hp-meter">
+          <span>PF</span>
+          <strong>${escapeHtml(`${current}/${max}`)}</strong>
+          <small>${escapeHtml(temp ? `Temp ${temp}` : `${percent}%`)}</small>
+        </div>
+        <form class="sheet-hp-actions" data-sheet-hp-form>
+          <label>
+            <span>Valore</span>
+            <input type="number" name="amount" min="0" value="1" inputmode="numeric">
+          </label>
+          <button type="submit" data-sheet-hp-action="damage">Danno</button>
+          <button type="submit" data-sheet-hp-action="heal">Cura</button>
+          <button type="submit" data-sheet-hp-action="temp">Temp</button>
+        </form>
       </div>
     `;
   }
@@ -397,6 +425,7 @@ export function createCharacterSheetCombatRenderer({
             <div class="sheet-action-card-buttons">
               ${action.roll ? `<button type="button" data-dice-roll="${escapeAttr(action.roll)}">${escapeHtml(action.rollLabel)}</button>` : ''}
               ${action.damage ? `<button type="button" data-dice-roll="${escapeAttr(action.damage)}">Danni</button>` : ''}
+              ${action.resourceId ? `<button type="button" data-sheet-resource-delta="1" data-sheet-resource-id="${escapeAttr(action.resourceId)}">Usa</button>` : ''}
               ${action.href ? `<a class="button button--ghost" href="${escapeAttr(action.href)}">Apri</a>` : ''}
             </div>
           </article>
@@ -424,6 +453,7 @@ export function createCharacterSheetCombatRenderer({
       type: 'Risorsa',
       name: resource.name || 'Risorsa',
       detail: [`${Math.max(0, max - used)}/${max} disponibili`, resource.recovery].filter(Boolean).join(' · '),
+      resourceId: resource.id,
     };
   }
 

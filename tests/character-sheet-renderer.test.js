@@ -112,6 +112,7 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-skill="arcana"/);
   assert.match(views['#detail-view'].innerHTML, /Tradizione Arcana/);
   assert.match(views['#detail-view'].innerHTML, /Apri classe/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-level-up/);
   assert.match(views['#detail-view'].innerHTML, /Personaggi/);
   assert.doesNotMatch(views['#detail-view'].innerHTML, />Creazione<\/a>/);
 
@@ -135,6 +136,8 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
 
   api.renderCharacterSheet('combat');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-add-resource/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-hp-form/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-hp-action="damage"/);
   assert.match(views['#detail-view'].innerHTML, /Azione Impetuosa/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-add-attack/);
   assert.match(views['#detail-view'].innerHTML, /Spada lunga/);
