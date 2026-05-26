@@ -1115,7 +1115,6 @@ export function createCharacterSheetOverviewRenderer({
             <span>${escapeHtml(`Livello ${level}`)}</span>
           </div>
           <div class="sheet-class-actions">
-            ${nextRow ? '<button class="button button--ghost" type="button" data-sheet-level-up>Aumenta livello</button>' : ''}
             <a class="button button--ghost" href="#/classes/${encodeURIComponent(classEntry.id)}">Apri classe</a>
           </div>
         </div>
@@ -1144,6 +1143,7 @@ export function createCharacterSheetOverviewRenderer({
           ` : '<p class="sheet-empty">Nessun nuovo privilegio indicato per questo livello.</p>'}
         </div>
 
+        ${renderLevelUpPlanner(currentRow, nextRow)}
         ${renderLevelAdvancementSummary(classEntry, currentRow, nextRow)}
 
         ${subclassRows.length ? `
@@ -1172,6 +1172,97 @@ export function createCharacterSheetOverviewRenderer({
         ${!progression ? '<p class="sheet-empty">Progressione non disponibile nei dati locali.</p>' : ''}
       </div>
     `;
+  }
+
+  function renderLevelUpPlanner(currentRow, nextRow) {
+    if (!nextRow) return '';
+
+    const nextLevel = Number(nextRow.Livello) || characterLevel() + 1;
+    const hpGain = suggestedHitPointsForLevel(nextLevel) - suggestedHitPointsForLevel(characterLevel());
+    const features = splitClassFeatures(nextRow['Privilegi di classe']);
+    const currentResources = new Map(classProgressionResources(currentRow));
+    const nextResources = classProgressionResources(nextRow)
+      .map(([label, value]) => ({
+        label,
+        current: currentResources.get(label) || '-',
+        next: value,
+      }));
+    const choices = levelUpChoices(features);
+
+    return `
+      <div class="sheet-level-planner">
+        <div class="sheet-level-planner-heading">
+          <div>
+            <span>Level up</span>
+            <strong>${escapeHtml(`Livello ${characterLevel()} -> ${nextLevel}`)}</strong>
+            <p>${escapeHtml(nextLevelSummary(nextRow))}</p>
+          </div>
+          <button class="button button--primary" type="button" data-sheet-level-up>
+            ${escapeHtml(`Applica livello ${nextLevel}`)}
+          </button>
+        </div>
+
+        <div class="sheet-level-planner-grid">
+          <div class="sheet-derived">
+            <span>PF stimati</span>
+            <strong>${escapeHtml(`+${Math.max(1, hpGain)}`)}</strong>
+          </div>
+          <div class="sheet-derived">
+            <span>Bonus competenza</span>
+            <strong>${escapeHtml(nextRow['Bonus di competenza'] || formatSigned(characterProficiencyBonus()))}</strong>
+          </div>
+          ${nextResources.slice(0, 4).map((entry) => `
+            <div class="sheet-derived">
+              <span>${escapeHtml(entry.label)}</span>
+              <strong>${escapeHtml(`${entry.current} -> ${entry.next}`)}</strong>
+            </div>
+          `).join('')}
+        </div>
+
+        ${features.length ? `
+          <div class="sheet-class-block">
+            <h4>Nuovi privilegi</h4>
+            <ul class="sheet-chip-list">
+              ${features.map((feature) => `<li>${escapeHtml(feature)}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+
+        ${choices.length ? `
+          <div class="sheet-level-choices">
+            <strong>Scelte da completare</strong>
+            ${choices.map((choice) => `<p>${escapeHtml(choice)}</p>`).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  function suggestedHitPointsForLevel(level) {
+    const safeLevel = Math.min(20, Math.max(1, Number(level) || 1));
+    const hitDie = Number(String(appState.characterSheet.hitDice || '').match(/d(\d+)/i)?.[1]) || 8;
+    const con = abilityModifier(appState.characterSheet.abilities.con);
+    const firstLevel = Math.max(1, hitDie + con);
+    const laterLevel = Math.max(1, Math.floor(hitDie / 2) + 1 + con);
+
+    return firstLevel + Math.max(0, safeLevel - 1) * laterLevel;
+  }
+
+  function levelUpChoices(features) {
+    const text = features.join(' ').toLowerCase();
+    const choices = [];
+
+    if (/miglioramento|punteggi|talento/.test(text)) {
+      choices.push('Scegli aumento caratteristiche o talento, poi aggiorna manualmente la scheda.');
+    }
+    if (/sottoclasse|tradizione|collegio|circolo|patrono|dominio|giuramento|archetipo/.test(text)) {
+      choices.push('Controlla la scelta di sottoclasse e collega il riferimento SRD se disponibile.');
+    }
+    if (/incantesim|trucchett/.test(text)) {
+      choices.push('Rivedi incantesimi preparati/conosciuti e nuovi slot nella tab Incantesimi.');
+    }
+
+    return choices;
   }
 
   return { renderCharacterSheetBuilder, renderCharacterSheetOverview };

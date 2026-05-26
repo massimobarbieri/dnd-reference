@@ -8,6 +8,8 @@ export function createCharacterSheetEventsController({
   applySpeciesToCharacterSheet,
   applyBackgroundToCharacterSheet,
   syncCharacterSheetClassResources,
+  classProgressionRow,
+  nextLevelSummary,
   normalizeIdList,
   resetCharacterResources,
   addSpellToCharacterSheet,
@@ -777,6 +779,9 @@ export function createCharacterSheetEventsController({
   function applyLevelUp() {
     const currentLevel = Math.min(20, Math.max(1, Number(appState.characterSheet.level) || 1));
     if (currentLevel >= 20) return;
+    const classEntry = characterClassEntry();
+    const nextRow = classProgressionRow?.(classEntry, currentLevel + 1);
+    const summary = nextRow ? nextLevelSummary(nextRow) : `Livello ${currentLevel + 1}.`;
 
     const previousSuggestedHp = characterSheetDerived.characterSuggestedHitPoints();
     const previousMaxHp = Math.max(0, Number(appState.characterSheet.maxHp) || 0);
@@ -789,9 +794,17 @@ export function createCharacterSheetEventsController({
     const hpIncrease = Math.max(1, nextSuggestedHp - previousSuggestedHp);
     appState.characterSheet.maxHp = previousMaxHp ? previousMaxHp + hpIncrease : nextSuggestedHp;
     appState.characterSheet.currentHp = Math.min(appState.characterSheet.maxHp, previousCurrentHp + hpIncrease);
+    appendLevelUpNote(currentLevel + 1, hpIncrease, summary);
 
     saveCharacterSheet();
     renderCharacterSheet('overview');
+  }
+
+  function appendLevelUpNote(level, hpIncrease, summary) {
+    const note = `Avanzamento livello ${level}: +${hpIncrease} PF. ${summary}`;
+    const current = String(appState.characterSheet.notes || '').trim();
+    if (current.includes(note)) return;
+    appState.characterSheet.notes = current ? `${current}\n\n${note}` : note;
   }
 
   function castPreparedSpell(id) {

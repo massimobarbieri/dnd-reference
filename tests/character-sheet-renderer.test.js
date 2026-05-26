@@ -115,6 +115,9 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /Tradizione Arcana/);
   assert.match(views['#detail-view'].innerHTML, /Apri classe/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-level-up/);
+  assert.match(views['#detail-view'].innerHTML, /Level up/);
+  assert.match(views['#detail-view'].innerHTML, /Livello 3 -&gt; 4/);
+  assert.match(views['#detail-view'].innerHTML, /Scelte da completare/);
   assert.match(views['#detail-view'].innerHTML, /Personaggi/);
   assert.doesNotMatch(views['#detail-view'].innerHTML, />Creazione<\/a>/);
 
