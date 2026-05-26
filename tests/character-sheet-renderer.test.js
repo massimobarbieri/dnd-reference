@@ -90,7 +90,10 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
 
   context.location.hash = '#/character_sheet';
   api.renderRoute();
-  assert.equal(context.location.hash, '#/character_sheet/overview');
+  assert.equal(context.location.hash, '#/character_sheet');
+  assert.match(views['#detail-view'].innerHTML, /Personaggi/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-create-builder/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-open-character="sheet-render"/);
 
   api.renderCharacterSheet('overview');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-field="name"/);
@@ -109,7 +112,7 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-skill="arcana"/);
   assert.match(views['#detail-view'].innerHTML, /Tradizione Arcana/);
   assert.match(views['#detail-view'].innerHTML, /Apri classe/);
-  assert.match(views['#detail-view'].innerHTML, /Rifinisci personaggio/);
+  assert.match(views['#detail-view'].innerHTML, /Personaggi/);
   assert.doesNotMatch(views['#detail-view'].innerHTML, />Creazione<\/a>/);
 
   api.renderCharacterSheet('builder');
@@ -120,6 +123,15 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /sheet-builder-step/);
   assert.doesNotMatch(views['#detail-view'].innerHTML, /Checklist creazione/);
   assert.doesNotMatch(views['#detail-view'].innerHTML, />Creazione<\/a>/);
+
+  api.appState.characterSheetBuilderStep = 'abilities';
+  api.renderCharacterSheet('builder');
+  assert.match(views['#detail-view'].innerHTML, /Serie standard/);
+  assert.match(views['#detail-view'].innerHTML, /Acquisto punti/);
+  assert.match(views['#detail-view'].innerHTML, /Generazione casuale/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-builder-action="apply-standard-array"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-builder-action="apply-point-buy-base"/);
+  assert.match(views['#detail-view'].innerHTML, /data-dice-roll="4d6dl1"/);
 
   api.renderCharacterSheet('combat');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-add-resource/);

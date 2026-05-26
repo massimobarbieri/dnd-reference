@@ -1,8 +1,8 @@
-import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260526-character-ux';
-import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260526-character-ux';
-import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260526-character-ux';
-import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260526-character-ux';
-import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260526-character-ux';
+import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260526-character-flow';
+import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260526-character-flow';
+import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260526-character-flow';
+import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260526-character-flow';
+import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260526-character-flow';
 
 export function createCharacterSheetRenderer({
   appState,
@@ -65,6 +65,10 @@ export function createCharacterSheetRenderer({
     magicItemRequiresAttunement,
     characterClassEntry,
     characterSheetDerived,
+    characterSpellOptions,
+    spellOptionLabel,
+    characterSpellSlots,
+    abilityOptions,
   });
 
   const { renderCharacterSheetSpells } = createCharacterSheetSpellsRenderer({
@@ -192,10 +196,16 @@ export function createCharacterSheetRenderer({
    * Renderizza la scheda personaggio nativa.
    */
   function renderCharacterSheet(tab = 'overview') {
-    const validTab = tab === 'builder' || CHARACTER_SHEET_TABS.some(([id]) => id === tab) ? tab : 'overview';
+    const validTab = tab === 'characters' || tab === 'builder' || CHARACTER_SHEET_TABS.some(([id]) => id === tab) ? tab : 'overview';
     appState.characterSheetTab = validTab;
 
     setView('detail');
+
+    if (validTab === 'characters') {
+      views.detail.innerHTML = renderCharacterRoster();
+      bindCharacterSheetEvents();
+      return;
+    }
 
     views.detail.innerHTML = `
       <nav class="detail-nav sheet-topbar" aria-label="Navigazione scheda personaggio">
@@ -213,6 +223,87 @@ export function createCharacterSheetRenderer({
     `;
 
     bindCharacterSheetEvents();
+  }
+
+  function renderCharacterRoster() {
+    return `
+      <nav class="detail-nav sheet-topbar" aria-label="Navigazione personaggi">
+        <a class="button sheet-home-link" href="#/">Home</a>
+      </nav>
+
+      <article class="detail-card character-roster">
+        ${renderCharacterSheetArchiveImportPrompt()}
+        ${renderAppBackupImportPrompt()}
+        <header class="detail-header character-roster-header">
+          <div>
+            <p class="detail-kicker">Schede salvate</p>
+            <h2 class="detail-title">Personaggi</h2>
+            <p class="subtitle">Scegli un personaggio per aprire subito la scheda da usare al tavolo.</p>
+          </div>
+          <button class="button button--primary" type="button" data-sheet-create-builder>Nuovo personaggio</button>
+        </header>
+
+        <div class="character-roster-grid">
+          ${appState.characterSheets.map((sheet) => renderCharacterRosterCard(sheet)).join('')}
+        </div>
+
+        <details class="sheet-manager" aria-label="Archivio schede">
+          <summary>
+            <span>Archivio</span>
+            <strong>Import/export</strong>
+          </summary>
+          <div class="sheet-manager-body sheet-manager-body--archive">
+            <div class="sheet-manager-actions">
+              <button class="button button--ghost" type="button" data-sheet-export-archive>Esporta archivio</button>
+              <button class="button button--ghost" type="button" data-sheet-import-archive>Importa archivio</button>
+              <button class="button button--ghost" type="button" data-app-export-backup>Esporta backup app</button>
+              <button class="button button--ghost" type="button" data-app-import-backup>Importa backup app</button>
+            </div>
+            <input id="character-sheet-import" class="visually-hidden" type="file" accept="application/json,.json">
+            <input id="character-sheet-archive-import" class="visually-hidden" type="file" accept="application/json,.json">
+            <input id="app-backup-import" class="visually-hidden" type="file" accept="application/json,.json">
+          </div>
+        </details>
+      </article>
+    `;
+  }
+
+  function renderCharacterRosterCard(sheet) {
+    const active = sheet.id === appState.characterSheet.id;
+    const className = appState.data.classes.find((entry) => entry.id === sheet.classId)?.nome?.replace(/^Classe:\s*/i, '') || '';
+    const title = sheet.name || 'Nuovo personaggio';
+    const subtitle = [className, sheet.level ? `livello ${sheet.level}` : null, sheet.ancestry, sheet.background].filter(Boolean).join(' · ');
+    const checklist = characterSheetDerived.characterBuilderChecklistForSheet(sheet);
+    const complete = checklist.filter((item) => item.complete).length;
+    const total = checklist.length || 1;
+    const ready = complete === total;
+    const next = checklist.find((item) => !item.complete);
+
+    return `
+      <article class="character-roster-card${active ? ' is-active' : ''}">
+        <div>
+          <span>${escapeHtml(active ? 'Attivo' : ready ? 'Pronto' : 'Bozza')}</span>
+          <strong>${escapeHtml(title)}</strong>
+          <p>${escapeHtml(subtitle || 'Scheda in preparazione')}</p>
+        </div>
+        <div class="character-roster-progress" aria-label="Avanzamento creazione">
+          <strong>${escapeHtml(`${complete}/${total}`)}</strong>
+          <span>${escapeHtml(ready ? 'Pronta per il tavolo' : `Prossimo: ${next?.label || 'rifinitura'}`)}</span>
+        </div>
+        <div class="character-roster-stats">
+          <span>CA ${escapeHtml(String(Number(sheet.armorClass) || 10))}</span>
+          <span>PF ${escapeHtml(String(Number(sheet.currentHp) || 0))}/${escapeHtml(String(Number(sheet.maxHp) || 0))}</span>
+        </div>
+        <div class="character-roster-actions">
+          <button class="button" type="button" data-sheet-open-character="${escapeAttr(sheet.id)}">Apri scheda</button>
+          ${ready ? '' : `<button class="button button--ghost" type="button" data-sheet-continue-character="${escapeAttr(sheet.id)}">Continua creazione</button>`}
+          <button class="button button--ghost" type="button" data-sheet-rename-character="${escapeAttr(sheet.id)}">Rinomina</button>
+          <button class="button button--ghost" type="button" data-sheet-duplicate-character="${escapeAttr(sheet.id)}">Duplica</button>
+          <button class="button button--ghost" type="button" data-sheet-export-character="${escapeAttr(sheet.id)}">Esporta</button>
+          <button class="button button--ghost sheet-danger-action" type="button" data-sheet-delete-character="${escapeAttr(sheet.id)}"${appState.characterSheets.length <= 1 ? ' disabled' : ''}>Elimina</button>
+        </div>
+      </article>
+    `;
   }
 
   /*
@@ -236,7 +327,7 @@ export function createCharacterSheetRenderer({
             </select>
           </label>
           <div class="sheet-manager-actions">
-            <button class="button button--ghost" type="button" data-sheet-reset>Nuova scheda</button>
+            <a class="button button--ghost" href="#/character_sheet">Personaggi</a>
             <button class="button button--ghost" type="button" data-sheet-duplicate>Duplica</button>
             <details class="sheet-more-actions">
               <summary>Archivio</summary>

@@ -50,7 +50,7 @@ export function createReferenceViewController({
 
     if (route.section === 'character_sheet') {
       if (!route.id) {
-        location.hash = '#/character_sheet/overview';
+        renderCharacterSheet('characters');
         return;
       }
 
@@ -91,7 +91,8 @@ export function createReferenceViewController({
 
   function homeCardSubtitle(section) {
     if (SECTION_META[section]?.type === 'tool') {
-      return appState.characterSheet.name || 'Strumento locale';
+      const count = appState.characterSheets.length || 0;
+      return count === 1 ? '1 personaggio salvato' : `${count} personaggi salvati`;
     }
 
     return `${appState.data[section].length} elementi disponibili`;

@@ -114,6 +114,71 @@ export function createCharacterSheetEventsController({
       applyBackgroundSkills();
     });
 
+    views.detail.querySelector('[data-sheet-create-builder]')?.addEventListener('click', () => {
+      createNewCharacterSheet();
+      appState.characterSheetBuilderStep = 'identity';
+      location.hash = '#/character_sheet/builder';
+    });
+
+    views.detail.querySelectorAll('[data-sheet-open-character]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        if (switchCharacterSheet(event.currentTarget.dataset.sheetOpenCharacter)) {
+          location.hash = '#/character_sheet/overview';
+        }
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-continue-character]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        if (!switchCharacterSheet(event.currentTarget.dataset.sheetContinueCharacter)) return;
+        appState.characterSheetBuilderStep = nextBuilderStepForActiveSheet();
+        location.hash = '#/character_sheet/builder';
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-rename-character]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        if (!switchCharacterSheet(event.currentTarget.dataset.sheetRenameCharacter)) return;
+        const name = prompt('Nome personaggio', appState.characterSheet.name || '');
+        if (name === null) return;
+        appState.characterSheet.name = name.trim() || 'Nuovo personaggio';
+        saveCharacterSheet();
+        renderCharacterSheet('characters');
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-duplicate-character]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        if (!switchCharacterSheet(event.currentTarget.dataset.sheetDuplicateCharacter)) return;
+        duplicateCharacterSheet();
+        location.hash = '#/character_sheet/overview';
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-export-character]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        if (!switchCharacterSheet(event.currentTarget.dataset.sheetExportCharacter)) return;
+        exportCharacterSheet();
+        renderCharacterSheet('characters');
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-delete-character]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        if (appState.characterSheets.length <= 1) {
+          alert('Deve restare almeno una scheda.');
+          return;
+        }
+        if (!switchCharacterSheet(event.currentTarget.dataset.sheetDeleteCharacter)) return;
+        if (!confirm(`Eliminare "${appState.characterSheet.name || 'Scheda personaggio'}"?`)) {
+          renderCharacterSheet('characters');
+          return;
+        }
+        deleteActiveCharacterSheet();
+        renderCharacterSheet('characters');
+      });
+    });
+
     views.detail.querySelectorAll('[data-sheet-builder-action]').forEach((node) => {
       node.addEventListener('click', (event) => {
         applyBuilderAction(event.currentTarget.dataset.sheetBuilderAction, event.currentTarget.dataset.sheetBuilderActionValue);
@@ -424,7 +489,7 @@ export function createCharacterSheetEventsController({
       const id = event.currentTarget.value;
       if (id) {
         addSpellToCharacterSheet(id);
-        renderCharacterSheet('spells');
+        renderCharacterSheet(appState.characterSheetTab === 'builder' ? 'builder' : 'spells');
       }
     });
 
@@ -562,11 +627,64 @@ export function createCharacterSheetEventsController({
       renderCharacterSheet(appState.characterSheetTab);
       return;
     }
+    if (action === 'apply-standard-array') {
+      applyStandardArray();
+      saveCharacterSheet();
+      renderCharacterSheet(appState.characterSheetTab);
+      return;
+    }
+    if (action === 'apply-point-buy-base') {
+      ['str', 'dex', 'con', 'int', 'wis', 'cha'].forEach((key) => {
+        appState.characterSheet.abilities[key] = 8;
+      });
+      saveCharacterSheet();
+      renderCharacterSheet(appState.characterSheetTab);
+      return;
+    }
     if (action === 'apply-starting-equipment') {
       applyStartingEquipment(value);
       saveCharacterSheet();
       renderCharacterSheet(appState.characterSheetTab);
     }
+  }
+
+  function applyStandardArray() {
+    const preset = classStandardArrayPreset();
+    if (preset) {
+      appState.characterSheet.abilities = {
+        ...appState.characterSheet.abilities,
+        ...preset,
+      };
+      return;
+    }
+
+    const values = [15, 14, 13, 12, 10, 8];
+    const priorities = characterSheetDerived.characterAbilityGuidance().map((ability) => ability.key);
+    const fallback = ['dex', 'con', 'wis', 'str', 'int', 'cha'];
+    const ordered = [...new Set([...priorities, ...fallback])].slice(0, 6);
+    ordered.forEach((key, index) => {
+      appState.characterSheet.abilities[key] = values[index];
+    });
+  }
+
+  function classStandardArrayPreset() {
+    const className = normalizeLabel(String(characterClassEntry()?.nome || '').replace(/^Classe:\s*/i, ''));
+    const presets = {
+      barbaro: { str: 15, dex: 13, con: 14, int: 10, wis: 12, cha: 8 },
+      bardo: { str: 8, dex: 14, con: 12, int: 13, wis: 10, cha: 15 },
+      chierico: { str: 14, dex: 8, con: 13, int: 10, wis: 15, cha: 12 },
+      druido: { str: 8, dex: 12, con: 14, int: 13, wis: 15, cha: 10 },
+      guerriero: { str: 15, dex: 14, con: 13, int: 8, wis: 10, cha: 12 },
+      ladro: { str: 12, dex: 15, con: 13, int: 14, wis: 10, cha: 8 },
+      mago: { str: 8, dex: 12, con: 13, int: 15, wis: 14, cha: 10 },
+      monaco: { str: 12, dex: 15, con: 13, int: 10, wis: 14, cha: 8 },
+      paladino: { str: 15, dex: 10, con: 13, int: 8, wis: 12, cha: 14 },
+      ranger: { str: 12, dex: 15, con: 13, int: 8, wis: 14, cha: 10 },
+      stregone: { str: 10, dex: 13, con: 14, int: 8, wis: 12, cha: 15 },
+      warlock: { str: 8, dex: 14, con: 13, int: 12, wis: 10, cha: 15 },
+    };
+
+    return presets[className] || null;
   }
 
   function applyBackgroundSkills() {
@@ -595,6 +713,22 @@ export function createCharacterSheetEventsController({
       appendEquipmentNote(`Da verificare (${result.source}): ${result.unmatched.join(', ')}`);
     }
     appendEquipmentNote(marker);
+  }
+
+  function nextBuilderStepForActiveSheet() {
+    const missing = characterSheetDerived.characterBuilderChecklist().find((item) => !item.complete);
+    const stepByLabel = {
+      Identita: 'identity',
+      Caratteristiche: 'abilities',
+      Competenze: 'skills',
+      'Talento origine': 'identity',
+      Combattimento: 'kit',
+      Equipaggiamento: 'kit',
+      Incantesimi: 'spells',
+      Riferimenti: 'finish',
+    };
+
+    return stepByLabel[missing?.label] || 'finish';
   }
 
   function importEquipmentText(text, source) {

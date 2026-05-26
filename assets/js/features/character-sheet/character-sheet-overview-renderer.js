@@ -26,6 +26,10 @@ export function createCharacterSheetOverviewRenderer({
   nextLevelSummary,
   renderLevelAdvancementSummary,
   characterSheetDerived,
+  characterSpellOptions,
+  spellOptionLabel,
+  characterSpellSlots,
+  abilityOptions,
 }) {
   function renderCharacterSheetOverview() {
     const sheet = appState.characterSheet;
@@ -159,8 +163,9 @@ export function createCharacterSheetOverviewRenderer({
           <div class="sheet-builder-step-heading">
             <span>Step 2</span>
             <h3>Caratteristiche</h3>
-            <p>Metti in evidenza le caratteristiche suggerite da classe e background, poi assegna i punteggi.</p>
+            <p>Scegli un metodo, applica una base ufficiale e poi rifinisci i punteggi con i bonus del background.</p>
           </div>
+          ${renderAbilityMethodGuide()}
           ${renderAbilityGuidance()}
           <div class="ability-grid">
             ${ABILITY_META.map(([key, label, short]) => renderAbilityCard(key, label, short)).join('')}
@@ -195,16 +200,54 @@ export function createCharacterSheetOverviewRenderer({
         <div class="sheet-panel sheet-panel--wide sheet-builder-step" id="sheet-builder-kit">
           <div class="sheet-builder-step-heading">
             <span>Step 4</span>
-            <h3>Kit e progressione</h3>
-            <p>Rivedi competenze, progressione e prossime azioni. Equipaggiamento e combattimento restano nelle viste dedicate.</p>
+            <h3>Equipaggiamento iniziale</h3>
+            <p>Scegli il pacchetto della classe o le monete del background, poi applica PF e CA suggeriti.</p>
           </div>
           ${renderBuilderIssues()}
+          ${renderBuilderStartingEquipment()}
+          ${renderBuilderCombatSetup()}
+          ${renderStepActions([
+            { label: 'Indietro', target: 'skills' },
+            { label: 'Continua', target: 'spells' },
+          ])}
+        </div>
+      `;
+    }
+
+    if (activeStep === 'spells') {
+      return `
+        <div class="sheet-panel sheet-panel--wide sheet-builder-step" id="sheet-builder-spells">
+          <div class="sheet-builder-step-heading">
+            <span>Step 5</span>
+            <h3>Magia</h3>
+            <p>${escapeHtml(characterSpellOptions().length || characterSpellSlots().length
+              ? 'Scegli i primi incantesimi dal catalogo filtrato per classe e controlla gli slot disponibili.'
+              : 'Questa classe non richiede scelte da incantatore nel catalogo SRD collegato.')}</p>
+          </div>
+          ${renderBuilderSpellSetup()}
+          ${renderStepActions([
+            { label: 'Indietro', target: 'kit' },
+            { label: 'Continua', target: 'finish' },
+          ])}
+        </div>
+      `;
+    }
+
+    if (activeStep === 'finish') {
+      return `
+        <div class="sheet-panel sheet-panel--wide sheet-builder-step" id="sheet-builder-finish">
+          <div class="sheet-builder-step-heading">
+            <span>Step 6</span>
+            <h3>Pronto al tavolo</h3>
+            <p>Controlla solo gli avvisi rimasti e apri la scheda giocabile quando la base e pronta.</p>
+          </div>
+          ${renderBuilderFinish()}
           ${renderOtherProficiencies()}
           ${renderCharacterClassProgression()}
           ${renderStepActions([
-            { label: 'Indietro', target: 'skills' },
-            { label: 'Inventario', href: '#/character_sheet/inventory' },
-            { label: 'Combattimento', href: '#/character_sheet/combat' },
+            { label: 'Indietro', target: 'spells' },
+            { label: 'Apri scheda', href: '#/character_sheet/overview' },
+            { label: 'Usa al tavolo', href: '#/character_sheet/combat' },
           ])}
         </div>
       `;
@@ -259,9 +302,23 @@ export function createCharacterSheetOverviewRenderer({
       {
         id: 'kit',
         label: 'Kit',
-        hint: 'Equipaggiamento e dettagli finali',
-        summary: 'Ultimo passaggio: azioni consigliate compatte e rimandi alle viste giocabili.',
-        checks: ['Combattimento', 'Equipaggiamento', 'Riferimenti'],
+        hint: 'Equipaggiamento e difese',
+        summary: 'Equipaggiamento iniziale, PF e CA vengono trattati prima di passare alla scheda giocabile.',
+        checks: ['Combattimento', 'Equipaggiamento'],
+      },
+      {
+        id: 'spells',
+        label: 'Magia',
+        hint: 'Incantesimi se servono',
+        summary: 'Il wizard mostra le scelte magiche solo quando la classe usa incantesimi.',
+        checks: ['Incantesimi'],
+      },
+      {
+        id: 'finish',
+        label: 'Pronto',
+        hint: 'Riepilogo finale',
+        summary: 'Chiusura compatta con gli ultimi avvisi e accesso alla scheda pronta.',
+        checks: ['Riferimenti'],
       },
     ];
   }
@@ -513,6 +570,154 @@ export function createCharacterSheetOverviewRenderer({
     return characterSheetDerived.characterOriginFeat();
   }
 
+  function renderBuilderStartingEquipment() {
+    const classText = characterSheetDerived.classStartingEquipmentText();
+    const classOptions = characterSheetDerived.classStartingEquipmentOptions(classText);
+    const backgroundText = characterSheetDerived.backgroundStartingCoinsText();
+    const backgroundOption = characterSheetDerived.backgroundStartingCoinsOption();
+
+    if (!classText && !backgroundText) {
+      return '<p class="sheet-empty">Scegli classe e background per vedere equipaggiamento iniziale e monete alternative.</p>';
+    }
+
+    return `
+      <div class="sheet-builder-choice-grid">
+        ${classText ? `
+          <article class="sheet-builder-choice">
+            <span>Classe</span>
+            <strong>${escapeHtml(characterClassEntry()?.nome?.replace(/^Classe:\s*/i, '') || 'Equipaggiamento')}</strong>
+            <p>${escapeHtml(classText)}</p>
+            <div>
+              ${classOptions.map((option) => `
+                <button
+                  class="button button--ghost"
+                  type="button"
+                  data-sheet-builder-action="apply-starting-equipment"
+                  data-sheet-builder-action-value="${escapeAttr(option.key)}"
+                  ${option.imported ? 'disabled' : ''}
+                >${escapeHtml(option.imported ? 'Gia importato' : option.label)}</button>
+              `).join('')}
+            </div>
+          </article>
+        ` : ''}
+        ${backgroundText ? `
+          <article class="sheet-builder-choice">
+            <span>Background</span>
+            <strong>${escapeHtml(characterBackgroundEntry()?.nome || 'Monete')}</strong>
+            <p>${escapeHtml(backgroundText)}</p>
+            <div>
+              <button
+                class="button button--ghost"
+                type="button"
+                data-sheet-builder-action="apply-starting-equipment"
+                data-sheet-builder-action-value="background-coins"
+                ${backgroundOption?.imported ? 'disabled' : ''}
+              >${escapeHtml(backgroundOption?.imported ? 'Gia applicate' : 'Applica monete')}</button>
+            </div>
+          </article>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  function renderBuilderCombatSetup() {
+    const suggestedHp = characterSheetDerived.characterSuggestedHitPoints();
+    const suggestedAc = characterSheetDerived.characterSuggestedArmorClass();
+
+    return `
+      <div class="sheet-builder-choice-grid">
+        <article class="sheet-builder-choice">
+          <span>Punti ferita</span>
+          <strong>${escapeHtml(String(Number(appState.characterSheet.maxHp) || 0))}/${escapeHtml(String(suggestedHp))}</strong>
+          <p>Il valore suggerito usa dado vita, livello e modificatore di Costituzione.</p>
+          <div>
+            <button class="button button--ghost" type="button" data-sheet-builder-action="apply-derived-hp">Applica PF</button>
+          </div>
+        </article>
+        <article class="sheet-builder-choice">
+          <span>Classe Armatura</span>
+          <strong>${escapeHtml(String(Number(appState.characterSheet.armorClass) || 10))}/${escapeHtml(String(suggestedAc))}</strong>
+          <p>La CA usa armatura equipaggiata quando presente, altrimenti 10 + Destrezza.</p>
+          <div>
+            <button class="button button--ghost" type="button" data-sheet-builder-action="apply-derived-ac">Applica CA</button>
+          </div>
+        </article>
+      </div>
+    `;
+  }
+
+  function renderBuilderSpellSetup() {
+    const spells = characterSpellOptions();
+    const slots = characterSpellSlots();
+    const ability = abilityOptions().find((option) => option.value === appState.characterSheet.spellcastingAbility)?.label || appState.characterSheet.spellcastingAbility;
+
+    if (!spells.length && !slots.length) {
+      return `
+        <div class="sheet-builder-choice">
+          <span>Non caster</span>
+          <strong>Nessuna scelta richiesta</strong>
+          <p>La scheda incantesimi mostrera uno stato vuoto utile invece di controlli tecnici.</p>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="sheet-builder-spell-panel">
+        <div class="sheet-stat-strip">
+          ${renderSummaryStat('Car.', ability, 'Lancio')}
+          ${renderSummaryStat('Lista', spells.length, 'SRD filtrati')}
+          ${renderSummaryStat('Preparati', appState.characterSheet.preparedSpells.length, 'Scheda')}
+          ${renderSummaryStat('Slot', slots.length ? slots.map(([, value]) => value).join('/') : '0', 'Livelli')}
+        </div>
+        <label class="sheet-field">
+          <span>Aggiungi incantesimo</span>
+          <select data-sheet-add-spell>
+            <option value="">Scegli dal catalogo SRD</option>
+            ${spells.slice(0, 80).map((spell) => `<option value="${escapeAttr(spell.id)}">${escapeHtml(spellOptionLabel(spell))}</option>`).join('')}
+          </select>
+        </label>
+        ${appState.characterSheet.preparedSpells.length ? `
+          <div class="sheet-pill-list">
+            ${appState.characterSheet.preparedSpells.slice(0, 12).map((id) => {
+              const spell = (Array.isArray(appState.data.spells) ? appState.data.spells : []).find((entry) => entry.id === id);
+              return spell ? `<a href="#/spells/${encodeURIComponent(spell.id)}">${escapeHtml(spell.nome)}</a>` : '';
+            }).join('')}
+          </div>
+        ` : '<p class="sheet-empty">Aggiungi almeno un trucchetto o incantesimo per avere una dashboard pronta.</p>'}
+      </div>
+    `;
+  }
+
+  function renderBuilderFinish() {
+    const checklist = characterBuilderChecklist();
+    const missing = checklist.filter((item) => !item.complete);
+
+    if (!missing.length) {
+      return `
+        <div class="sheet-builder-finish is-ready">
+          <strong>Base completa</strong>
+          <p>Il personaggio ha identita, punteggi, competenze, kit e riferimenti minimi per essere usato.</p>
+          <a class="button button--primary" href="#/character_sheet/overview">Apri scheda pronta</a>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="sheet-builder-finish">
+        <strong>${escapeHtml(`${missing.length} cose da rifinire`)}</strong>
+        <div class="sheet-checklist-grid">
+          ${missing.map((item) => `
+            <a class="sheet-checklist-item" href="${escapeAttr(builderHref(item.href))}">
+              <span>Da fare</span>
+              <strong>${escapeHtml(item.label)}</strong>
+              <small>${escapeHtml(item.hint)}</small>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
   function renderOverviewSummary() {
     const sheet = appState.characterSheet;
     const initiative = abilityModifier(sheet.abilities.dex) + (Number(sheet.initiativeBonus) || 0);
@@ -578,14 +783,102 @@ export function createCharacterSheetOverviewRenderer({
   }
 
   function renderOverviewCreationCta() {
-    const missing = characterBuilderChecklist()
-      .filter((item) => ['Identita', 'Caratteristiche', 'Competenze', 'Combattimento', 'Equipaggiamento'].includes(item.label))
-      .filter((item) => !item.complete);
+    const missing = characterBuilderChecklist().filter((item) => !item.complete);
+    if (!missing.length) {
+      return `<a class="button button--ghost sheet-creation-cta" href="#/character_sheet">Personaggi</a>`;
+    }
 
-    if (!missing.length) return '';
+    return `<a class="button button--ghost sheet-creation-cta" href="#/character_sheet/builder">${escapeHtml(appState.characterSheet.name ? 'Rifinisci personaggio' : 'Completa creazione')}</a>`;
+  }
 
-    const label = missing.some((item) => item.label === 'Identita') ? 'Completa creazione' : 'Rifinisci personaggio';
-    return `<a class="button button--primary sheet-creation-cta" href="#/character_sheet/builder">${escapeHtml(label)}</a>`;
+  function renderAbilityMethodGuide() {
+    const pointBuy = pointBuyState();
+    const preset = classStandardArrayPreset();
+    const rule = appState.data.rules.find((entry) => entry.id === 'caratteristiche_allineamento_personaggio');
+
+    return `
+      <div class="sheet-ability-methods">
+        <article class="sheet-ability-method is-primary">
+          <div>
+            <span>Serie standard</span>
+            <strong>${escapeHtml(preset ? 'Consigliata per classe' : '15, 14, 13, 12, 10, 8')}</strong>
+            <p>${escapeHtml(preset ? `Applica la distribuzione SRD per ${preset.className}.` : 'Assegna i valori standard alle priorita suggerite.')}</p>
+          </div>
+          <button class="button button--ghost" type="button" data-sheet-builder-action="apply-standard-array">Applica</button>
+        </article>
+
+        <article class="sheet-ability-method${pointBuy.valid ? '' : ' is-warning'}">
+          <div>
+            <span>Acquisto punti</span>
+            <strong>${escapeHtml(`${pointBuy.spent}/27 punti`)}</strong>
+            <p>${escapeHtml(pointBuy.valid ? `${27 - pointBuy.spent} punti restanti, valori da 8 a 15.` : 'Porta i valori tra 8 e 15 per usare il costo in punti.')}</p>
+          </div>
+          <button class="button button--ghost" type="button" data-sheet-builder-action="apply-point-buy-base">Base 8</button>
+        </article>
+
+        <article class="sheet-ability-method">
+          <div>
+            <span>Generazione casuale</span>
+            <strong>4d6, tieni 3</strong>
+            <p>Tira sei risultati, poi inseriscili manualmente dove servono.</p>
+          </div>
+          <button type="button" data-dice-roll="4d6dl1">Tira</button>
+        </article>
+
+        ${rule ? `
+          <a class="sheet-rule-link" href="#/rules/${encodeURIComponent(rule.id)}">Apri regola SRD: ${escapeHtml(rule.nome)}</a>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  function pointBuyState() {
+    const costs = {
+      8: 0,
+      9: 1,
+      10: 2,
+      11: 3,
+      12: 4,
+      13: 5,
+      14: 7,
+      15: 9,
+    };
+    const values = ABILITY_META.map(([key]) => Number(appState.characterSheet.abilities[key]) || 10);
+    const valid = values.every((value) => Object.hasOwn(costs, value));
+    const spent = valid ? values.reduce((total, value) => total + costs[value], 0) : 0;
+
+    return { valid, spent };
+  }
+
+  function classStandardArrayPreset() {
+    const classEntry = characterClassEntry();
+    const className = String(classEntry?.nome || '').replace(/^Classe:\s*/i, '');
+    const key = normalizeAbilityMethodLabel(className);
+    const presets = {
+      barbaro: { str: 15, dex: 13, con: 14, int: 10, wis: 12, cha: 8 },
+      bardo: { str: 8, dex: 14, con: 12, int: 13, wis: 10, cha: 15 },
+      chierico: { str: 14, dex: 8, con: 13, int: 10, wis: 15, cha: 12 },
+      druido: { str: 8, dex: 12, con: 14, int: 13, wis: 15, cha: 10 },
+      guerriero: { str: 15, dex: 14, con: 13, int: 8, wis: 10, cha: 12 },
+      ladro: { str: 12, dex: 15, con: 13, int: 14, wis: 10, cha: 8 },
+      mago: { str: 8, dex: 12, con: 13, int: 15, wis: 14, cha: 10 },
+      monaco: { str: 12, dex: 15, con: 13, int: 10, wis: 14, cha: 8 },
+      paladino: { str: 15, dex: 10, con: 13, int: 8, wis: 12, cha: 14 },
+      ranger: { str: 12, dex: 15, con: 13, int: 8, wis: 14, cha: 10 },
+      stregone: { str: 10, dex: 13, con: 14, int: 8, wis: 12, cha: 15 },
+      warlock: { str: 8, dex: 14, con: 13, int: 12, wis: 10, cha: 15 },
+    };
+
+    return presets[key] ? { className, abilities: presets[key] } : null;
+  }
+
+  function normalizeAbilityMethodLabel(value) {
+    return String(value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[’']/g, '')
+      .trim();
   }
 
   function renderSummaryStat(label, value, hint) {

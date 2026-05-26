@@ -127,6 +127,7 @@ export function createCharacterSheetDerivedModel({
     const originFeat = characterOriginFeat();
     const hasCombatReady = Number(sheet.maxHp) > 0 && Number(sheet.armorClass) > 0;
     const hasClass = Boolean(characterClassEntry());
+    const caster = characterSpellCatalog().length > 0;
 
     return [
       {
@@ -166,12 +167,28 @@ export function createCharacterSheetDerivedModel({
         href: '#/character_sheet/inventory',
       },
       {
+        label: 'Incantesimi',
+        complete: !caster || sheet.preparedSpells.length > 0,
+        hint: caster ? 'Scegli trucchetti o incantesimi iniziali' : 'Nessuna scelta magica richiesta',
+        href: '#/character_sheet/spells',
+      },
+      {
         label: 'Riferimenti',
         complete: sheet.references.length >= 3,
         hint: 'Classe, specie, background e regole utili',
         href: '#/character_sheet/notes',
       },
     ];
+  }
+
+  function characterBuilderChecklistForSheet(sheet) {
+    const current = appState.characterSheet;
+    appState.characterSheet = sheet;
+    try {
+      return characterBuilderChecklist();
+    } finally {
+      appState.characterSheet = current;
+    }
   }
 
   function characterBuilderIssues() {
@@ -318,6 +335,18 @@ export function createCharacterSheetDerivedModel({
       .sort((a, b) => a.priority - b.priority || a.label.localeCompare(b.label, 'it'));
   }
 
+  function characterSpellCatalog() {
+    const className = normalizeSheetLabel(String(characterClassEntry()?.nome || '').replace(/^Classe:\s*/i, ''));
+    if (!className) return [];
+
+    const spells = Array.isArray(appState.data.spells) ? appState.data.spells : [];
+
+    return spells.filter((spell) => {
+      const classes = Array.isArray(spell.classi) ? spell.classi : [];
+      return classes.some((name) => normalizeSheetLabel(name) === className);
+    });
+  }
+
   function abilityKeysFromText(value) {
     const text = normalizeSheetLabel(value);
     if (!text) return [];
@@ -444,6 +473,7 @@ export function createCharacterSheetDerivedModel({
     characterBackgroundEntry,
     characterBackgroundSkills,
     characterBuilderChecklist,
+    characterBuilderChecklistForSheet,
     characterBuilderIssues,
     characterInitiative,
     characterOriginFeat,
