@@ -1,3 +1,5 @@
+import { createCharacterSheetDerivedModel } from './character-sheet-derived.js?v=20260520-guided';
+
 export function createCharacterSheetOverviewRenderer({
   appState,
   escapeAttr,
@@ -21,11 +23,22 @@ export function createCharacterSheetOverviewRenderer({
   classProgressionRow,
   classProgressionResources,
   classSkillChoiceCount,
+  classTraitsMap,
   splitClassFeatures,
   classSubclassRows,
   nextLevelSummary,
   renderLevelAdvancementSummary,
 }) {
+  const derived = createCharacterSheetDerivedModel({
+    appState,
+    abilityMeta: ABILITY_META,
+    skillMeta: SKILL_META,
+    classSkillOptions,
+    classSkillChoiceCount,
+    characterClassEntry,
+    classTraitsMap,
+  });
+
   function renderCharacterSheetOverview() {
     const sheet = appState.characterSheet;
 
@@ -85,6 +98,7 @@ export function createCharacterSheetOverviewRenderer({
           </div>
           <a class="button button--ghost" href="${escapeAttr(next.href)}">${escapeHtml(next.action)}</a>
         </div>
+        ${renderGuidedNextActions()}
         <div class="sheet-guide-grid">
           ${renderClassGuideCard()}
           ${renderSpeciesGuideCard()}
@@ -94,9 +108,39 @@ export function createCharacterSheetOverviewRenderer({
     `;
   }
 
+  function renderGuidedNextActions() {
+    const items = characterBuilderChecklist();
+    const missing = items.filter((item) => !item.complete).slice(0, 3);
+
+    if (!missing.length) {
+      return `
+        <div class="sheet-guide-next">
+          <strong>Base pronta</strong>
+          <p>La scheda ha identita, scelte principali, combattimento, equipaggiamento e riferimenti minimi.</p>
+          <a class="button button--ghost" href="#/character_sheet/combat">Usa al tavolo</a>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="sheet-guide-next">
+        <strong>Completa prima questi passaggi</strong>
+        <ol>
+          ${missing.map((item) => `
+            <li>
+              <span>${escapeHtml(item.label)}</span>
+              <small>${escapeHtml(item.hint)}</small>
+              <a href="${escapeAttr(item.href)}">Apri</a>
+            </li>
+          `).join('')}
+        </ol>
+      </div>
+    `;
+  }
+
   function renderClassGuideCard() {
     const classEntry = characterClassEntry();
-    const traits = classTraitsMap(classEntry);
+    const traits = derived.selectedClassTraits();
     const skillProgress = characterSkillChoiceProgress();
 
     if (!classEntry) {
@@ -245,127 +289,27 @@ export function createCharacterSheetOverviewRenderer({
   }
 
   function characterBuilderChecklist() {
-    const sheet = appState.characterSheet;
-    const hasAbilitySpread = ABILITY_META.some(([key]) => Number(sheet.abilities[key]) !== 10);
-    const skillProgress = characterSkillChoiceProgress();
-    const originFeat = characterOriginFeat();
-    const hasCombatReady = Number(sheet.maxHp) > 0 && Number(sheet.armorClass) > 0;
-    const hasClass = Boolean(characterClassEntry());
-
-    return [
-      {
-        label: 'Identita',
-        complete: Boolean(sheet.name && hasClass && sheet.ancestry && sheet.background),
-        hint: 'Nome, classe, specie e background',
-        href: '#/character_sheet/overview',
-      },
-      {
-        label: 'Caratteristiche',
-        complete: hasAbilitySpread,
-        hint: hasAbilitySpread ? 'Punteggi modificati' : 'Imposta i sei punteggi',
-        href: '#/character_sheet/overview',
-      },
-      {
-        label: 'Competenze',
-        complete: skillProgress.complete,
-        hint: skillProgress.required ? `${skillProgress.classSelected}/${skillProgress.required} scelte classe · ${skillProgress.backgroundSelected} background` : 'Scegli abilita da classe/background',
-        href: '#/character_sheet/overview',
-      },
-      {
-        label: 'Talento origine',
-        complete: Boolean(originFeat),
-        hint: originFeat ? originFeat.nome : 'Scegli un background con talento',
-        href: originFeat ? `#/feats/${encodeURIComponent(originFeat.id)}` : '#/character_sheet/overview',
-      },
-      {
-        label: 'Combattimento',
-        complete: hasCombatReady,
-        hint: hasCombatReady ? 'CA e PF presenti' : 'Applica PF e CA suggeriti',
-        href: '#/character_sheet/combat',
-      },
-      {
-        label: 'Equipaggiamento',
-        complete: sheet.equipmentItems.length > 0 || sheet.magicItems.length > 0 || String(sheet.equipment || '').trim(),
-        hint: 'Armi, armature, strumenti o note',
-        href: '#/character_sheet/inventory',
-      },
-      {
-        label: 'Riferimenti',
-        complete: sheet.references.length >= 3,
-        hint: 'Classe, specie, background e regole utili',
-        href: '#/character_sheet/notes',
-      },
-    ];
+    return derived.characterBuilderChecklist();
   }
 
   function characterSkillChoiceProgress() {
-    const classEntry = characterClassEntry();
-    const classOptions = new Set(classSkillOptions(classEntry).map(([key]) => key));
-    const backgroundSkills = new Set(characterBackgroundSkills());
-    const required = classSkillChoiceCount(classEntry);
-    const classSelected = [...classOptions]
-      .filter((key) => !backgroundSkills.has(key) && Number(appState.characterSheet.skillProficiencies[key]) > 0)
-      .length;
-    const backgroundSelected = [...backgroundSkills]
-      .filter((key) => Number(appState.characterSheet.skillProficiencies[key]) > 0)
-      .length;
-    const anySelected = Object.values(appState.characterSheet.skillProficiencies).some((rank) => Number(rank) > 0);
-
-    return {
-      required,
-      classSelected,
-      backgroundSelected,
-      complete: required ? classSelected >= required : anySelected,
-    };
+    return derived.characterSkillChoiceProgress();
   }
 
   function characterBackgroundEntry() {
-    const value = appState.characterSheet.background;
-    return appState.data.backgrounds.find((entry) => entry.id === value || entry.nome === value) || null;
+    return derived.characterBackgroundEntry();
   }
 
   function characterSpeciesEntry() {
-    const value = appState.characterSheet.ancestry;
-    return appState.data.species.find((entry) => entry.id === value || entry.nome === value) || null;
-  }
-
-  function classTraitsMap(classEntry) {
-    const traits = classEntry?.sezioni?.find((section) => String(section.titolo || '').startsWith('Tratti '));
-
-    return Object.fromEntries((traits?.righe || [])
-      .map((row) => [
-        row.chiave || row.Voce,
-        String(row.valore || row.Riepilogo || '').replace(/\.$/, ''),
-      ])
-      .filter(([key]) => key));
+    return derived.characterSpeciesEntry();
   }
 
   function characterBackgroundSkills() {
-    const background = characterBackgroundEntry();
-    const skills = Array.isArray(background?.competenze?.abilita) ? background.competenze.abilita : [];
-
-    return skills
-      .map((label) => {
-        const normalized = normalizeLabel(label);
-        return SKILL_META.find(([, skillLabel]) => normalizeLabel(skillLabel) === normalized)?.[0] || '';
-      })
-      .filter(Boolean);
+    return derived.characterBackgroundSkills();
   }
 
   function characterOriginFeat() {
-    const background = characterBackgroundEntry();
-    const featName = String(background?.talento_origine || '').replace(/\s*\([^)]*\)\s*/g, ' ').trim();
-    const key = normalizeLabel(featName);
-    if (!key) return null;
-
-    return appState.data.feats.find((feat) => normalizeLabel(feat.nome) === key) || null;
-  }
-
-  function normalizeLabel(value) {
-    return String(value || '')
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
+    return derived.characterOriginFeat();
   }
 
   function renderOverviewSummary() {
@@ -566,10 +510,7 @@ export function createCharacterSheetOverviewRenderer({
   }
 
   function skillSources(key) {
-    const sources = [];
-    if (characterBackgroundSkills().includes(key)) sources.push('Background');
-    if (classSkillOptions(characterClassEntry()).some(([skillKey]) => skillKey === key)) sources.push('Classe');
-    return sources;
+    return derived.skillSources(key);
   }
 
   function renderOtherProficiencies() {

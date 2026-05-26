@@ -535,8 +535,12 @@ export function createCharacterSheetEventsController({
   }
 
   function applyStartingEquipment(mode) {
+    const marker = startingEquipmentImportMarker(mode);
+    if (marker && startingEquipmentAlreadyImported(marker)) return;
+
     if (mode === 'background-coins') {
       applyCoinsFromText(backgroundEntry()?.equipaggiamento_alternativo || '');
+      appendEquipmentNote(marker);
       return;
     }
 
@@ -547,6 +551,7 @@ export function createCharacterSheetEventsController({
     if (result.unmatched.length) {
       appendEquipmentNote(`Da verificare (${result.source}): ${result.unmatched.join(', ')}`);
     }
+    appendEquipmentNote(marker);
   }
 
   function importEquipmentText(text, source) {
@@ -625,9 +630,21 @@ export function createCharacterSheetEventsController({
   }
 
   function appendEquipmentNote(note) {
+    if (!note) return;
     const text = String(appState.characterSheet.equipment || '').trim();
     if (text.includes(note)) return;
     appState.characterSheet.equipment = text ? `${text}\n\n${note}` : note;
+  }
+
+  function startingEquipmentImportMarker(mode) {
+    if (mode === 'class-a') return 'Importato equipaggiamento iniziale: Classe opzione A';
+    if (mode === 'class-b') return 'Importato equipaggiamento iniziale: Classe opzione B';
+    if (mode === 'background-coins') return 'Importato equipaggiamento iniziale: Monete background';
+    return 'Importato equipaggiamento iniziale: Classe';
+  }
+
+  function startingEquipmentAlreadyImported(marker) {
+    return Boolean(marker && String(appState.characterSheet.equipment || '').includes(marker));
   }
 
   function normalizeLabel(value) {

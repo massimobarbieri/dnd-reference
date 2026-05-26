@@ -1199,6 +1199,61 @@ h1 {
   font-size: .88rem;
 }
 
+.sheet-guide-next {
+  display: grid;
+  gap: .45rem;
+  border: 1px solid rgba(138,63,35,.18);
+  border-radius: 8px;
+  background: rgba(252,248,240,.72);
+  padding: .65rem;
+}
+
+.sheet-guide-next > strong {
+  color: var(--accent);
+  font-size: .95rem;
+}
+
+.sheet-guide-next p {
+  margin: 0;
+  color: var(--muted);
+  font-size: .86rem;
+}
+
+.sheet-guide-next ol {
+  display: grid;
+  gap: .35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sheet-guide-next li {
+  display: grid;
+  grid-template-columns: minmax(7rem, .8fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .5rem;
+  min-width: 0;
+}
+
+.sheet-guide-next li span {
+  color: var(--accent);
+  font-weight: 760;
+}
+
+.sheet-guide-next li small {
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheet-guide-next li a {
+  color: var(--accent);
+  font-size: .82rem;
+  font-weight: 760;
+  text-decoration: none;
+}
+
 .sheet-guide-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2794,6 +2849,15 @@ code {
   .sheet-guide-grid,
   .sheet-guide-card .button {
     width: 100%;
+  }
+
+  .sheet-guide-next li {
+    grid-template-columns: 1fr auto;
+  }
+
+  .sheet-guide-next li small {
+    grid-column: 1 / -1;
+    white-space: normal;
   }
 
   .sheet-guide-grid {
