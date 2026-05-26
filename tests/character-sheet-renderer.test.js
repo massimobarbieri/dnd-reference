@@ -11,8 +11,8 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
     classId: 'wizard',
     ancestry: 'Elfo',
     background: 'Accolito',
-    spellcastingAbility: 'int',
-    preparedSpells: ['magic-missile'],
+  spellcastingAbility: 'int',
+    preparedSpells: ['magic-missile', 'fire-bolt'],
     magicItems: [{ id: 'wand', name: 'Bacchetta', summary: 'rara · richiede sintonia' }],
     references: [{ section: 'rules', id: 'cover', name: 'Copertura', summary: 'Combattimento' }],
     equipmentItems: [{ id: 'eq-armor', name: 'Armatura di cuoio', quantity: 1, armorClass: '11 + Des', source: 'Armature' }],
@@ -22,7 +22,9 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   api.appState.characterSheets = [sheet];
   api.appState.activeCharacterSheetId = sheet.id;
   api.appState.data.spells = [
-    { id: 'magic-missile', nome: 'Dardo Incantato', livello: 1, scuola: 'Invocazione', classi: ['mago'] },
+    { id: 'magic-missile', nome: 'Dardo Incantato', livello: 1, scuola: 'Invocazione', classi: ['mago'], tempo_lancio: 'azione', gittata: '36 m', componenti: 'V, S', durata: 'istantanea' },
+    { id: 'fire-bolt', nome: 'Dardo di Fuoco', livello: 0, scuola: 'Invocazione', classi: ['mago'], tempo_lancio: 'azione', gittata: '36 m', componenti: 'V, S', durata: 'istantanea' },
+    { id: 'shield', nome: 'Scudo', livello: 1, scuola: 'Abiurazione', classi: ['mago'], tempo_lancio: 'reazione', gittata: 'incantatore', componenti: 'V, S', durata: '1 round' },
   ];
   api.appState.data.magic_items = [
     { id: 'wand', nome: 'Bacchetta', rarita: 'rara', richiede_sintonia: true },
@@ -146,7 +148,12 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   api.renderCharacterSheet('spells');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-add-spell/);
   assert.match(views['#detail-view'].innerHTML, /Dardo Incantato/);
+  assert.match(views['#detail-view'].innerHTML, /Dardo di Fuoco/);
   assert.match(views['#detail-view'].innerHTML, /sheet-spell-slots/);
+  assert.match(views['#detail-view'].innerHTML, /Catalogo classe/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-spell-filter="level"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-cast-spell="magic-missile"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-add-spell-button="shield"/);
 
   api.appState.characterSheet.classId = 'fighter';
   api.renderCharacterSheet('spells');

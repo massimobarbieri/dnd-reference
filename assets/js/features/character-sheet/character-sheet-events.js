@@ -507,6 +507,31 @@ export function createCharacterSheetEventsController({
       }
     });
 
+    views.detail.querySelectorAll('[data-sheet-add-spell-button]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        addSpellToCharacterSheet(event.currentTarget.dataset.sheetAddSpellButton);
+        renderCharacterSheet('spells');
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-spell-filter]').forEach((node) => {
+      node.addEventListener('change', (event) => {
+        appState.characterSpellFilters = {
+          ...(appState.characterSpellFilters || {}),
+          [event.currentTarget.dataset.sheetSpellFilter]: event.currentTarget.value,
+        };
+        renderCharacterSheet('spells');
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-cast-spell]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        castPreparedSpell(event.currentTarget.dataset.sheetCastSpell);
+        saveCharacterSheet();
+        renderCharacterSheet(appState.characterSheetTab === 'combat' ? 'combat' : 'spells');
+      });
+    });
+
     views.detail.querySelectorAll('[data-sheet-remove-spell]').forEach((node) => {
       node.addEventListener('click', (event) => {
         const id = event.currentTarget.dataset.sheetRemoveSpell;
@@ -767,6 +792,33 @@ export function createCharacterSheetEventsController({
 
     saveCharacterSheet();
     renderCharacterSheet('overview');
+  }
+
+  function castPreparedSpell(id) {
+    const spell = appState.data.spells.find((entry) => entry.id === id);
+    const level = Number(spell?.livello) || 0;
+    if (!spell || level <= 0) return true;
+
+    const slot = firstAvailableSpellSlot(level);
+    if (!slot) return false;
+
+    appState.characterSheet.spellSlotsUsed[slot.label] = Math.min(
+      slot.max,
+      (Number(appState.characterSheet.spellSlotsUsed[slot.label]) || 0) + 1
+    );
+    return true;
+  }
+
+  function firstAvailableSpellSlot(level) {
+    return characterSpellSlots()
+      .map(([label, value]) => ({
+        label,
+        level: Number(String(label).match(/\d+/)?.[0]) || 0,
+        max: Math.max(0, Number(value) || 0),
+      }))
+      .filter((slot) => slot.level >= level && slot.max > 0)
+      .sort((a, b) => a.level - b.level)
+      .find((slot) => (Number(appState.characterSheet.spellSlotsUsed[slot.label]) || 0) < slot.max) || null;
   }
 
   function nextBuilderStepForActiveSheet() {

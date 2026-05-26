@@ -426,6 +426,7 @@ export function createCharacterSheetCombatRenderer({
               ${action.roll ? `<button type="button" data-dice-roll="${escapeAttr(action.roll)}">${escapeHtml(action.rollLabel)}</button>` : ''}
               ${action.damage ? `<button type="button" data-dice-roll="${escapeAttr(action.damage)}">Danni</button>` : ''}
               ${action.resourceId ? `<button type="button" data-sheet-resource-delta="1" data-sheet-resource-id="${escapeAttr(action.resourceId)}">Usa</button>` : ''}
+              ${action.spellId ? `<button type="button" data-sheet-cast-spell="${escapeAttr(action.spellId)}">Lancia</button>` : ''}
               ${action.href ? `<a class="button button--ghost" href="${escapeAttr(action.href)}">Apri</a>` : ''}
             </div>
           </article>
@@ -468,6 +469,7 @@ export function createCharacterSheetCombatRenderer({
         type: spell.livello === 0 ? 'Trucchetto' : 'Incantesimo',
         name: spell.nome || spell.id,
         detail: [spellLevel(spell), spell.scuola, slotLabels.has(String(spell.livello)) ? 'slot disponibile' : null].filter(Boolean).join(' · '),
+        spellId: spell.id,
         href: `#/spells/${encodeURIComponent(spell.id)}`,
       }));
   }

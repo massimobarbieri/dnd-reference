@@ -1,4 +1,4 @@
-import { createCharacterSheetBackupController } from './character-sheet-backup.js?v=20260526-table-flow';
+import { createCharacterSheetBackupController } from './character-sheet-backup.js?v=20260526-spell-flow';
 
 export const CHARACTER_SHEET_BACKUP_ACTIONS = [
   'applyAppBackupImport',
