@@ -127,6 +127,13 @@ export function createCharacterSheetEventsController({
       });
     });
 
+    views.detail.querySelectorAll('[data-sheet-builder-step]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        appState.characterSheetBuilderStep = event.currentTarget.dataset.sheetBuilderStep;
+        renderCharacterSheet('builder');
+      });
+    });
+
     views.detail.querySelectorAll('[data-sheet-proficiency]').forEach((node) => {
       node.addEventListener('input', (event) => {
         appState.characterSheet.proficiencies[event.currentTarget.dataset.sheetProficiency] = event.currentTarget.value;

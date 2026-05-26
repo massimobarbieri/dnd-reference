@@ -77,6 +77,11 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
         },
       ],
     },
+    {
+      id: 'fighter',
+      nome: 'Classe: Guerriero',
+      sezioni: [],
+    },
   ];
 
   sheet.status.conditions = ['prone'];
@@ -91,18 +96,11 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-field="name"/);
   assert.match(views['#detail-view'].innerHTML, /<option value="elfo" selected>Elfo<\/option>/);
   assert.match(views['#detail-view'].innerHTML, /<option value="accolito" selected>Accolito<\/option>/);
-  assert.match(views['#detail-view'].innerHTML, /Talento origine/);
   assert.match(views['#detail-view'].innerHTML, /Talento: Iniziato alla magia/);
-  assert.match(views['#detail-view'].innerHTML, /Percorso guidato/);
-  assert.match(views['#detail-view'].innerHTML, /sheet-wizard-steps/);
-  assert.match(views['#detail-view'].innerHTML, /data-sheet-jump="sheet-builder-identity"/);
+  assert.doesNotMatch(views['#detail-view'].innerHTML, /Percorso guidato/);
+  assert.doesNotMatch(views['#detail-view'].innerHTML, /sheet-wizard-steps/);
+  assert.doesNotMatch(views['#detail-view'].innerHTML, /Continua a caratteristiche/);
   assert.match(views['#detail-view'].innerHTML, /id="sheet-builder-skills"/);
-  assert.match(views['#detail-view'].innerHTML, /Continua a caratteristiche/);
-  assert.match(views['#detail-view'].innerHTML, /href="#\/character_sheet\/inventory"/);
-  assert.match(views['#detail-view'].innerHTML, /Azioni consigliate/);
-  assert.match(views['#detail-view'].innerHTML, /D6 per ogni livello da mago/);
-  assert.match(views['#detail-view'].innerHTML, /scurovisione e retaggio fatato/);
-  assert.match(views['#detail-view'].innerHTML, /Intelligenza, Saggezza, Carisma/);
   assert.match(views['#detail-view'].innerHTML, /Priorita consigliate/);
   assert.match(views['#detail-view'].innerHTML, /Intelligenza · Classe · Background/);
   assert.match(views['#detail-view'].innerHTML, /Mancano 2 scelte abilita dalla classe/);
@@ -111,6 +109,17 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-skill="arcana"/);
   assert.match(views['#detail-view'].innerHTML, /Tradizione Arcana/);
   assert.match(views['#detail-view'].innerHTML, /Apri classe/);
+  assert.match(views['#detail-view'].innerHTML, /Rifinisci personaggio/);
+  assert.doesNotMatch(views['#detail-view'].innerHTML, />Creazione<\/a>/);
+
+  api.renderCharacterSheet('builder');
+  assert.match(views['#detail-view'].innerHTML, /Percorso guidato/);
+  assert.match(views['#detail-view'].innerHTML, /sheet-builder-progress/);
+  assert.match(views['#detail-view'].innerHTML, /sheet-wizard-steps/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-builder-step="identity"/);
+  assert.match(views['#detail-view'].innerHTML, /sheet-builder-step/);
+  assert.doesNotMatch(views['#detail-view'].innerHTML, /Checklist creazione/);
+  assert.doesNotMatch(views['#detail-view'].innerHTML, />Creazione<\/a>/);
 
   api.renderCharacterSheet('combat');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-add-resource/);
@@ -123,6 +132,12 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-add-spell/);
   assert.match(views['#detail-view'].innerHTML, /Dardo Incantato/);
   assert.match(views['#detail-view'].innerHTML, /sheet-spell-slots/);
+
+  api.appState.characterSheet.classId = 'fighter';
+  api.renderCharacterSheet('spells');
+  assert.match(views['#detail-view'].innerHTML, /Nessun lancio incantesimi/);
+  assert.doesNotMatch(views['#detail-view'].innerHTML, /sheet-spell-summary/);
+  api.appState.characterSheet.classId = 'wizard';
 
   api.renderCharacterSheet('inventory');
   assert.match(views['#detail-view'].innerHTML, /Equipaggiamento iniziale/);

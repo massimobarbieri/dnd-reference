@@ -33,8 +33,6 @@ export function createCharacterSheetOverviewRenderer({
     return `
       <section class="sheet-grid">
         ${renderOverviewSummary()}
-        ${renderCharacterBuilderChecklist()}
-        ${renderGuidedBuilder()}
 
         <div id="sheet-builder-identity" class="sheet-panel sheet-panel--identity">
           <h3>Identita</h3>
@@ -47,9 +45,6 @@ export function createCharacterSheetOverviewRenderer({
             ${sheetField('alignment', 'Allineamento', sheet.alignment)}
             ${sheetNumberField('xp', 'PE', sheet.xp, 0)}
           </div>
-          ${renderStepActions([
-            { label: 'Continua a caratteristiche', target: 'sheet-builder-abilities' },
-          ])}
         </div>
 
         <div id="sheet-builder-abilities" class="sheet-panel">
@@ -58,57 +53,60 @@ export function createCharacterSheetOverviewRenderer({
           <div class="ability-grid">
             ${ABILITY_META.map(([key, label, short]) => renderAbilityCard(key, label, short)).join('')}
           </div>
-          ${renderStepActions([
-            { label: 'Continua a competenze', target: 'sheet-builder-skills' },
-          ])}
         </div>
 
         <div id="sheet-builder-skills" class="sheet-panel sheet-panel--wide">
           <h3>Competenze abilita</h3>
           ${renderSkillProficiencies()}
-          ${renderStepActions([
-            { label: 'Altre competenze', target: 'sheet-builder-proficiencies' },
-            { label: 'Combattimento', href: '#/character_sheet/combat' },
-          ])}
         </div>
 
         <div id="sheet-builder-proficiencies" class="sheet-panel sheet-panel--wide">
           <h3>Altre competenze</h3>
           ${renderOtherProficiencies()}
-          ${renderStepActions([
-            { label: 'Progressione classe', target: 'sheet-builder-progression' },
-            { label: 'Inventario', href: '#/character_sheet/inventory' },
-          ])}
         </div>
 
         <div id="sheet-builder-progression" class="sheet-panel sheet-panel--wide">
           <h3>Progressione classe</h3>
           ${renderCharacterClassProgression()}
-          ${renderStepActions([
-            { label: 'Incantesimi', href: '#/character_sheet/spells' },
-            { label: 'Inventario', href: '#/character_sheet/inventory' },
-            { label: 'Riepilogo note', href: '#/character_sheet/notes' },
-          ])}
         </div>
       </section>
     `;
   }
 
-  function renderGuidedBuilder() {
-    const next = nextGuidedStep();
+  /*
+   * Wizard separato dalla scheda giocabile: qui l'utente viene guidato nelle
+   * scelte di creazione senza sporcare la vista principale al tavolo.
+   */
+  function renderCharacterSheetBuilder() {
+    const activeStep = characterBuilderActiveStep();
+
+    return `
+      <section class="sheet-grid sheet-grid--builder">
+        ${renderGuidedBuilder(activeStep)}
+        ${renderBuilderStepPanel(activeStep)}
+      </section>
+    `;
+  }
+
+  function renderGuidedBuilder(activeStep) {
+    const steps = builderSteps();
+    const active = steps.find((step) => step.id === activeStep) || steps[0];
+    const complete = characterBuilderChecklist().filter((item) => item.complete).length;
 
     return `
       <div class="sheet-panel sheet-panel--wide sheet-guided-builder">
         <div class="sheet-guide-heading">
           <div>
             <h3>Percorso guidato</h3>
-            <p>${escapeHtml(next.hint)}</p>
+            <p>${escapeHtml(active.summary)}</p>
           </div>
-          <a class="button button--ghost" href="${escapeAttr(next.href)}">${escapeHtml(next.action)}</a>
+          <a class="button button--ghost" href="#/character_sheet/overview">Torna alla scheda</a>
         </div>
-        ${renderWizardSteps()}
-        ${renderGuidedNextActions()}
-        ${renderBuilderIssues()}
+        ${renderWizardSteps(activeStep)}
+        <div class="sheet-builder-progress" aria-label="Avanzamento creazione">
+          <strong>${escapeHtml(`${complete}/${characterBuilderChecklist().length}`)}</strong>
+          <span>${escapeHtml(nextGuidedStep().hint)}</span>
+        </div>
         <div class="sheet-guide-grid">
           ${renderClassGuideCard()}
           ${renderSpeciesGuideCard()}
@@ -118,31 +116,22 @@ export function createCharacterSheetOverviewRenderer({
     `;
   }
 
-  function renderWizardSteps() {
-    const steps = characterBuilderChecklist();
-    const activeIndex = Math.max(0, steps.findIndex((step) => !step.complete));
+  function renderWizardSteps(activeStep) {
+    const checklist = characterBuilderChecklist();
+    const activeIndex = builderSteps().findIndex((step) => step.id === activeStep);
 
     return `
       <nav class="sheet-wizard-steps" aria-label="Passaggi creazione personaggio">
-        ${steps.map((step, index) => {
-          const state = step.complete ? 'complete' : index === activeIndex ? 'active' : 'pending';
-          const target = wizardStepTarget(step.label);
-          if (target) {
-            return `
-              <button class="sheet-wizard-step is-${state}" type="button" data-sheet-jump="${escapeAttr(target)}">
-                <span>${escapeHtml(String(index + 1))}</span>
-                <strong>${escapeHtml(step.label)}</strong>
-                <small>${escapeHtml(step.complete ? 'Pronto' : step.hint)}</small>
-              </button>
-            `;
-          }
-
+        ${builderSteps().map((step, index) => {
+          const related = checklist.filter((item) => step.checks.includes(item.label));
+          const complete = related.length > 0 && related.every((item) => item.complete);
+          const state = index === activeIndex ? 'active' : complete ? 'complete' : 'pending';
           return `
-            <a class="sheet-wizard-step is-${state}" href="${escapeAttr(step.href)}">
+            <button class="sheet-wizard-step is-${state}" type="button" data-sheet-builder-step="${escapeAttr(step.id)}">
               <span>${escapeHtml(String(index + 1))}</span>
               <strong>${escapeHtml(step.label)}</strong>
-              <small>${escapeHtml(step.complete ? 'Pronto' : step.hint)}</small>
-            </a>
+              <small>${escapeHtml(complete ? 'Pronto' : step.hint)}</small>
+            </button>
           `;
         }).join('')}
       </nav>
@@ -155,19 +144,136 @@ export function createCharacterSheetOverviewRenderer({
         ${actions.map((action) => action.href ? `
           <a class="button button--ghost" href="${escapeAttr(action.href)}">${escapeHtml(action.label)}</a>
         ` : `
-          <button class="button button--ghost" type="button" data-sheet-jump="${escapeAttr(action.target)}">${escapeHtml(action.label)}</button>
+          <button class="button button--ghost" type="button" data-sheet-builder-step="${escapeAttr(action.target)}">${escapeHtml(action.label)}</button>
         `).join('')}
       </div>
     `;
   }
 
-  function wizardStepTarget(label) {
-    return {
-      Identita: 'sheet-builder-identity',
-      Caratteristiche: 'sheet-builder-abilities',
-      Competenze: 'sheet-builder-skills',
-      'Talento origine': 'sheet-builder-identity',
-    }[label] || '';
+  function renderBuilderStepPanel(activeStep) {
+    const sheet = appState.characterSheet;
+
+    if (activeStep === 'abilities') {
+      return `
+        <div class="sheet-panel sheet-panel--wide sheet-builder-step" id="sheet-builder-abilities">
+          <div class="sheet-builder-step-heading">
+            <span>Step 2</span>
+            <h3>Caratteristiche</h3>
+            <p>Metti in evidenza le caratteristiche suggerite da classe e background, poi assegna i punteggi.</p>
+          </div>
+          ${renderAbilityGuidance()}
+          <div class="ability-grid">
+            ${ABILITY_META.map(([key, label, short]) => renderAbilityCard(key, label, short)).join('')}
+          </div>
+          ${renderStepActions([
+            { label: 'Indietro', target: 'identity' },
+            { label: 'Continua', target: 'skills' },
+          ])}
+        </div>
+      `;
+    }
+
+    if (activeStep === 'skills') {
+      return `
+        <div class="sheet-panel sheet-panel--wide sheet-builder-step" id="sheet-builder-skills">
+          <div class="sheet-builder-step-heading">
+            <span>Step 3</span>
+            <h3>Competenze abilita</h3>
+            <p>Usa i suggerimenti SRD della classe e applica le abilita del background quando disponibili.</p>
+          </div>
+          ${renderSkillProficiencies()}
+          ${renderStepActions([
+            { label: 'Indietro', target: 'abilities' },
+            { label: 'Continua', target: 'kit' },
+          ])}
+        </div>
+      `;
+    }
+
+    if (activeStep === 'kit') {
+      return `
+        <div class="sheet-panel sheet-panel--wide sheet-builder-step" id="sheet-builder-kit">
+          <div class="sheet-builder-step-heading">
+            <span>Step 4</span>
+            <h3>Kit e progressione</h3>
+            <p>Rivedi competenze, progressione e prossime azioni. Equipaggiamento e combattimento restano nelle viste dedicate.</p>
+          </div>
+          ${renderBuilderIssues()}
+          ${renderOtherProficiencies()}
+          ${renderCharacterClassProgression()}
+          ${renderStepActions([
+            { label: 'Indietro', target: 'skills' },
+            { label: 'Inventario', href: '#/character_sheet/inventory' },
+            { label: 'Combattimento', href: '#/character_sheet/combat' },
+          ])}
+        </div>
+      `;
+    }
+
+    return `
+      <div class="sheet-panel sheet-panel--wide sheet-builder-step" id="sheet-builder-identity">
+        <div class="sheet-builder-step-heading">
+          <span>Step 1</span>
+          <h3>Identita</h3>
+          <p>Parti dalle scelte che sbloccano suggerimenti SRD: classe, specie e background guidano il resto della scheda.</p>
+        </div>
+        <div class="sheet-form-grid">
+          ${sheetField('name', 'Nome', sheet.name)}
+          ${sheetSelect('classId', 'Classe', sheet.classId, characterClassOptions())}
+          ${sheetNumberField('level', 'Livello', sheet.level, 1, 20)}
+          ${originSelectOrField('ancestry', 'Specie', sheet.ancestry, appState.data.species, 'Nessuna specie')}
+          ${originSelectOrField('background', 'Background', sheet.background, appState.data.backgrounds, 'Nessun background')}
+          ${sheetField('alignment', 'Allineamento', sheet.alignment)}
+          ${sheetNumberField('xp', 'PE', sheet.xp, 0)}
+        </div>
+        ${renderStepActions([
+          { label: 'Continua', target: 'abilities' },
+        ])}
+      </div>
+    `;
+  }
+
+  function builderSteps() {
+    return [
+      {
+        id: 'identity',
+        label: 'Identita',
+        hint: 'Nome, classe, specie e background',
+        summary: 'Le scelte di identita attivano suggerimenti da classi, specie e background SRD.',
+        checks: ['Identita', 'Talento origine'],
+      },
+      {
+        id: 'abilities',
+        label: 'Caratteristiche',
+        hint: 'Punteggi e priorita',
+        summary: 'Mostra solo i sei punteggi e le priorita utili, senza liste di controllo invasive.',
+        checks: ['Caratteristiche'],
+      },
+      {
+        id: 'skills',
+        label: 'Competenze',
+        hint: 'Abilita di classe e background',
+        summary: "Qui l'utente sceglie le competenze con pulsanti suggeriti dai dati SRD gia caricati.",
+        checks: ['Competenze'],
+      },
+      {
+        id: 'kit',
+        label: 'Kit',
+        hint: 'Equipaggiamento e dettagli finali',
+        summary: 'Ultimo passaggio: azioni consigliate compatte e rimandi alle viste giocabili.',
+        checks: ['Combattimento', 'Equipaggiamento', 'Riferimenti'],
+      },
+    ];
+  }
+
+  function characterBuilderActiveStep() {
+    const steps = builderSteps();
+    const selected = appState.characterSheetBuilderStep;
+    if (steps.some((step) => step.id === selected)) return selected;
+
+    const checklist = characterBuilderChecklist();
+    const next = steps.find((step) => step.checks.some((label) => !checklist.find((item) => item.label === label)?.complete));
+    return next?.id || 'kit';
   }
 
   function renderBuilderIssues() {
@@ -180,7 +286,7 @@ export function createCharacterSheetOverviewRenderer({
         <div>
           ${issues.map((issue) => `
             <article class="sheet-builder-issue is-${escapeAttr(issue.severity)}">
-              <a href="${escapeAttr(issue.href)}">
+              <a href="${escapeAttr(builderHref(issue.href))}">
                 <span>${escapeHtml(issue.label)}</span>
                 <small>${escapeHtml(issue.hint)}</small>
               </a>
@@ -221,7 +327,7 @@ export function createCharacterSheetOverviewRenderer({
             <li>
               <span>${escapeHtml(item.label)}</span>
               <small>${escapeHtml(item.hint)}</small>
-              <a href="${escapeAttr(item.href)}">Apri</a>
+              <a href="${escapeAttr(builderHref(item.href))}">Apri</a>
             </li>
           `).join('')}
         </ol>
@@ -368,7 +474,7 @@ export function createCharacterSheetOverviewRenderer({
         </div>
         <div class="sheet-checklist-grid">
           ${items.map((item) => `
-            <a class="sheet-checklist-item${item.complete ? ' is-complete' : ''}" href="${escapeAttr(item.href)}">
+            <a class="sheet-checklist-item${item.complete ? ' is-complete' : ''}" href="${escapeAttr(builderHref(item.href))}">
               <span>${item.complete ? 'OK' : 'Da fare'}</span>
               <strong>${escapeHtml(item.label)}</strong>
               <small>${escapeHtml(item.hint)}</small>
@@ -381,6 +487,10 @@ export function createCharacterSheetOverviewRenderer({
 
   function characterBuilderChecklist() {
     return characterSheetDerived.characterBuilderChecklist();
+  }
+
+  function builderHref(href) {
+    return href === '#/character_sheet/overview' ? '#/character_sheet/builder' : href;
   }
 
   function characterSkillChoiceProgress() {
@@ -432,11 +542,12 @@ export function createCharacterSheetOverviewRenderer({
             ].filter(Boolean).join(' · '))}</p>
           </div>
           <div class="sheet-hero-rolls">
+            ${renderOverviewCreationCta()}
             <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, initiative))}">
-              Iniziativa ${escapeHtml(formatSigned(initiative))}
+              Tira iniziativa ${escapeHtml(formatSigned(initiative))}
             </button>
             <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, skillModifier('perception')))}">
-              Percezione ${escapeHtml(formatSigned(skillModifier('perception')))}
+              Tira percezione ${escapeHtml(formatSigned(skillModifier('perception')))}
             </button>
           </div>
         </div>
@@ -464,6 +575,17 @@ export function createCharacterSheetOverviewRenderer({
         </div>
       </div>
     `;
+  }
+
+  function renderOverviewCreationCta() {
+    const missing = characterBuilderChecklist()
+      .filter((item) => ['Identita', 'Caratteristiche', 'Competenze', 'Combattimento', 'Equipaggiamento'].includes(item.label))
+      .filter((item) => !item.complete);
+
+    if (!missing.length) return '';
+
+    const label = missing.some((item) => item.label === 'Identita') ? 'Completa creazione' : 'Rifinisci personaggio';
+    return `<a class="button button--primary sheet-creation-cta" href="#/character_sheet/builder">${escapeHtml(label)}</a>`;
   }
 
   function renderSummaryStat(label, value, hint) {
@@ -756,5 +878,5 @@ export function createCharacterSheetOverviewRenderer({
     `;
   }
 
-  return { renderCharacterSheetOverview };
+  return { renderCharacterSheetBuilder, renderCharacterSheetOverview };
 }

@@ -15,6 +15,12 @@ export function createCharacterSheetSpellsRenderer({
   function renderCharacterSheetSpells() {
     const sheet = appState.characterSheet;
     const spellOptions = characterSpellOptions();
+    const slots = characterSpellSlots();
+    const hasClass = Boolean(sheet.classId);
+    const isCaster = Boolean(spellOptions.length || slots.length);
+
+    if (!isCaster) return renderSpellEmptyState(hasClass);
+
     const dc = 8 + characterProficiencyBonus() + abilityModifier(sheet.abilities[sheet.spellcastingAbility]);
     const attack = characterProficiencyBonus() + abilityModifier(sheet.abilities[sheet.spellcastingAbility]);
 
@@ -66,6 +72,27 @@ export function createCharacterSheetSpellsRenderer({
         <div class="sheet-panel sheet-panel--wide">
           <h3>Incantesimi preparati</h3>
           ${renderPreparedSpells()}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderSpellEmptyState(hasClass) {
+    return `
+      <section class="sheet-grid sheet-spell-grid">
+        <div class="sheet-panel sheet-panel--wide sheet-dashboard sheet-dashboard--spells sheet-spell-empty-state">
+          <div class="sheet-dashboard-heading">
+            <div>
+              <span>Magia</span>
+              <strong>${escapeHtml(hasClass ? 'Nessun lancio incantesimi' : 'Classe da scegliere')}</strong>
+              <p>${escapeHtml(hasClass
+                ? 'Questa classe non ha incantesimi nel catalogo SRD collegato. La scheda resta pronta per combattimento, inventario e note.'
+                : 'Scegli una classe nel builder per capire se il personaggio usa incantesimi.')}</p>
+            </div>
+            <a class="button button--ghost" href="${escapeAttr(hasClass ? '#/character_sheet/combat' : '#/character_sheet/builder')}">
+              ${escapeHtml(hasClass ? 'Vai al combattimento' : 'Completa creazione')}
+            </a>
+          </div>
         </div>
       </section>
     `;

@@ -1,8 +1,8 @@
-import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260526-builder';
-import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260526-builder';
-import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260526-builder';
-import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260526-builder';
-import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260526-builder';
+import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260526-character-ux';
+import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260526-character-ux';
+import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260526-character-ux';
+import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260526-character-ux';
+import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260526-character-ux';
 
 export function createCharacterSheetRenderer({
   appState,
@@ -103,7 +103,7 @@ export function createCharacterSheetRenderer({
     characterSheetDerived,
   });
 
-  const { renderCharacterSheetOverview } = createCharacterSheetOverviewRenderer({
+  const { renderCharacterSheetBuilder, renderCharacterSheetOverview } = createCharacterSheetOverviewRenderer({
     appState,
     escapeAttr,
     escapeHtml,
@@ -192,17 +192,43 @@ export function createCharacterSheetRenderer({
    * Renderizza la scheda personaggio nativa.
    */
   function renderCharacterSheet(tab = 'overview') {
-    const validTab = CHARACTER_SHEET_TABS.some(([id]) => id === tab) ? tab : 'overview';
+    const validTab = tab === 'builder' || CHARACTER_SHEET_TABS.some(([id]) => id === tab) ? tab : 'overview';
     appState.characterSheetTab = validTab;
 
     setView('detail');
 
     views.detail.innerHTML = `
-      <nav class="detail-nav" aria-label="Navigazione scheda personaggio">
-        <a class="button" href="#/">Home</a>
-        <div class="sheet-manager">
+      <nav class="detail-nav sheet-topbar" aria-label="Navigazione scheda personaggio">
+        <a class="button sheet-home-link" href="#/">Reference</a>
+      </nav>
+
+      <article class="detail-card detail-card--flat character-sheet">
+        ${renderCharacterSheetArchiveImportPrompt()}
+        ${renderAppBackupImportPrompt()}
+        ${renderCharacterSheetHeader()}
+        ${renderCharacterSheetTabs(validTab)}
+        ${renderCharacterSheetTab(validTab)}
+        ${renderCharacterSheetManager()}
+      </article>
+    `;
+
+    bindCharacterSheetEvents();
+  }
+
+  /*
+   * Controlli di archivio e gestione: restano disponibili, ma non devono
+   * competere con le informazioni giocabili nel primo colpo d'occhio.
+   */
+  function renderCharacterSheetManager() {
+    return `
+      <details class="sheet-manager" aria-label="Gestione scheda">
+        <summary>
+          <span>Gestisci scheda</span>
+          <strong>${escapeHtml(sheetManagerLabel())}</strong>
+        </summary>
+        <div class="sheet-manager-body">
           <label class="sheet-character-picker">
-            <span>Personaggio</span>
+            <span>Scheda attiva</span>
             <select class="sheet-character-select" data-sheet-switch-character aria-label="Personaggio attivo">
               ${appState.characterSheets.map((sheet) => `
                 <option value="${escapeAttr(sheet.id)}"${sheet.id === appState.characterSheet.id ? ' selected' : ''}>${escapeHtml(sheet.name || 'Scheda personaggio')}</option>
@@ -210,10 +236,10 @@ export function createCharacterSheetRenderer({
             </select>
           </label>
           <div class="sheet-manager-actions">
-            <button class="button button--ghost" type="button" data-sheet-reset>Nuova</button>
+            <button class="button button--ghost" type="button" data-sheet-reset>Nuova scheda</button>
             <button class="button button--ghost" type="button" data-sheet-duplicate>Duplica</button>
             <details class="sheet-more-actions">
-              <summary>Altro</summary>
+              <summary>Archivio</summary>
               <div>
                 <button class="button button--ghost" type="button" data-sheet-export>Esporta</button>
                 <button class="button button--ghost" type="button" data-sheet-import>Importa</button>
@@ -229,18 +255,12 @@ export function createCharacterSheetRenderer({
             <input id="app-backup-import" class="visually-hidden" type="file" accept="application/json,.json">
           </div>
         </div>
-      </nav>
-
-      <article class="detail-card detail-card--flat character-sheet">
-        ${renderCharacterSheetArchiveImportPrompt()}
-        ${renderAppBackupImportPrompt()}
-        ${renderCharacterSheetHeader()}
-        ${renderCharacterSheetTabs(validTab)}
-        ${renderCharacterSheetTab(validTab)}
-      </article>
+      </details>
     `;
+  }
 
-    bindCharacterSheetEvents();
+  function sheetManagerLabel() {
+    return appState.characterSheet.name || 'Nuovo personaggio';
   }
 
   /*
@@ -254,6 +274,7 @@ export function createCharacterSheetRenderer({
     return `
       <header class="detail-header character-sheet-header">
         <div>
+          <span class="sheet-kicker">Scheda personaggio</span>
           <h2 class="detail-title">${escapeHtml(sheet.name || 'Scheda personaggio')}</h2>
           <p class="detail-kicker">${escapeHtml([className, level ? `livello ${level}` : null, sheet.ancestry].filter(Boolean).join(' · '))}</p>
         </div>
@@ -288,6 +309,7 @@ export function createCharacterSheetRenderer({
    * Contenuto della tab attiva.
    */
   function renderCharacterSheetTab(tab) {
+    if (tab === 'builder') return renderCharacterSheetBuilder();
     if (tab === 'combat') return renderCharacterSheetCombat();
     if (tab === 'spells') return renderCharacterSheetSpells();
     if (tab === 'inventory') return renderCharacterSheetInventory();
