@@ -1199,6 +1199,83 @@ h1 {
   font-size: .88rem;
 }
 
+.sheet-wizard-steps {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: .35rem;
+}
+
+.sheet-wizard-step {
+  display: grid;
+  gap: .14rem;
+  min-width: 0;
+  border: 1px solid rgba(138,63,35,.16);
+  border-radius: 8px;
+  background: rgba(255,255,255,.46);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: .48rem;
+  text-align: left;
+  text-decoration: none;
+}
+
+.sheet-wizard-step span {
+  display: inline-grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: rgba(138,63,35,.12);
+  color: var(--accent);
+  font-size: .72rem;
+  font-weight: 820;
+}
+
+.sheet-wizard-step strong {
+  overflow: hidden;
+  color: var(--accent);
+  font-size: .82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheet-wizard-step small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: .72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheet-wizard-step.is-active {
+  border-color: rgba(138,63,35,.42);
+  background: rgba(252,248,240,.86);
+}
+
+.sheet-wizard-step.is-complete {
+  border-color: rgba(64,115,78,.26);
+  background: rgba(238,247,238,.56);
+}
+
+.sheet-wizard-step.is-complete span {
+  background: rgba(64,115,78,.14);
+  color: #40734e;
+}
+
+.sheet-step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  border-top: 1px solid rgba(217,199,179,.56);
+  margin-top: .6rem;
+  padding-top: .55rem;
+}
+
+.sheet-step-actions .button {
+  min-height: 2rem;
+}
+
 .sheet-guide-next {
   display: grid;
   gap: .45rem;
@@ -3000,6 +3077,25 @@ code {
   .sheet-guide-heading .button,
   .sheet-guide-grid,
   .sheet-guide-card .button {
+    width: 100%;
+  }
+
+  .sheet-wizard-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .sheet-wizard-step {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .sheet-wizard-step small {
+    grid-column: 2;
+    white-space: normal;
+  }
+
+  .sheet-step-actions,
+  .sheet-step-actions .button {
     width: 100%;
   }
 

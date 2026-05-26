@@ -36,7 +36,7 @@ export function createCharacterSheetOverviewRenderer({
         ${renderCharacterBuilderChecklist()}
         ${renderGuidedBuilder()}
 
-        <div class="sheet-panel sheet-panel--identity">
+        <div id="sheet-builder-identity" class="sheet-panel sheet-panel--identity">
           <h3>Identita</h3>
           <div class="sheet-form-grid">
             ${sheetField('name', 'Nome', sheet.name)}
@@ -47,29 +47,48 @@ export function createCharacterSheetOverviewRenderer({
             ${sheetField('alignment', 'Allineamento', sheet.alignment)}
             ${sheetNumberField('xp', 'PE', sheet.xp, 0)}
           </div>
+          ${renderStepActions([
+            { label: 'Continua a caratteristiche', target: 'sheet-builder-abilities' },
+          ])}
         </div>
 
-        <div class="sheet-panel">
+        <div id="sheet-builder-abilities" class="sheet-panel">
           <h3>Caratteristiche</h3>
           ${renderAbilityGuidance()}
           <div class="ability-grid">
             ${ABILITY_META.map(([key, label, short]) => renderAbilityCard(key, label, short)).join('')}
           </div>
+          ${renderStepActions([
+            { label: 'Continua a competenze', target: 'sheet-builder-skills' },
+          ])}
         </div>
 
-        <div class="sheet-panel sheet-panel--wide">
+        <div id="sheet-builder-skills" class="sheet-panel sheet-panel--wide">
           <h3>Competenze abilita</h3>
           ${renderSkillProficiencies()}
+          ${renderStepActions([
+            { label: 'Altre competenze', target: 'sheet-builder-proficiencies' },
+            { label: 'Combattimento', href: '#/character_sheet/combat' },
+          ])}
         </div>
 
-        <div class="sheet-panel sheet-panel--wide">
+        <div id="sheet-builder-proficiencies" class="sheet-panel sheet-panel--wide">
           <h3>Altre competenze</h3>
           ${renderOtherProficiencies()}
+          ${renderStepActions([
+            { label: 'Progressione classe', target: 'sheet-builder-progression' },
+            { label: 'Inventario', href: '#/character_sheet/inventory' },
+          ])}
         </div>
 
-        <div class="sheet-panel sheet-panel--wide">
+        <div id="sheet-builder-progression" class="sheet-panel sheet-panel--wide">
           <h3>Progressione classe</h3>
           ${renderCharacterClassProgression()}
+          ${renderStepActions([
+            { label: 'Incantesimi', href: '#/character_sheet/spells' },
+            { label: 'Inventario', href: '#/character_sheet/inventory' },
+            { label: 'Riepilogo note', href: '#/character_sheet/notes' },
+          ])}
         </div>
       </section>
     `;
@@ -87,6 +106,7 @@ export function createCharacterSheetOverviewRenderer({
           </div>
           <a class="button button--ghost" href="${escapeAttr(next.href)}">${escapeHtml(next.action)}</a>
         </div>
+        ${renderWizardSteps()}
         ${renderGuidedNextActions()}
         ${renderBuilderIssues()}
         <div class="sheet-guide-grid">
@@ -96,6 +116,58 @@ export function createCharacterSheetOverviewRenderer({
         </div>
       </div>
     `;
+  }
+
+  function renderWizardSteps() {
+    const steps = characterBuilderChecklist();
+    const activeIndex = Math.max(0, steps.findIndex((step) => !step.complete));
+
+    return `
+      <nav class="sheet-wizard-steps" aria-label="Passaggi creazione personaggio">
+        ${steps.map((step, index) => {
+          const state = step.complete ? 'complete' : index === activeIndex ? 'active' : 'pending';
+          const target = wizardStepTarget(step.label);
+          if (target) {
+            return `
+              <button class="sheet-wizard-step is-${state}" type="button" data-sheet-jump="${escapeAttr(target)}">
+                <span>${escapeHtml(String(index + 1))}</span>
+                <strong>${escapeHtml(step.label)}</strong>
+                <small>${escapeHtml(step.complete ? 'Pronto' : step.hint)}</small>
+              </button>
+            `;
+          }
+
+          return `
+            <a class="sheet-wizard-step is-${state}" href="${escapeAttr(step.href)}">
+              <span>${escapeHtml(String(index + 1))}</span>
+              <strong>${escapeHtml(step.label)}</strong>
+              <small>${escapeHtml(step.complete ? 'Pronto' : step.hint)}</small>
+            </a>
+          `;
+        }).join('')}
+      </nav>
+    `;
+  }
+
+  function renderStepActions(actions) {
+    return `
+      <div class="sheet-step-actions">
+        ${actions.map((action) => action.href ? `
+          <a class="button button--ghost" href="${escapeAttr(action.href)}">${escapeHtml(action.label)}</a>
+        ` : `
+          <button class="button button--ghost" type="button" data-sheet-jump="${escapeAttr(action.target)}">${escapeHtml(action.label)}</button>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function wizardStepTarget(label) {
+    return {
+      Identita: 'sheet-builder-identity',
+      Caratteristiche: 'sheet-builder-abilities',
+      Competenze: 'sheet-builder-skills',
+      'Talento origine': 'sheet-builder-identity',
+    }[label] || '';
   }
 
   function renderBuilderIssues() {

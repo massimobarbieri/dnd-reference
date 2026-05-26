@@ -120,6 +120,13 @@ export function createCharacterSheetEventsController({
       });
     });
 
+    views.detail.querySelectorAll('[data-sheet-jump]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        const target = views.detail.querySelector(`#${event.currentTarget.dataset.sheetJump}`);
+        target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
     views.detail.querySelectorAll('[data-sheet-proficiency]').forEach((node) => {
       node.addEventListener('input', (event) => {
         appState.characterSheet.proficiencies[event.currentTarget.dataset.sheetProficiency] = event.currentTarget.value;
