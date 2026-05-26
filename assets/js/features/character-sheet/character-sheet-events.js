@@ -111,11 +111,13 @@ export function createCharacterSheetEventsController({
     });
 
     views.detail.querySelector('[data-sheet-apply-background-skills]')?.addEventListener('click', () => {
-      characterSheetDerived.characterSkillChoiceState().missingBackgroundKeys.forEach((key) => {
-        appState.characterSheet.skillProficiencies[key] = 1;
+      applyBackgroundSkills();
+    });
+
+    views.detail.querySelectorAll('[data-sheet-builder-action]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        applyBuilderAction(event.currentTarget.dataset.sheetBuilderAction, event.currentTarget.dataset.sheetBuilderActionValue);
       });
-      saveCharacterSheet();
-      renderCharacterSheet(appState.characterSheetTab);
     });
 
     views.detail.querySelectorAll('[data-sheet-proficiency]').forEach((node) => {
@@ -523,6 +525,42 @@ export function createCharacterSheetEventsController({
       deleteActiveCharacterSheet();
       renderCharacterSheet('overview');
     });
+  }
+
+  function applyBuilderAction(action, value) {
+    if (action === 'apply-background-skills') {
+      applyBackgroundSkills();
+      return;
+    }
+    if (action === 'apply-derived-ac') {
+      appState.characterSheet.armorClass = characterSheetDerived.characterSuggestedArmorClass();
+      saveCharacterSheet();
+      renderCharacterSheet(appState.characterSheetTab);
+      return;
+    }
+    if (action === 'apply-derived-hp') {
+      const hp = characterSheetDerived.characterSuggestedHitPoints();
+      appState.characterSheet.maxHp = hp;
+      if (!Number(appState.characterSheet.currentHp)) {
+        appState.characterSheet.currentHp = hp;
+      }
+      saveCharacterSheet();
+      renderCharacterSheet(appState.characterSheetTab);
+      return;
+    }
+    if (action === 'apply-starting-equipment') {
+      applyStartingEquipment(value);
+      saveCharacterSheet();
+      renderCharacterSheet(appState.characterSheetTab);
+    }
+  }
+
+  function applyBackgroundSkills() {
+    characterSheetDerived.characterSkillChoiceState().missingBackgroundKeys.forEach((key) => {
+      appState.characterSheet.skillProficiencies[key] = 1;
+    });
+    saveCharacterSheet();
+    renderCharacterSheet(appState.characterSheetTab);
   }
 
   function applyStartingEquipment(mode) {

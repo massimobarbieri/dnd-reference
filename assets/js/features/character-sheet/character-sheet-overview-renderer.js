@@ -107,10 +107,20 @@ export function createCharacterSheetOverviewRenderer({
         <strong>Azioni consigliate</strong>
         <div>
           ${issues.map((issue) => `
-            <a class="sheet-builder-issue is-${escapeAttr(issue.severity)}" href="${escapeAttr(issue.href)}">
-              <span>${escapeHtml(issue.label)}</span>
-              <small>${escapeHtml(issue.hint)}</small>
-            </a>
+            <article class="sheet-builder-issue is-${escapeAttr(issue.severity)}">
+              <a href="${escapeAttr(issue.href)}">
+                <span>${escapeHtml(issue.label)}</span>
+                <small>${escapeHtml(issue.hint)}</small>
+              </a>
+              ${issue.action ? `
+                <button
+                  class="button button--ghost"
+                  type="button"
+                  data-sheet-builder-action="${escapeAttr(issue.action.id)}"
+                  ${issue.action.value ? `data-sheet-builder-action-value="${escapeAttr(issue.action.value)}"` : ''}
+                >${escapeHtml(issue.action.label)}</button>
+              ` : ''}
+            </article>
           `).join('')}
         </div>
       </div>

@@ -209,6 +209,10 @@ export function createCharacterSheetDerivedModel({
         label: 'Background',
         hint: `Applica abilita: ${skillState.missingBackgroundKeys.map(skillLabel).join(', ')}.`,
         href: '#/character_sheet/overview',
+        action: {
+          id: 'apply-background-skills',
+          label: 'Applica',
+        },
       });
     }
     if (Number(sheet.maxHp) > 0 && Number(sheet.maxHp) !== characterSuggestedHitPoints()) {
@@ -217,10 +221,70 @@ export function createCharacterSheetDerivedModel({
         label: 'Punti ferita',
         hint: `PF suggeriti ${characterSuggestedHitPoints()}, attuali massimi ${Number(sheet.maxHp) || 0}.`,
         href: '#/character_sheet/combat',
+        action: {
+          id: 'apply-derived-hp',
+          label: 'Applica PF',
+        },
+      });
+    }
+    if (Number(sheet.armorClass) !== characterSuggestedArmorClass()) {
+      issues.push({
+        severity: 'notice',
+        label: 'Classe Armatura',
+        hint: `CA suggerita ${characterSuggestedArmorClass()}, attuale ${Number(sheet.armorClass) || 10}.`,
+        href: '#/character_sheet/combat',
+        action: {
+          id: 'apply-derived-ac',
+          label: 'Applica CA',
+        },
+      });
+    }
+    startingEquipmentIssues().forEach((issue) => issues.push(issue));
+
+    return issues.slice(0, 8);
+  }
+
+  function startingEquipmentIssues() {
+    const issues = [];
+    const classOptions = classStartingEquipmentOptions().filter((option) => !option.imported);
+    const backgroundOption = backgroundStartingCoinsOption();
+
+    if (classOptions.length === 1) {
+      issues.push({
+        severity: 'todo',
+        label: 'Equipaggiamento',
+        hint: 'Importa equipaggiamento iniziale della classe.',
+        href: '#/character_sheet/inventory',
+        action: {
+          id: 'apply-starting-equipment',
+          value: classOptions[0].key,
+          label: 'Importa',
+        },
+      });
+    } else if (classOptions.length > 1) {
+      issues.push({
+        severity: 'todo',
+        label: 'Equipaggiamento',
+        hint: 'Scegli opzione A o B per equipaggiamento iniziale.',
+        href: '#/character_sheet/inventory',
       });
     }
 
-    return issues.slice(0, 8);
+    if (backgroundOption && !backgroundOption.imported) {
+      issues.push({
+        severity: 'todo',
+        label: 'Monete background',
+        hint: `Importa alternativa: ${backgroundStartingCoinsText()}.`,
+        href: '#/character_sheet/inventory',
+        action: {
+          id: 'apply-starting-equipment',
+          value: 'background-coins',
+          label: 'Importa',
+        },
+      });
+    }
+
+    return issues;
   }
 
   function characterAbilityGuidance() {
