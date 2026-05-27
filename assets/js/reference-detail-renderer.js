@@ -171,6 +171,32 @@ export function createReferenceDetailRenderer({
 
       ${renderScalingEntries('Slot superiori', spell.scaling, spell)}
       ${renderSections('Sezioni', spell.sezioni)}
+      ${renderSummonedCreatureLink(spell)}
+    `;
+  }
+
+  /*
+   * Se l'incantesimo rimanda a una creatura evocata presente nel catalogo
+   * mostri, aggiunge un link diretto in fondo alla scheda.
+   */
+  function renderSummonedCreatureLink(spell) {
+    const summonedCreatureId = spell?.creatura_evocata?.id;
+
+    if (!summonedCreatureId || spell?.creatura_evocata?.fonte !== 'mostri') {
+      return '';
+    }
+
+    const monster = appState.data.monsters.find((entry) => entry.id === summonedCreatureId);
+
+    if (!monster) {
+      return '';
+    }
+
+    return `
+      <p class="summoned-creature-link">
+        <strong>Creatura evocata:</strong>
+        <a href="#/monsters/${encodeURIComponent(monster.id)}">${escapeHtml(monster.nome)}</a>
+      </p>
     `;
   }
 

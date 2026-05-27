@@ -1,11 +1,13 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const classes = require('../data/srd/5.2.1/json/srd_5_2_1_classes.json');
+const rules = require('../data/srd/5.2.1/json/srd_5_2_1_rules.json');
 
 const configSource = fs.readFileSync('config.yml', 'utf8');
 const indexSource = fs.readFileSync('index.html', 'utf8');
 
 assert.equal(classes.length, 12);
+assert.equal(rules.some((rule) => rule.id.startsWith('classe_')), false);
 
 for (const classEntry of classes) {
   const progression = classEntry.sezioni.find((section) => section.titolo === 'Progressione di classe');
@@ -42,10 +44,11 @@ assert.ok(
   'druido deve includere la tabella Forme bestiali'
 );
 
+assert.match(configSource, /classes:\s+data\/srd\/5\.2\.1\/json\/srd_5_2_1_classes\.json/);
 assert.match(configSource, /classes: Classi/);
 assert.match(configSource, /classes: data\/srd\/5\.2\.1\/json\/srd_5_2_1_classes\.json/);
 assert.match(configSource, /species: Specie/);
 assert.match(configSource, /backgrounds: Background/);
-assert.match(indexSource, /20260526-backup-ux/);
+assert.match(indexSource, /20260527-upstream-dev/);
 
 console.log('Sezione classi OK');
