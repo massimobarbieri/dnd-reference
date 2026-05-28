@@ -382,6 +382,82 @@ export function createCharacterSheetDerivedModel({
     return 10 + abilityModifier(appState.characterSheet.abilities.dex);
   }
 
+  function characterCarryingLoad() {
+    const itemWeights = appState.characterSheet.equipmentItems.map((item) => equipmentItemWeight(item));
+    const itemWeight = itemWeights.reduce((total, entry) => total + entry.total, 0);
+    const unknownItems = itemWeights.filter((entry) => entry.unknown).length;
+    const coinWeight = characterCoinWeight();
+    const total = roundWeight(itemWeight + coinWeight);
+    const capacity = characterCarryingCapacity();
+    const pushDragLift = roundWeight(capacity * 2);
+    const percent = capacity ? Math.min(100, Math.round((total / capacity) * 100)) : 0;
+
+    return {
+      total,
+      itemWeight: roundWeight(itemWeight),
+      coinWeight,
+      capacity,
+      pushDragLift,
+      percent,
+      unknownItems,
+      state: total > capacity ? 'over' : total >= capacity * 0.75 ? 'warning' : 'ok',
+      size: characterCarryingSize(),
+    };
+  }
+
+  function characterCarryingCapacity() {
+    const strength = Math.max(0, Number(appState.characterSheet.abilities.str) || 0);
+    return roundWeight(strength * carryingMultiplier(characterCarryingSize()));
+  }
+
+  function characterCarryingSize() {
+    return String(characterSpeciesEntry()?.taglia || '').trim() || 'Media';
+  }
+
+  function carryingMultiplier(size) {
+    const text = normalizeSheetLabel(size);
+    if (text.includes('mastodontica')) return 60;
+    if (text.includes('enorme')) return 30;
+    if (text.includes('grande')) return 15;
+    if (text.includes('minuscola')) return 3.75;
+    return 7.5;
+  }
+
+  function equipmentItemWeight(item) {
+    const unitWeight = parseWeightKg(item?.weight);
+    const quantity = Math.max(1, Number(item?.quantity) || 1);
+    return {
+      total: unitWeight === null ? 0 : roundWeight(unitWeight * quantity),
+      unknown: Boolean(String(item?.weight || '').trim()) && unitWeight === null,
+    };
+  }
+
+  function characterCoinWeight() {
+    const coins = appState.characterSheet.coins || {};
+    const count = ['pp', 'mo', 'ma', 'mr']
+      .reduce((total, key) => total + Math.max(0, Number(coins[key]) || 0), 0);
+
+    return roundWeight(count * 0.01);
+  }
+
+  function parseWeightKg(value) {
+    const text = String(value || '').trim().toLowerCase();
+    if (!text || text === '-' || text === 'variabile') return null;
+
+    const match = text.match(/(\d+(?:[,.]\d+)?)/);
+    if (!match) return null;
+
+    const amount = Number(match[1].replace(',', '.'));
+    if (!Number.isFinite(amount)) return null;
+
+    if (/\b(g|gramm[oi])\b/.test(text)) return amount / 1000;
+    return amount;
+  }
+
+  function roundWeight(value) {
+    return Math.round((Number(value) || 0) * 100) / 100;
+  }
+
   function armorClassFromEquipment(item) {
     return armorClassFromText(item?.armorClass);
   }
@@ -475,6 +551,7 @@ export function createCharacterSheetDerivedModel({
     characterBuilderChecklist,
     characterBuilderChecklistForSheet,
     characterBuilderIssues,
+    characterCarryingLoad,
     characterInitiative,
     characterOriginFeat,
     characterSkillChoiceProgress,

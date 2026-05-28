@@ -1616,6 +1616,77 @@ body:has(.character-roster) .app-shell {
   white-space: nowrap;
 }
 
+.sheet-carrying-meter {
+  display: grid;
+  gap: .38rem;
+  border: 1px solid rgba(17,24,39,.08);
+  border-radius: 8px;
+  background: #fff;
+  padding: .65rem .72rem;
+}
+
+.sheet-carrying-meter-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .55rem;
+}
+
+.sheet-carrying-meter-heading span {
+  color: #166534;
+  font-size: .72rem;
+  font-weight: 820;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.sheet-carrying-meter-heading strong {
+  color: #111827;
+  font-size: .96rem;
+  white-space: nowrap;
+}
+
+.sheet-carrying-bar {
+  overflow: hidden;
+  height: .48rem;
+  border-radius: 999px;
+  background: #e5e7eb;
+}
+
+.sheet-carrying-bar span {
+  display: block;
+  height: 100%;
+  max-width: 100%;
+  border-radius: inherit;
+  background: #16a34a;
+}
+
+.sheet-carrying-meter small {
+  color: var(--muted);
+  font-size: .78rem;
+  line-height: 1.25;
+}
+
+.sheet-carrying-meter.is-warning .sheet-carrying-meter-heading span {
+  color: #92400e;
+}
+
+.sheet-carrying-meter.is-warning .sheet-carrying-bar span {
+  background: #d97706;
+}
+
+.sheet-carrying-meter.is-over {
+  border-color: rgba(163,32,47,.28);
+}
+
+.sheet-carrying-meter.is-over .sheet-carrying-meter-heading span {
+  color: #a3202f;
+}
+
+.sheet-carrying-meter.is-over .sheet-carrying-bar span {
+  background: #a3202f;
+}
+
 .sheet-skill-strip {
   display: grid;
   gap: .38rem;

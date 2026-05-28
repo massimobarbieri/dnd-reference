@@ -17,7 +17,7 @@ const { pathToFileURL } = require('node:url');
           equipaggiamento_alternativo: '50 mo',
         },
       ],
-      species: [{ id: 'elfo', nome: 'Elfo' }],
+      species: [{ id: 'elfo', nome: 'Elfo', taglia: 'Media' }],
       feats: [{ id: 'iniziato_alla_magia', nome: 'Iniziato alla magia' }],
     },
     characterSheet: {
@@ -38,9 +38,11 @@ const { pathToFileURL } = require('node:url');
       maxHp: 8,
       armorClass: 12,
       equipmentItems: [
-        { name: 'Pugnale' },
-        { name: 'Armatura di cuoio', armorClass: '11 + Des', equipped: true },
+        { name: 'Pugnale', quantity: 2, weight: '0,5 kg' },
+        { name: 'Armatura di cuoio', quantity: 1, weight: '5 kg', armorClass: '11 + Des', equipped: true },
+        { name: 'Oggetto strano', quantity: 1, weight: 'variabile' },
       ],
+      coins: { pp: 0, mo: 50, ma: 25, mr: 0 },
       magicItems: [],
       equipment: 'Importato equipaggiamento iniziale: Classe opzione A',
       references: [{}, {}, {}],
@@ -97,6 +99,17 @@ const { pathToFileURL } = require('node:url');
   assert.equal(derived.characterInitiative(), 3);
   assert.equal(derived.characterSuggestedHitPoints(), 14);
   assert.equal(derived.characterSuggestedArmorClass(), 13);
+  assert.deepEqual(derived.characterCarryingLoad(), {
+    total: 6.75,
+    itemWeight: 6,
+    coinWeight: 0.75,
+    capacity: 75,
+    pushDragLift: 150,
+    percent: 9,
+    unknownItems: 1,
+    state: 'ok',
+    size: 'Media',
+  });
   assert.equal(derived.armorClassFromEquipment({ armorClass: '14 + Des (max 2)' }), 16);
   assert.equal(derived.classStartingEquipmentText(), 'A: pugnale; oppure B: 55 mo');
   assert.deepEqual(derived.classStartingEquipmentOptions().map((option) => [option.key, option.imported]), [['class-a', true], ['class-b', false]]);
