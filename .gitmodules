@@ -1,4 +1,4 @@
 [submodule "data"]
 	path = data
 	url = https://github.com/massimobarbieri/DND-SRD-IT.git
-	branch = refactor-data
+	branch = main

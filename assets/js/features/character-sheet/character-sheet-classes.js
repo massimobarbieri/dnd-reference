@@ -141,6 +141,7 @@ export function createCharacterSheetClassController({
     appState.characterSheet.classId = classEntry.id;
     appState.characterSheet.spellcastingAbility = classDefaultSpellcastingAbility(classEntry.id);
     appState.characterSheet.hitDice = classHitDice(traits['Dado Vita']) || appState.characterSheet.hitDice;
+    applySuggestedHitPointsWhenEmpty();
     appState.characterSheet.savingThrows = {
       ...appState.characterSheet.savingThrows,
       ...classSavingThrows(traits['Tiri salvezza']),
@@ -152,6 +153,7 @@ export function createCharacterSheetClassController({
       tools: traits.Strumenti || appState.characterSheet.proficiencies.tools,
     };
     syncCharacterSheetClassResources(classEntry);
+    addClassReferenceToCharacterSheet(classEntry, traits);
     appState.characterSheet.notes = mergeSheetNote(
       appState.characterSheet.notes,
       classSkillSuggestion(classEntry, traits.Abilita)
@@ -186,8 +188,25 @@ export function createCharacterSheetClassController({
     const traits = classEntry?.sezioni?.find((section) => String(section.titolo || '').startsWith('Tratti '));
 
     return Object.fromEntries((traits?.righe || [])
-      .filter((row) => row?.chiave)
-      .map((row) => [row.chiave, String(row.valore || '').replace(/\.$/, '')]));
+      .map((row) => [
+        row.chiave || row.Voce,
+        String(row.valore || row.Riepilogo || '').replace(/\.$/, ''),
+      ])
+      .filter(([key]) => key));
+  }
+
+  function addClassReferenceToCharacterSheet(classEntry, traits) {
+    if (!classEntry?.id || appState.characterSheet.references.some((entry) => entry.section === 'classes' && entry.id === classEntry.id)) {
+      return false;
+    }
+
+    appState.characterSheet.references.push({
+      section: 'classes',
+      id: classEntry.id,
+      name: classEntry.nome || classEntry.id,
+      summary: [traits['Dado Vita'], traits['Caratteristica primaria']].filter(Boolean).join(' · '),
+    });
+    return true;
   }
 
   /*
@@ -335,6 +354,22 @@ export function createCharacterSheetClassController({
     return normalizeLegacyResources(resources);
   }
 
+  function applySuggestedHitPointsWhenEmpty() {
+    if (Number(appState.characterSheet.maxHp) > 0) return;
+
+    const level = Math.min(20, Math.max(1, Number(appState.characterSheet.level) || 1));
+    const hitDie = Number(String(appState.characterSheet.hitDice || '').match(/d(\d+)/i)?.[1]) || 8;
+    const con = Math.floor(((Number(appState.characterSheet.abilities?.con) || 10) - 10) / 2);
+    const firstLevel = Math.max(1, hitDie + con);
+    const laterLevel = Math.max(1, Math.floor(hitDie / 2) + 1 + con);
+    const hp = firstLevel + Math.max(0, level - 1) * laterLevel;
+
+    appState.characterSheet.maxHp = hp;
+    if (!Number(appState.characterSheet.currentHp)) {
+      appState.characterSheet.currentHp = hp;
+    }
+  }
+
   /*
    * Estrae le abilita nominate nella riga "Abilita" della classe.
    * Serve solo come suggerimento: le scelte finali restano nello stato scheda.
@@ -346,6 +381,27 @@ export function createCharacterSheetClassController({
     return skillMeta
       .filter(([, label]) => text.includes(normalizeText(label)))
       .map(([key, label]) => [key, label]);
+  }
+
+  function classSkillChoiceCount(classEntry) {
+    const text = normalizeText(classTraitsMap(classEntry).Abilita || '');
+    if (!text) return 0;
+
+    const digit = text.match(/\b(\d+)\b/);
+    if (digit) return Number(digit[1]) || 0;
+
+    const words = {
+      una: 1,
+      un: 1,
+      uno: 1,
+      due: 2,
+      tre: 3,
+      quattro: 4,
+      cinque: 5,
+      sei: 6,
+    };
+    const match = text.match(/\b(una|un|uno|due|tre|quattro|cinque|sei)\b/);
+    return match ? words[match[1]] : 0;
   }
 
   /*
@@ -391,6 +447,7 @@ export function createCharacterSheetClassController({
     classProgressionResources,
     classProgressionRow,
     classProgressionSection,
+    classSkillChoiceCount,
     classSkillOptions,
     classSubclassRows,
     classSuggestedResources,

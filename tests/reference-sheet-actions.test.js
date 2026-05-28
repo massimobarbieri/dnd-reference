@@ -22,6 +22,47 @@ const { pathToFileURL } = require('node:url');
 
   assert.match(monsterHtml, /Collega alla scheda/);
 
+  const speciesHtml = renderReferenceSheetActions({
+    section: 'species',
+    item: { id: 'elfo', nome: 'Elfo' },
+    escapeAttr,
+  });
+
+  assert.match(speciesHtml, /data-sheet-use-species="elfo"/);
+  assert.match(speciesHtml, /Usa per scheda/);
+
+  const backgroundHtml = renderReferenceSheetActions({
+    section: 'backgrounds',
+    item: { id: 'accolito', nome: 'Accolito' },
+    escapeAttr,
+  });
+
+  assert.match(backgroundHtml, /data-sheet-use-background="accolito"/);
+
+  const equipmentHtml = renderReferenceSheetActions({
+    section: 'equipment',
+    item: { id: 'pugnale', nome: 'Pugnale' },
+    escapeAttr,
+  });
+
+  assert.match(equipmentHtml, /data-sheet-add-equipment-item="pugnale"/);
+
+  const languageHtml = renderReferenceSheetActions({
+    section: 'languages',
+    item: { id: 'comune', nome: 'Comune' },
+    escapeAttr,
+  });
+
+  assert.match(languageHtml, /data-sheet-use-language="comune"/);
+
+  const featHtml = renderReferenceSheetActions({
+    section: 'feats',
+    item: { id: 'abile', nome: 'Abile' },
+    escapeAttr,
+  });
+
+  assert.match(featHtml, /data-sheet-add-reference="abile"/);
+
   console.log('Azioni scheda su riferimenti SRD OK');
 })().catch((error) => {
   console.error(error);

@@ -43,6 +43,7 @@ function createElement(html = '') {
 }
 
 function createAppTestContext() {
+  const createdElements = [];
   const views = {
     '#home-view': createElement(),
     '#list-view': createElement(),
@@ -94,9 +95,14 @@ function createAppTestContext() {
     console,
     document: {
       addEventListener() {},
-      createElement: () => createElement(),
+      createElement: () => {
+        const element = createElement();
+        createdElements.push(element);
+        return element;
+      },
       querySelector: (selector) => views[selector] || createElement(),
     },
+    createdElements,
     localStorage: new MemoryStorage(),
     location: { hash: '#/character_sheet/overview' },
     window,

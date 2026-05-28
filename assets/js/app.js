@@ -9,11 +9,11 @@
  * - Permette ricerca, filtri e preferiti.
  * - Salva i preferiti nel localStorage del browser.
  */
-import { loadConfig } from './data/loaders.js?v=20260519-browserverify';
+import { loadConfig } from './data/loaders.js?v=20260527-upstream-dev';
 import {
   applyReferenceSources,
   loadReferenceSources,
-} from './data/reference-data.js?v=20260519-browserverify';
+} from './data/reference-data.js?v=20260527-upstream-dev';
 import {
   escapeAttr,
   escapeHtml,
@@ -29,9 +29,9 @@ import {
 import {
   createReferenceViewController,
   renderReferenceSheetActions,
-} from './reference-view-controller.js?v=20260519-sheet-inventory3';
+} from './reference-view-controller.js?v=20260527-upstream-dev';
 import { createInlineFormatter } from './inline-formatting.js';
-import { createReferenceDetailRenderer } from './reference-detail-renderer.js?v=20260519-browserverify';
+import { createReferenceDetailRenderer } from './reference-detail-renderer.js?v=20260527-upstream-dev';
 
 import {
   normalizeCharacterSheet,
@@ -46,7 +46,7 @@ import {
   uniqueCharacterSheets,
   createCharacterSheetId,
   cloneJson,
-} from './features/character-sheet/character-sheet-normalizers.js?v=20260519-sheet-inventory3';
+} from './features/character-sheet/character-sheet-normalizers.js?v=20260527-upstream-dev';
 
 import {
   readJsonStorage,
@@ -63,14 +63,15 @@ import {
   CHARACTER_SHEETS_STORAGE_KEY,
   ACTIVE_CHARACTER_SHEET_STORAGE_KEY,
   APP_STORAGE_PREFIX,
-} from './features/character-sheet/character-sheet-storage.js?v=20260519-sheet-inventory3';
+} from './features/character-sheet/character-sheet-storage.js?v=20260527-upstream-dev';
 
-import { createCharacterSheetClassController } from './features/character-sheet/character-sheet-classes.js?v=20260519-sheet-inventory3';
-import { createCharacterSheetActionsController } from './features/character-sheet/character-sheet-actions.js?v=20260519-sheet-inventory3';
-import { createCharacterSheetEventsController } from './features/character-sheet/character-sheet-events.js?v=20260519-sheet-inventory3';
-import { createCharacterSheetRenderer } from './features/character-sheet/character-sheet-renderers.js?v=20260519-sheet-inventory3';
-import { createCharacterSheetSelectors } from './features/character-sheet/character-sheet-selectors.js?v=20260519-sheet-inventory3';
-import { createCharacterSheetBackupWorkflow } from './features/character-sheet/character-sheet-backup-workflow.js?v=20260519-sheet-inventory3';
+import { createCharacterSheetClassController } from './features/character-sheet/character-sheet-classes.js?v=20260527-upstream-dev';
+import { createCharacterSheetActionsController } from './features/character-sheet/character-sheet-actions.js?v=20260527-upstream-dev';
+import { createCharacterSheetEventsController } from './features/character-sheet/character-sheet-events.js?v=20260527-upstream-dev';
+import { createCharacterSheetRenderer } from './features/character-sheet/character-sheet-renderers.js?v=20260527-upstream-dev';
+import { createCharacterSheetSelectors } from './features/character-sheet/character-sheet-selectors.js?v=20260527-upstream-dev';
+import { createCharacterSheetDerivedModel } from './features/character-sheet/character-sheet-derived.js?v=20260527-upstream-dev';
+import { createCharacterSheetBackupWorkflow } from './features/character-sheet/character-sheet-backup-workflow.js?v=20260527-upstream-dev';
 
 import {
   CONDITION_ALIASES,
@@ -79,7 +80,7 @@ import {
   CHARACTER_SHEET_TABS,
   CHARACTER_SHEET_SCHEMA_VERSION,
   DEFAULT_CHARACTER_SHEET,
-} from './features/character-sheet/character-sheet-view.js?v=20260519-sheet-inventory3';
+} from './features/character-sheet/character-sheet-view.js?v=20260527-upstream-dev';
 
 (() => {
   'use strict';
@@ -97,6 +98,11 @@ import {
       monsters: [],
       spells: [],
       classes: [],
+      species: [],
+      backgrounds: [],
+      equipment: [],
+      feats: [],
+      languages: [],
       character_sheet: [],
       magic_items: [],
       rules: [],
@@ -120,6 +126,11 @@ import {
       monsters: '',
       spells: '',
       classes: '',
+      species: '',
+      backgrounds: '',
+      equipment: '',
+      feats: '',
+      languages: '',
       character_sheet: '',
       magic_items: '',
       rules: '',
@@ -131,6 +142,11 @@ import {
     activeCharacterSheetId: '',
     characterSheet: null,
     characterSheetTab: 'overview',
+    characterSpellFilters: {
+      level: '',
+      school: '',
+    },
+    characterSheetNotice: '',
     pendingCharacterSheetArchive: null,
     pendingAppBackup: null,
 
@@ -191,10 +207,12 @@ import {
   const {
     applyClassToCharacterSheet,
     classProgressionResources,
+    classSkillChoiceCount,
     classProgressionRow,
     classProgressionSection,
     classSkillOptions,
     classSubclassRows,
+    classTraitsMap,
     renderLevelAdvancementSummary,
     splitClassFeatures,
     syncCharacterSheetClassResources,
@@ -211,15 +229,30 @@ import {
 
   const {
     addEquipmentToCharacterSheet,
+    addEquipmentItemToCharacterSheet,
     addMagicItemToCharacterSheet,
     addReferenceToCharacterSheet,
     addSpellToCharacterSheet,
+    applyBackgroundToCharacterSheet,
+    applyLanguageToCharacterSheet,
+    applySpeciesToCharacterSheet,
     magicItemRequiresAttunement,
     resetCharacterResources,
   } = createCharacterSheetActionsController({
     appState,
     normalizeText,
     saveCharacterSheet,
+  });
+
+  const characterSheetDerived = createCharacterSheetDerivedModel({
+    appState,
+    abilityModifier,
+    abilityMeta: ABILITY_META,
+    skillMeta: SKILL_META,
+    classSkillOptions,
+    classSkillChoiceCount,
+    characterClassEntry,
+    classTraitsMap,
   });
 
   const {
@@ -311,9 +344,13 @@ import {
     applyClassToCharacterSheet,
     saveCharacterSheet,
     addEquipmentToCharacterSheet,
+    addEquipmentItemToCharacterSheet,
     addSpellToCharacterSheet,
     addMagicItemToCharacterSheet,
     addReferenceToCharacterSheet,
+    applySpeciesToCharacterSheet,
+    applyBackgroundToCharacterSheet,
+    applyLanguageToCharacterSheet,
   });
 
   const characterSheetEvents = createCharacterSheetEventsController({
@@ -323,16 +360,22 @@ import {
     renderCharacterSheet,
     characterClassEntry,
     applyClassToCharacterSheet,
+    applySpeciesToCharacterSheet,
+    applyBackgroundToCharacterSheet,
     syncCharacterSheetClassResources,
+    classProgressionRow,
+    nextLevelSummary,
     normalizeIdList,
     resetCharacterResources,
     addSpellToCharacterSheet,
+    addEquipmentItemToCharacterSheet,
     characterSpellSlots,
     ...backupActions,
     switchCharacterSheet,
     createNewCharacterSheet,
     duplicateCharacterSheet,
     deleteActiveCharacterSheet,
+    characterSheetDerived,
   });
 
   const characterSheetRenderer = createCharacterSheetRenderer({
@@ -346,6 +389,7 @@ import {
     CHARACTER_SHEET_TABS,
     ABILITY_META,
     SKILL_META,
+    characterSheetDerived,
     characterSheetClassName,
     characterLevel,
     characterProficiencyBonus,
@@ -367,6 +411,8 @@ import {
     classProgressionSection,
     classProgressionRow,
     classProgressionResources,
+    classSkillChoiceCount,
+    classTraitsMap,
     splitClassFeatures,
     classSubclassRows,
     nextLevelSummary,
@@ -403,7 +449,7 @@ import {
       applyReferenceSources(appState, referenceSources);
       appState.data.character_sheet = [appState.characterSheet];
 
-      // Renderizza home, lista o dettaglio in base all’URL.
+      // Renderizza home, lista o dettaglio in base all'URL.
       renderRoute();
     } catch (error) {
       console.error(error);
@@ -464,6 +510,8 @@ import {
       appState,
       applyAppBackupImport: backupActions.applyAppBackupImport,
       applyCharacterSheetArchiveImport: backupActions.applyCharacterSheetArchiveImport,
+      exportCharacterSheet: backupActions.exportCharacterSheet,
+      exportCharacterSheetArchive: backupActions.exportCharacterSheetArchive,
       loadCharacterSheetArchive,
       mergeCharacterSheetArchives,
       normalizeAppBackup: backupActions.normalizeAppBackup,

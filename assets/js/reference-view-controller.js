@@ -3,7 +3,7 @@ import {
   createFilterOptions,
   filterCatalogItems,
   sectionSummaryLine,
-} from './catalog.js?v=20260519-browserverify';
+} from './catalog.js?v=20260520-guided';
 
 export function createReferenceViewController({
   appState,
@@ -20,9 +20,13 @@ export function createReferenceViewController({
   applyClassToCharacterSheet,
   saveCharacterSheet,
   addEquipmentToCharacterSheet,
+  addEquipmentItemToCharacterSheet,
   addSpellToCharacterSheet,
   addMagicItemToCharacterSheet,
   addReferenceToCharacterSheet,
+  applySpeciesToCharacterSheet,
+  applyBackgroundToCharacterSheet,
+  applyLanguageToCharacterSheet,
 }) {
   function renderRoute() {
     const route = parseHash(location.hash);
@@ -46,7 +50,7 @@ export function createReferenceViewController({
 
     if (route.section === 'character_sheet') {
       if (!route.id) {
-        location.hash = '#/character_sheet/overview';
+        renderCharacterSheet('characters');
         return;
       }
 
@@ -87,7 +91,8 @@ export function createReferenceViewController({
 
   function homeCardSubtitle(section) {
     if (SECTION_META[section]?.type === 'tool') {
-      return appState.characterSheet.name || 'Strumento locale';
+      const count = appState.characterSheets.length || 0;
+      return count === 1 ? '1 personaggio salvato' : `${count} personaggi salvati`;
     }
 
     return `${appState.data[section].length} elementi disponibili`;
@@ -197,6 +202,11 @@ export function createReferenceViewController({
       monsters: 'Tutti i GS',
       spells: 'Tutti i livelli',
       classes: 'Tutte le classi',
+      species: 'Tutte le specie',
+      backgrounds: 'Tutte le caratteristiche',
+      equipment: 'Tutte le categorie',
+      feats: 'Tutte le categorie',
+      languages: 'Tutte le categorie',
       magic_items: 'Tutte le rarità',
       rules: 'Tutte le categorie',
       rules_glossary: 'Tutti i descrittori',
@@ -277,6 +287,26 @@ export function createReferenceViewController({
       location.hash = '#/character_sheet/inventory';
     });
 
+    views.detail.querySelector('[data-sheet-add-equipment-item]')?.addEventListener('click', () => {
+      addEquipmentItemToCharacterSheet(item);
+      location.hash = '#/character_sheet/inventory';
+    });
+
+    views.detail.querySelector('[data-sheet-use-species]')?.addEventListener('click', () => {
+      applySpeciesToCharacterSheet(item);
+      location.hash = '#/character_sheet/overview';
+    });
+
+    views.detail.querySelector('[data-sheet-use-background]')?.addEventListener('click', () => {
+      applyBackgroundToCharacterSheet(item);
+      location.hash = '#/character_sheet/overview';
+    });
+
+    views.detail.querySelector('[data-sheet-use-language]')?.addEventListener('click', () => {
+      applyLanguageToCharacterSheet(item);
+      location.hash = '#/character_sheet/overview';
+    });
+
     views.detail.querySelector('[data-sheet-add-reference]')?.addEventListener('click', () => {
       addReferenceToCharacterSheet(section, item);
       location.hash = '#/character_sheet/notes';
@@ -344,7 +374,43 @@ export function renderReferenceSheetActions({ section, item, escapeAttr }) {
     `;
   }
 
-  if (['monsters', 'rules', 'rules_glossary'].includes(section)) {
+  if (section === 'equipment') {
+    return `
+      <div class="sheet-actions">
+        <button class="button button--primary" type="button" data-sheet-add-equipment-item="${escapeAttr(item.id)}">Aggiungi all'inventario</button>
+        <a class="button button--ghost" href="#/character_sheet/inventory">Inventario scheda</a>
+      </div>
+    `;
+  }
+
+  if (section === 'species') {
+    return `
+      <div class="sheet-actions">
+        <button class="button button--primary" type="button" data-sheet-use-species="${escapeAttr(item.id)}">Usa per scheda</button>
+        <a class="button button--ghost" href="#/character_sheet/overview">Apri scheda</a>
+      </div>
+    `;
+  }
+
+  if (section === 'backgrounds') {
+    return `
+      <div class="sheet-actions">
+        <button class="button button--primary" type="button" data-sheet-use-background="${escapeAttr(item.id)}">Usa per scheda</button>
+        <a class="button button--ghost" href="#/character_sheet/overview">Apri scheda</a>
+      </div>
+    `;
+  }
+
+  if (section === 'languages') {
+    return `
+      <div class="sheet-actions">
+        <button class="button button--primary" type="button" data-sheet-use-language="${escapeAttr(item.id)}">Aggiungi alla scheda</button>
+        <a class="button button--ghost" href="#/character_sheet/overview">Apri scheda</a>
+      </div>
+    `;
+  }
+
+  if (['monsters', 'feats', 'rules', 'rules_glossary'].includes(section)) {
     return `
       <div class="sheet-actions">
         <button class="button button--primary" type="button" data-sheet-add-reference="${escapeAttr(item.id)}">Collega alla scheda</button>

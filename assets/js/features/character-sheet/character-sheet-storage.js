@@ -3,7 +3,7 @@ import {
   uniqueCharacterSheets,
   createCharacterSheetId,
   cloneJson,
-} from './character-sheet-normalizers.js?v=20260519-sheet-inventory3';
+} from './character-sheet-normalizers.js?v=20260527-upstream-dev';
 
 let appState = null;
 

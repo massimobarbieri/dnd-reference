@@ -4,6 +4,8 @@ export function createCharacterSheetInventoryRenderer({
   escapeHtml,
   sheetTextArea,
   magicItemRequiresAttunement,
+  characterClassEntry,
+  characterSheetDerived,
 }) {
   function renderCharacterSheetInventory() {
     const sheet = appState.characterSheet;
@@ -11,6 +13,7 @@ export function createCharacterSheetInventoryRenderer({
     return `
       <section class="sheet-grid">
         ${renderInventorySummary()}
+        ${renderStartingEquipmentPanel()}
 
         <div class="sheet-panel sheet-panel--control">
           <h3>Monete</h3>
@@ -40,6 +43,54 @@ export function createCharacterSheetInventoryRenderer({
           ${sheetTextArea('equipment', 'Dettagli liberi, tesori, contenitori, promemoria...', sheet.equipment)}
         </div>
       </section>
+    `;
+  }
+
+  function renderStartingEquipmentPanel() {
+    const classText = characterSheetDerived.classStartingEquipmentText();
+    const classOptions = characterSheetDerived.classStartingEquipmentOptions(classText);
+    const background = characterSheetDerived.characterBackgroundEntry();
+    const backgroundCoins = characterSheetDerived.backgroundStartingCoinsText();
+    const backgroundOption = characterSheetDerived.backgroundStartingCoinsOption();
+
+    if (!classText && !backgroundCoins) return '';
+
+    return `
+      <div class="sheet-panel sheet-panel--wide sheet-starting-equipment">
+        <h3>Equipaggiamento iniziale</h3>
+        <div class="sheet-starting-grid">
+          ${classText ? `
+            <article class="sheet-starting-card">
+              <div>
+                <span>Classe</span>
+                <strong>${escapeHtml(characterClassEntry()?.nome?.replace(/^Classe:\s*/i, '') || 'Classe')}</strong>
+                <p>${escapeHtml(classText)}</p>
+              </div>
+              <div class="sheet-starting-actions">
+                ${classOptions.map((option) => `
+                  <button class="button button--ghost" type="button" data-sheet-apply-starting-equipment="${escapeAttr(option.key)}"${option.imported ? ' disabled' : ''}>
+                    ${escapeHtml(option.imported ? 'Gia importato' : option.label)}
+                  </button>
+                `).join('')}
+              </div>
+            </article>
+          ` : ''}
+          ${backgroundCoins ? `
+            <article class="sheet-starting-card">
+              <div>
+                <span>Background</span>
+                <strong>${escapeHtml(background?.nome || 'Background')}</strong>
+                <p>${escapeHtml(`Alternativa: ${backgroundCoins}`)}</p>
+              </div>
+              <div class="sheet-starting-actions">
+                <button class="button button--ghost" type="button" data-sheet-apply-starting-equipment="background-coins"${backgroundOption?.imported ? ' disabled' : ''}>
+                  ${escapeHtml(backgroundOption?.imported ? 'Gia importate' : 'Applica monete')}
+                </button>
+              </div>
+            </article>
+          ` : ''}
+        </div>
+      </div>
     `;
   }
 

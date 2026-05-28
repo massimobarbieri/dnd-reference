@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const rules = require('../data/srd/5.2.1/json/srd_5_2_1_rules.json');
 
-assert.equal(rules.length, 49);
+assert.equal(rules.length, 47);
 
 const ids = new Set();
 
@@ -76,11 +76,11 @@ assert.ok(ids.has('caratteristiche_allineamento_personaggio'));
 assert.ok(ids.has('compilare_scheda_personaggio'));
 assert.ok(ids.has('avanzamento_livelli_superiori'));
 assert.ok(ids.has('multiclasse_e_monili'));
-assert.ok(ids.has('background_origini_personaggio'));
-assert.ok(ids.has('specie_origini_personaggio'));
 assert.ok(ids.has('talenti_origini_generali'));
 assert.ok(ids.has('talenti_stile_doni_epici'));
 assert.ok(![...ids].some((id) => id.startsWith('classe_')), 'le classi devono stare nel JSON dedicato');
+assert.ok(!ids.has('background_origini_personaggio'), 'i background devono stare nel JSON dedicato');
+assert.ok(!ids.has('specie_origini_personaggio'), 'le specie devono stare nel JSON dedicato');
 
 [
   ['azioni', 'Abilita', 18],
@@ -91,16 +91,6 @@ assert.ok(![...ids].some((id) => id.startsWith('classe_')), 'le classi devono st
   ['avanzamento_livelli_superiori', 'Equipaggiamento a livelli superiori', 4],
   ['multiclasse_e_monili', 'Incantatore multiclasse: slot incantesimo 1-9', 20],
   ['multiclasse_e_monili', 'Monili', 100],
-  ['specie_origini_personaggio', 'Antenati draconici', 10],
-  ['specie_origini_personaggio', 'Lignaggi elfici', 3],
-  ['specie_origini_personaggio', 'Retaggi immondi', 3],
-  ['armi', 'Armi principali', 38],
-  ['armature', 'Armature complete', 13],
-  ['equipaggiamento_avventura', "Equipaggiamento d'avventura: peso e costo", 82],
-  ['cavalcature_e_veicoli', 'Finimenti e veicoli da tiro', 10],
-  ['cavalcature_e_veicoli', 'Veicoli aerei e imbarcazioni', 7],
-  ['spese_servizi_e_stile_di_vita', 'Vitto e alloggio', 17],
-  ['spese_servizi_e_stile_di_vita', 'Gregari e servizi magici', 10],
   ['pozioni_maledizioni_resilienza', 'Miscibilita delle pozioni', 8],
   ['creare_oggetti_magici', 'Strumenti per categoria', 9],
   ['creare_oggetti_magici', 'Tempi e costi', 5],
@@ -113,6 +103,19 @@ assert.ok(![...ids].some((id) => id.startsWith('classe_')), 'le classi devono st
 
   assert.ok(section, `${ruleId} deve includere la tabella ${sectionTitle}`);
   assert.equal(section.righe.length, rowCount, `${sectionTitle} deve avere ${rowCount} righe`);
+});
+
+[
+  ['armi', 'Armi principali'],
+  ['armature', 'Armature complete'],
+  ['equipaggiamento_avventura', "Equipaggiamento d'avventura: peso e costo"],
+  ['cavalcature_e_veicoli', 'Finimenti e veicoli da tiro'],
+  ['cavalcature_e_veicoli', 'Veicoli aerei e imbarcazioni'],
+  ['spese_servizi_e_stile_di_vita', 'Vitto e alloggio'],
+  ['spese_servizi_e_stile_di_vita', 'Gregari e servizi magici'],
+].forEach(([ruleId, sectionTitle]) => {
+  const rule = rules.find((entry) => entry.id === ruleId);
+  assert.ok(!rule?.sezioni.some((entry) => entry.titolo === sectionTitle), `${sectionTitle} deve stare nel JSON dedicato`);
 });
 
 console.log('Dati regole SRD OK');

@@ -37,6 +37,11 @@ function escapeAttr(value) {
     monsters: readJson('srd_5_2_1_monsters.json'),
     spells: readJson('srd_5_2_1_spells.json'),
     classes: readJson('srd_5_2_1_classes.json'),
+    species: readJson('srd_5_2_1_species.json'),
+    backgrounds: readJson('srd_5_2_1_backgrounds.json'),
+    equipment: readJson('srd_5_2_1_equipment.json'),
+    feats: readJson('srd_5_2_1_feats.json'),
+    languages: readJson('srd_5_2_1_languages.json'),
     magicItems: readJson('srd_5_2_1_magic_items.json'),
     rules: readJson('srd_5_2_1_rules.json'),
     rulesGlossary: readJson('srd_5_2_1_rules_glossary.json'),
@@ -54,6 +59,11 @@ function escapeAttr(value) {
       monsters: [],
       spells: [],
       classes: [],
+      species: [],
+      backgrounds: [],
+      equipment: [],
+      feats: [],
+      languages: [],
       character_sheet: [],
       magic_items: [],
       rules: [],
@@ -72,7 +82,7 @@ function escapeAttr(value) {
 
   const renderDetail = createRenderer(appState);
 
-  for (const section of ['monsters', 'spells', 'classes', 'magic_items', 'rules', 'rules_glossary']) {
+  for (const section of ['monsters', 'spells', 'classes', 'species', 'backgrounds', 'equipment', 'feats', 'languages', 'magic_items', 'rules', 'rules_glossary']) {
     for (const item of appState.data[section]) {
       const html = renderDetail(section, item);
       assert.doesNotMatch(html, /\[object Object\]/, `${section}/${item.id} renderizza [object Object] dopo normalizzazione`);
@@ -85,6 +95,11 @@ function escapeAttr(value) {
       monsters: rawSources.monsters,
       spells: rawSources.spells,
       classes: rawSources.classes,
+      species: rawSources.species,
+      backgrounds: rawSources.backgrounds,
+      equipment: rawSources.equipment,
+      feats: rawSources.feats,
+      languages: rawSources.languages,
       character_sheet: [],
       magic_items: rawSources.magicItems,
       rules: rawSources.rules,
@@ -93,7 +108,7 @@ function escapeAttr(value) {
   };
   const renderRawDetail = createRenderer(rawAppState);
 
-  for (const section of ['monsters', 'spells', 'classes', 'magic_items', 'rules', 'rules_glossary']) {
+  for (const section of ['monsters', 'spells', 'classes', 'species', 'backgrounds', 'equipment', 'feats', 'languages', 'magic_items', 'rules', 'rules_glossary']) {
     for (const item of rawAppState.data[section]) {
       const html = renderRawDetail(section, item);
       assert.doesNotMatch(html, /\[object Object\]/, `${section}/${item.id} renderizza [object Object] da JSON raw`);

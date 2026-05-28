@@ -1,5 +1,5 @@
 import { normalizeText } from './app-core.js';
-import { formatDisplayValue } from './display-values.js?v=20260519-browserverify';
+import { formatDisplayValue } from './display-values.js?v=20260520-guided';
 
 /*
  * Restituisce gli elementi filtrati e ordinati alfabeticamente.
@@ -59,8 +59,35 @@ export function createFilterOptions(section, data, spellLevel) {
       }));
   }
 
-  if (section === 'classes') {
+  if (section === 'classes' || section === 'species') {
     return [];
+  }
+
+  if (section === 'backgrounds') {
+    return uniqueArrayValues(data.backgrounds, 'punteggi_caratteristica')
+      .sort((a, b) => a.localeCompare(b, 'it'))
+      .map((value) => ({
+        value,
+        label: value,
+      }));
+  }
+
+  if (section === 'equipment') {
+    return uniqueValues(data.equipment, 'categoria')
+      .sort((a, b) => a.localeCompare(b, 'it'))
+      .map((value) => ({ value, label: value }));
+  }
+
+  if (section === 'feats') {
+    return uniqueValues(data.feats, 'categoria')
+      .sort((a, b) => a.localeCompare(b, 'it'))
+      .map((value) => ({ value, label: value }));
+  }
+
+  if (section === 'languages') {
+    return uniqueValues(data.languages, 'categoria')
+      .sort((a, b) => a.localeCompare(b, 'it'))
+      .map((value) => ({ value, label: value }));
   }
 
   if (section === 'rules_glossary') {
@@ -98,8 +125,16 @@ export function matchesSectionFilter(section, item, filter) {
     return String(item.categoria || '') === filter;
   }
 
-  if (section === 'classes') {
+  if (section === 'classes' || section === 'species') {
     return true;
+  }
+
+  if (section === 'backgrounds') {
+    return normalizeList(item.punteggi_caratteristica).includes(filter);
+  }
+
+  if (['equipment', 'feats', 'languages'].includes(section)) {
+    return String(item.categoria || '') === filter;
   }
 
   if (section === 'rules_glossary') {
@@ -120,6 +155,16 @@ export function uniqueValues(items, key) {
         .filter((value) => value !== null && value !== undefined && value !== '')
     )
   ).map(String);
+}
+
+export function uniqueArrayValues(items, key) {
+  return Array.from(
+    new Set(
+      items
+        .flatMap((item) => normalizeList(item[key]))
+        .filter((value) => value !== '')
+    )
+  );
 }
 
 /*
@@ -175,11 +220,65 @@ export function searchableText(section, item) {
     ]);
   }
 
-  if (section === 'rules' || section === 'classes') {
+  if (section === 'rules' || section === 'classes' || section === 'species') {
     return displayText([
       item.nome,
       item.capitolo,
       item.categoria,
+      item.tipo_creatura,
+      item.taglia,
+      item.velocita,
+      item.tratti_sintesi,
+      item.descrizione,
+      ...searchableSectionText(item.sezioni),
+    ]);
+  }
+
+  if (section === 'backgrounds') {
+    return displayText([
+      item.nome,
+      item.capitolo,
+      item.talento_origine,
+      item.punteggi_caratteristica,
+      item.competenze,
+      item.equipaggiamento_alternativo,
+      item.descrizione,
+      ...searchableSectionText(item.sezioni),
+    ]);
+  }
+
+  if (section === 'equipment') {
+    return displayText([
+      item.nome,
+      item.tipo,
+      item.categoria,
+      item.danni,
+      item.classe_armatura,
+      item.padronanza,
+      item.proprieta,
+      item.costo,
+      item.peso,
+      item.descrizione,
+      ...searchableSectionText(item.sezioni),
+    ]);
+  }
+
+  if (section === 'feats') {
+    return displayText([
+      item.nome,
+      item.categoria,
+      item.prerequisito,
+      item.beneficio,
+      item.descrizione,
+      ...searchableSectionText(item.sezioni),
+    ]);
+  }
+
+  if (section === 'languages') {
+    return displayText([
+      item.nome,
+      item.categoria,
+      item.tiro_casuale,
       item.descrizione,
       ...searchableSectionText(item.sezioni),
     ]);
@@ -232,6 +331,47 @@ export function sectionSummaryLine(section, item, spellLevel) {
     ].filter(Boolean).join(' · ');
   }
 
+  if (section === 'species') {
+    return [
+      item.tipo_creatura,
+      item.taglia,
+      item.velocita,
+      item.pagine_sorgente ? `pag. ${item.pagine_sorgente}` : null,
+    ].filter(Boolean).join(' · ');
+  }
+
+  if (section === 'backgrounds') {
+    return [
+      normalizeList(item.punteggi_caratteristica).join(', '),
+      item.talento_origine,
+      item.pagine_sorgente ? `pag. ${item.pagine_sorgente}` : null,
+    ].filter(Boolean).join(' · ');
+  }
+
+  if (section === 'equipment') {
+    return [
+      item.categoria || item.tipo,
+      item.danni ? `Danni ${item.danni}` : null,
+      item.classe_armatura ? `CA ${item.classe_armatura}` : null,
+      item.costo,
+    ].filter(Boolean).join(' · ');
+  }
+
+  if (section === 'feats') {
+    return [
+      item.categoria,
+      item.prerequisito ? `Prerequisito: ${item.prerequisito}` : null,
+      item.ripetibile ? 'ripetibile' : null,
+    ].filter(Boolean).join(' · ');
+  }
+
+  if (section === 'languages') {
+    return [
+      item.categoria,
+      item.tiro_casuale && item.tiro_casuale !== '—' ? `1d12 ${item.tiro_casuale}` : null,
+    ].filter(Boolean).join(' · ');
+  }
+
   if (section === 'rules_glossary') {
     return [
       item.descrittore ? capitalizeFirst(item.descrittore) : `Lettera ${item.lettera}`,
@@ -266,6 +406,12 @@ function searchableSectionText(sections) {
 
 function displayText(values) {
   return values.map(formatDisplayValue).filter(Boolean).join(' ');
+}
+
+function normalizeList(value) {
+  if (Array.isArray(value)) return value.map((entry) => formatDisplayValue(entry)).filter(Boolean);
+  const text = formatDisplayValue(value);
+  return text ? [text] : [];
 }
 
 function catalogValue(value) {

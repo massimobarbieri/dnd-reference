@@ -18,6 +18,31 @@
       singular: 'classe',
       titleKey: 'classes',
     },
+    species: {
+      icon: '🧬',
+      singular: 'specie',
+      titleKey: 'species',
+    },
+    backgrounds: {
+      icon: '🎒',
+      singular: 'background',
+      titleKey: 'backgrounds',
+    },
+    equipment: {
+      icon: '🛡️',
+      singular: 'oggetto',
+      titleKey: 'equipment',
+    },
+    feats: {
+      icon: '🏅',
+      singular: 'talento',
+      titleKey: 'feats',
+    },
+    languages: {
+      icon: '🗣️',
+      singular: 'lingua',
+      titleKey: 'languages',
+    },
     character_sheet: {
       icon: '🧾',
       singular: 'scheda',

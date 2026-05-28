@@ -1,8 +1,8 @@
-import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260519-sheet-inventory3';
-import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260519-sheet-inventory3';
-import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260519-sheet-inventory3';
-import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260519-sheet-inventory3';
-import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260519-sheet-inventory3';
+import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260527-upstream-dev';
+import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260527-upstream-dev';
+import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260527-upstream-dev';
+import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260527-upstream-dev';
+import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260527-upstream-dev';
 
 export function createCharacterSheetRenderer({
   appState,
@@ -15,6 +15,7 @@ export function createCharacterSheetRenderer({
   CHARACTER_SHEET_TABS,
   ABILITY_META,
   SKILL_META,
+  characterSheetDerived,
   characterSheetClassName,
   characterLevel,
   characterProficiencyBonus,
@@ -36,6 +37,8 @@ export function createCharacterSheetRenderer({
   classProgressionSection,
   classProgressionRow,
   classProgressionResources,
+  classSkillChoiceCount,
+  classTraitsMap,
   splitClassFeatures,
   classSubclassRows,
   nextLevelSummary,
@@ -60,6 +63,12 @@ export function createCharacterSheetRenderer({
     escapeHtml,
     sheetTextArea,
     magicItemRequiresAttunement,
+    characterClassEntry,
+    characterSheetDerived,
+    characterSpellOptions,
+    spellOptionLabel,
+    characterSpellSlots,
+    abilityOptions,
   });
 
   const { renderCharacterSheetSpells } = createCharacterSheetSpellsRenderer({
@@ -92,9 +101,13 @@ export function createCharacterSheetRenderer({
     characterConditionOptions,
     characterProficiencyBonus,
     characterAttackBonus,
+    characterSpellSlots,
+    characterSpellOptions,
+    spellLevel,
+    characterSheetDerived,
   });
 
-  const { renderCharacterSheetOverview } = createCharacterSheetOverviewRenderer({
+  const { renderCharacterSheetBuilder, renderCharacterSheetOverview } = createCharacterSheetOverviewRenderer({
     appState,
     escapeAttr,
     escapeHtml,
@@ -116,10 +129,12 @@ export function createCharacterSheetRenderer({
     classProgressionSection,
     classProgressionRow,
     classProgressionResources,
+    classSkillChoiceCount,
     splitClassFeatures,
     classSubclassRows,
     nextLevelSummary,
     renderLevelAdvancementSummary,
+    characterSheetDerived,
   });
 
   function renderCharacterSheetArchiveImportPrompt() {
@@ -177,21 +192,147 @@ export function createCharacterSheetRenderer({
     `;
   }
 
+  function renderCharacterSheetNotice() {
+    if (!appState.characterSheetNotice) return '';
+
+    return `
+      <section class="sheet-notice" role="status" aria-live="polite">
+        <span>${escapeHtml(appState.characterSheetNotice)}</span>
+        <button class="button button--ghost" type="button" data-sheet-notice-dismiss>Chiudi</button>
+      </section>
+    `;
+  }
+
   /*
    * Renderizza la scheda personaggio nativa.
    */
   function renderCharacterSheet(tab = 'overview') {
-    const validTab = CHARACTER_SHEET_TABS.some(([id]) => id === tab) ? tab : 'overview';
+    const validTab = tab === 'characters' || tab === 'builder' || CHARACTER_SHEET_TABS.some(([id]) => id === tab) ? tab : 'overview';
     appState.characterSheetTab = validTab;
 
     setView('detail');
 
+    if (validTab === 'characters') {
+      views.detail.innerHTML = renderCharacterRoster();
+      bindCharacterSheetEvents();
+      return;
+    }
+
     views.detail.innerHTML = `
-      <nav class="detail-nav" aria-label="Navigazione scheda personaggio">
-        <a class="button" href="#/">Home</a>
-        <div class="sheet-manager">
+      <nav class="detail-nav sheet-topbar" aria-label="Navigazione scheda personaggio">
+        <a class="button sheet-home-link" href="#/">Reference</a>
+      </nav>
+
+      <article class="detail-card detail-card--flat character-sheet">
+        ${renderCharacterSheetNotice()}
+        ${renderCharacterSheetArchiveImportPrompt()}
+        ${renderAppBackupImportPrompt()}
+        ${renderCharacterSheetHeader()}
+        ${renderCharacterSheetTabs(validTab)}
+        ${renderCharacterSheetTab(validTab)}
+        ${renderCharacterSheetManager()}
+      </article>
+    `;
+
+    bindCharacterSheetEvents();
+  }
+
+  function renderCharacterRoster() {
+    return `
+      <nav class="detail-nav sheet-topbar" aria-label="Navigazione personaggi">
+        <a class="button sheet-home-link" href="#/">Home</a>
+      </nav>
+
+      <article class="detail-card character-roster">
+        ${renderCharacterSheetNotice()}
+        ${renderCharacterSheetArchiveImportPrompt()}
+        ${renderAppBackupImportPrompt()}
+        <header class="detail-header character-roster-header">
+          <div>
+            <p class="detail-kicker">Schede salvate</p>
+            <h2 class="detail-title">Personaggi</h2>
+            <p class="subtitle">Scegli un personaggio per aprire subito la scheda da usare al tavolo.</p>
+          </div>
+          <button class="button button--primary" type="button" data-sheet-create-builder>Nuovo personaggio</button>
+        </header>
+
+        <div class="character-roster-grid">
+          ${appState.characterSheets.map((sheet) => renderCharacterRosterCard(sheet)).join('')}
+        </div>
+
+        <details class="sheet-manager" aria-label="Archivio schede">
+          <summary>
+            <span>Archivio</span>
+            <strong>Import/export</strong>
+          </summary>
+          <div class="sheet-manager-body sheet-manager-body--archive">
+            <div class="sheet-manager-actions">
+              <button class="button button--ghost" type="button" data-sheet-export-archive>Esporta archivio</button>
+              <button class="button button--ghost" type="button" data-sheet-import-archive>Importa archivio</button>
+              <button class="button button--ghost" type="button" data-app-export-backup>Esporta backup app</button>
+              <button class="button button--ghost" type="button" data-app-import-backup>Importa backup app</button>
+            </div>
+            <input id="character-sheet-import" class="visually-hidden" type="file" accept="application/json,.json">
+            <input id="character-sheet-archive-import" class="visually-hidden" type="file" accept="application/json,.json">
+            <input id="app-backup-import" class="visually-hidden" type="file" accept="application/json,.json">
+          </div>
+        </details>
+      </article>
+    `;
+  }
+
+  function renderCharacterRosterCard(sheet) {
+    const active = sheet.id === appState.characterSheet.id;
+    const className = appState.data.classes.find((entry) => entry.id === sheet.classId)?.nome?.replace(/^Classe:\s*/i, '') || '';
+    const title = sheet.name || 'Nuovo personaggio';
+    const subtitle = [className, sheet.level ? `livello ${sheet.level}` : null, sheet.ancestry, sheet.background].filter(Boolean).join(' · ');
+    const checklist = characterSheetDerived.characterBuilderChecklistForSheet(sheet);
+    const complete = checklist.filter((item) => item.complete).length;
+    const total = checklist.length || 1;
+    const ready = complete === total;
+    const next = checklist.find((item) => !item.complete);
+
+    return `
+      <article class="character-roster-card${active ? ' is-active' : ''}">
+        <div>
+          <span>${escapeHtml(active ? 'Attivo' : ready ? 'Pronto' : 'Bozza')}</span>
+          <strong>${escapeHtml(title)}</strong>
+          <p>${escapeHtml(subtitle || 'Scheda in preparazione')}</p>
+        </div>
+        <div class="character-roster-progress" aria-label="Avanzamento creazione">
+          <strong>${escapeHtml(`${complete}/${total}`)}</strong>
+          <span>${escapeHtml(ready ? 'Pronta per il tavolo' : `Prossimo: ${next?.label || 'rifinitura'}`)}</span>
+        </div>
+        <div class="character-roster-stats">
+          <span>CA ${escapeHtml(String(Number(sheet.armorClass) || 10))}</span>
+          <span>PF ${escapeHtml(String(Number(sheet.currentHp) || 0))}/${escapeHtml(String(Number(sheet.maxHp) || 0))}</span>
+        </div>
+        <div class="character-roster-actions">
+          <button class="button" type="button" data-sheet-open-character="${escapeAttr(sheet.id)}">Apri scheda</button>
+          ${ready ? '' : `<button class="button button--ghost" type="button" data-sheet-continue-character="${escapeAttr(sheet.id)}">Continua creazione</button>`}
+          <button class="button button--ghost" type="button" data-sheet-rename-character="${escapeAttr(sheet.id)}">Rinomina</button>
+          <button class="button button--ghost" type="button" data-sheet-duplicate-character="${escapeAttr(sheet.id)}">Duplica</button>
+          <button class="button button--ghost" type="button" data-sheet-export-character="${escapeAttr(sheet.id)}">Esporta</button>
+          <button class="button button--ghost sheet-danger-action" type="button" data-sheet-delete-character="${escapeAttr(sheet.id)}"${appState.characterSheets.length <= 1 ? ' disabled' : ''}>Elimina</button>
+        </div>
+      </article>
+    `;
+  }
+
+  /*
+   * Controlli di archivio e gestione: restano disponibili, ma non devono
+   * competere con le informazioni giocabili nel primo colpo d'occhio.
+   */
+  function renderCharacterSheetManager() {
+    return `
+      <details class="sheet-manager" aria-label="Gestione scheda">
+        <summary>
+          <span>Gestisci scheda</span>
+          <strong>${escapeHtml(sheetManagerLabel())}</strong>
+        </summary>
+        <div class="sheet-manager-body">
           <label class="sheet-character-picker">
-            <span>Personaggio</span>
+            <span>Scheda attiva</span>
             <select class="sheet-character-select" data-sheet-switch-character aria-label="Personaggio attivo">
               ${appState.characterSheets.map((sheet) => `
                 <option value="${escapeAttr(sheet.id)}"${sheet.id === appState.characterSheet.id ? ' selected' : ''}>${escapeHtml(sheet.name || 'Scheda personaggio')}</option>
@@ -199,10 +340,10 @@ export function createCharacterSheetRenderer({
             </select>
           </label>
           <div class="sheet-manager-actions">
-            <button class="button button--ghost" type="button" data-sheet-reset>Nuova</button>
+            <a class="button button--ghost" href="#/character_sheet">Personaggi</a>
             <button class="button button--ghost" type="button" data-sheet-duplicate>Duplica</button>
             <details class="sheet-more-actions">
-              <summary>Altro</summary>
+              <summary>Archivio</summary>
               <div>
                 <button class="button button--ghost" type="button" data-sheet-export>Esporta</button>
                 <button class="button button--ghost" type="button" data-sheet-import>Importa</button>
@@ -218,18 +359,12 @@ export function createCharacterSheetRenderer({
             <input id="app-backup-import" class="visually-hidden" type="file" accept="application/json,.json">
           </div>
         </div>
-      </nav>
-
-      <article class="detail-card detail-card--flat character-sheet">
-        ${renderCharacterSheetArchiveImportPrompt()}
-        ${renderAppBackupImportPrompt()}
-        ${renderCharacterSheetHeader()}
-        ${renderCharacterSheetTabs(validTab)}
-        ${renderCharacterSheetTab(validTab)}
-      </article>
+      </details>
     `;
+  }
 
-    bindCharacterSheetEvents();
+  function sheetManagerLabel() {
+    return appState.characterSheet.name || 'Nuovo personaggio';
   }
 
   /*
@@ -243,6 +378,7 @@ export function createCharacterSheetRenderer({
     return `
       <header class="detail-header character-sheet-header">
         <div>
+          <span class="sheet-kicker">Scheda personaggio</span>
           <h2 class="detail-title">${escapeHtml(sheet.name || 'Scheda personaggio')}</h2>
           <p class="detail-kicker">${escapeHtml([className, level ? `livello ${level}` : null, sheet.ancestry].filter(Boolean).join(' · '))}</p>
         </div>
@@ -277,6 +413,7 @@ export function createCharacterSheetRenderer({
    * Contenuto della tab attiva.
    */
   function renderCharacterSheetTab(tab) {
+    if (tab === 'builder') return renderCharacterSheetBuilder();
     if (tab === 'combat') return renderCharacterSheetCombat();
     if (tab === 'spells') return renderCharacterSheetSpells();
     if (tab === 'inventory') return renderCharacterSheetInventory();
@@ -359,6 +496,11 @@ export function createCharacterSheetRenderer({
       rules: 'Regola',
       rules_glossary: 'Glossario',
       classes: 'Classe',
+      species: 'Specie',
+      backgrounds: 'Background',
+      equipment: 'Equipaggiamento',
+      feats: 'Talento',
+      languages: 'Lingua',
       spells: 'Incantesimo',
       magic_items: 'Oggetto magico',
     }[section] || section;

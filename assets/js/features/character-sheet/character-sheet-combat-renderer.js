@@ -13,17 +13,27 @@ export function createCharacterSheetCombatRenderer({
   characterConditionOptions,
   characterProficiencyBonus,
   characterAttackBonus,
+  characterSpellSlots,
+  characterSpellOptions,
+  spellLevel,
+  characterSheetDerived,
 }) {
   function renderCharacterSheetCombat() {
     const sheet = appState.characterSheet;
-    const initiative = abilityModifier(sheet.abilities.dex) + (Number(sheet.initiativeBonus) || 0);
+    const initiative = characterSheetDerived.characterInitiative();
+    const suggestedArmorClass = characterSheetDerived.characterSuggestedArmorClass();
+    const suggestedHitPoints = characterSheetDerived.characterSuggestedHitPoints();
 
     return `
       <section class="sheet-grid">
         ${renderCombatSummary(initiative)}
+        ${renderTurnEconomyPanel()}
 
         <div class="sheet-panel sheet-panel--control">
           <h3>Difesa e punti ferita</h3>
+          ${renderHitPointQuickControls()}
+          ${renderHitDiceControls()}
+          ${renderHitPointLog()}
           <div class="sheet-form-grid sheet-form-grid--compact">
             ${sheetNumberField('armorClass', 'Classe Armatura', sheet.armorClass, 0)}
             ${sheetNumberField('currentHp', 'PF attuali', sheet.currentHp, 0)}
@@ -32,6 +42,12 @@ export function createCharacterSheetCombatRenderer({
             ${sheetField('hitDice', 'Dadi Vita', sheet.hitDice)}
             ${sheetNumberField('speed', 'Velocita (m)', sheet.speed, 0)}
             ${sheetNumberField('initiativeBonus', 'Bonus iniziativa extra', sheet.initiativeBonus)}
+          </div>
+          <div class="sheet-derived-actions">
+            <div class="sheet-derived"><span>CA suggerita</span><strong>${escapeHtml(String(suggestedArmorClass))}</strong></div>
+            <div class="sheet-derived"><span>PF suggeriti</span><strong>${escapeHtml(String(suggestedHitPoints))}</strong></div>
+            <button class="button button--ghost" type="button" data-sheet-apply-derived-ac>Applica CA</button>
+            <button class="button button--ghost" type="button" data-sheet-apply-derived-hp>Applica PF</button>
           </div>
         </div>
 
@@ -61,6 +77,11 @@ export function createCharacterSheetCombatRenderer({
         <div class="sheet-panel sheet-panel--wide">
           <h3>Risorse</h3>
           ${renderCharacterResources()}
+        </div>
+
+        <div class="sheet-panel sheet-panel--wide">
+          <h3>Azioni rapide</h3>
+          ${renderQuickActions()}
         </div>
 
         <div class="sheet-panel sheet-panel--wide">
@@ -98,11 +119,245 @@ export function createCharacterSheetCombatRenderer({
           ${renderCombatStat('PF', `${Number(sheet.currentHp) || 0}/${Number(sheet.maxHp) || 0}`, 'Attuali / massimi')}
           ${renderCombatStat('Temp', Number(sheet.tempHp) || 0, 'Punti ferita')}
           ${renderCombatStat('Vel', Number(sheet.speed) || 0, 'metri')}
-          ${renderCombatStat('DV', sheet.hitDice || '-', 'Dadi vita')}
+          ${renderCombatStat('DV', hitDiceAvailableSummary(), sheet.hitDice || 'Dadi vita')}
+          ${renderCombatStat('Turno', turnReadinessSummary(), `Round ${combatRound()}`)}
           ${renderCombatStat('Iniz.', formatSigned(initiative), 'Totale')}
         </div>
       </div>
     `;
+  }
+
+  function renderTurnEconomyPanel() {
+    const state = combatState();
+    const speed = Math.max(0, Number(appState.characterSheet.speed) || 0);
+    const usedMovement = movementUsed();
+    const remainingMovement = Math.max(0, speed - usedMovement);
+
+    return `
+      <div class="sheet-panel sheet-panel--wide sheet-turn-panel">
+        <div class="sheet-turn-header">
+          <div>
+            <span>Round</span>
+            <strong>${escapeHtml(String(state.round))}</strong>
+          </div>
+          <div class="sheet-turn-header-actions">
+            <button type="button" data-sheet-combat-round-delta="-1">-</button>
+            <button type="button" data-sheet-combat-new-turn>Nuovo turno</button>
+            <button type="button" data-sheet-combat-round-delta="1">+</button>
+          </div>
+        </div>
+
+        <div class="sheet-turn-console" aria-label="Economia del turno">
+          <div class="sheet-turn-slots">
+            ${renderTurnSlot('actionUsed', 'Azione', state.actionUsed)}
+            ${renderTurnSlot('bonusActionUsed', 'Bonus', state.bonusActionUsed)}
+            ${renderTurnSlot('reactionUsed', 'Reazione', state.reactionUsed)}
+          </div>
+
+          <div class="sheet-movement-console">
+            <div class="sheet-movement-meter">
+              <span>Movimento</span>
+              <strong>${escapeHtml(`${formatMeters(usedMovement)}/${formatMeters(speed)} m`)}</strong>
+              <small>${escapeHtml(`${formatMeters(remainingMovement)} m restanti`)}</small>
+            </div>
+            <div class="sheet-movement-actions">
+              <button type="button" data-sheet-combat-movement-delta="1.5">+1,5 m</button>
+              <button type="button" data-sheet-combat-movement-delta="3">+3 m</button>
+              <button type="button" data-sheet-combat-reset-movement>Reset</button>
+            </div>
+          </div>
+
+          ${renderConcentrationConsole()}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderTurnSlot(field, label, used) {
+    return `
+      <button
+        class="sheet-turn-slot ${used ? 'is-used' : ''}"
+        type="button"
+        data-sheet-combat-toggle="${escapeAttr(field)}"
+        aria-pressed="${used ? 'true' : 'false'}"
+      >
+        <span>${escapeHtml(label)}</span>
+        <strong>${escapeHtml(used ? 'Usata' : 'Pronta')}</strong>
+      </button>
+    `;
+  }
+
+  function renderConcentrationConsole() {
+    const sheet = appState.characterSheet;
+    const status = sheet.status;
+    const active = Boolean(status.concentration);
+    const spellName = String(status.concentrationSpell || '').trim();
+    const dc = concentrationDc();
+    const saveModifier = concentrationSaveModifier();
+
+    return `
+      <div class="sheet-concentration-console ${active ? 'is-active' : ''}">
+        <div class="sheet-concentration-state">
+          <span>Concentrazione</span>
+          <strong>${escapeHtml(active ? (spellName || 'Attiva') : 'Non attiva')}</strong>
+          <small>${escapeHtml(active ? `CD ${dc}` : 'Nessun effetto')}</small>
+        </div>
+        <label>
+          <span>Effetto</span>
+          <input type="text" value="${escapeAttr(spellName)}" data-sheet-concentration-field="concentrationSpell" placeholder="Benedizione">
+        </label>
+        <label>
+          <span>CD</span>
+          <input type="number" min="10" value="${escapeAttr(String(dc))}" data-sheet-concentration-number="concentrationDc">
+        </label>
+        <div class="sheet-concentration-actions">
+          <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, saveModifier))}">${escapeHtml(`TS COS ${formatSigned(saveModifier)}`)}</button>
+          ${active
+            ? '<button type="button" data-sheet-concentration-clear-dc>CD ok</button><button type="button" data-sheet-concentration-drop>Persa</button>'
+            : '<button type="button" data-sheet-concentration-start>Avvia</button>'}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderHitPointQuickControls() {
+    const sheet = appState.characterSheet;
+    const current = Math.max(0, Number(sheet.currentHp) || 0);
+    const max = Math.max(0, Number(sheet.maxHp) || 0);
+    const temp = Math.max(0, Number(sheet.tempHp) || 0);
+    const percent = max ? Math.round((current / max) * 100) : 0;
+
+    return `
+      <div class="sheet-hp-console" aria-label="Punti ferita rapidi">
+        <div class="sheet-hp-meter">
+          <span>PF</span>
+          <strong>${escapeHtml(`${current}/${max}`)}</strong>
+          <small>${escapeHtml(temp ? `Temp ${temp}` : `${percent}%`)}</small>
+        </div>
+        <form class="sheet-hp-actions" data-sheet-hp-form>
+          <label>
+            <span>Valore</span>
+            <input type="number" name="amount" min="0" value="1" inputmode="numeric">
+          </label>
+          <button type="submit" data-sheet-hp-action="damage">Danno</button>
+          <button type="submit" data-sheet-hp-action="heal">Cura</button>
+          <button type="submit" data-sheet-hp-action="temp">Temp</button>
+        </form>
+      </div>
+    `;
+  }
+
+  function renderHitDiceControls() {
+    const sheet = appState.characterSheet;
+    const max = hitDiceMaximum();
+    const used = hitDiceUsed();
+    const available = Math.max(0, max - used);
+    const faces = hitDieFaces();
+    const con = abilityModifier(sheet.abilities.con);
+    const averageHeal = hitDieAverageHealing();
+    const currentHp = Math.max(0, Number(sheet.currentHp) || 0);
+    const maxHp = Math.max(0, Number(sheet.maxHp) || 0);
+    const spendDisabled = available <= 0 || (maxHp > 0 && currentHp >= maxHp);
+
+    return `
+      <div class="sheet-hit-dice-console" aria-label="Dadi vita">
+        <div class="sheet-hit-dice-meter">
+          <span>Dadi vita</span>
+          <strong>${escapeHtml(`${available}/${max}`)}</strong>
+          <small>${escapeHtml(`${used} spesi`)}</small>
+        </div>
+        <div class="sheet-hit-dice-actions">
+          <button
+            type="button"
+            data-sheet-spend-hit-die
+            ${spendDisabled ? 'disabled' : ''}
+          >${escapeHtml(`Spendi DV medio +${averageHeal}`)}</button>
+          <button type="button" data-dice-roll="${escapeAttr(rollFormula(faces, con))}">
+            ${escapeHtml(`Tira d${faces} ${formatSigned(con)}`)}
+          </button>
+          <button
+            type="button"
+            data-sheet-hit-die-delta="-1"
+            ${used <= 0 ? 'disabled' : ''}
+          >Recupera DV</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderHitPointLog() {
+    const entries = Array.isArray(appState.characterSheet.hitPointLog)
+      ? appState.characterSheet.hitPointLog.slice(0, 5)
+      : [];
+
+    if (!entries.length) {
+      return '<p class="sheet-empty sheet-hp-log-empty">Nessuna modifica PF registrata.</p>';
+    }
+
+    return `
+      <div class="sheet-hp-log" aria-label="Cronologia punti ferita">
+        <div class="sheet-hp-log-heading">
+          <span>Cronologia PF</span>
+          <strong>${escapeHtml(String(appState.characterSheet.hitPointLog.length))}</strong>
+        </div>
+        <div class="sheet-hp-log-list">
+          ${entries.map((entry, index) => renderHitPointLogEntry(entry, index === 0)).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderHitPointLogEntry(entry, latest) {
+    const summary = hitPointActionSummary(entry.action, Number(entry.amount) || 0);
+    const before = entry.before || {};
+    const after = entry.after || {};
+    const change = [
+      `PF ${Number(before.currentHp) || 0} -> ${Number(after.currentHp) || 0}`,
+      `Temp ${Number(before.tempHp) || 0} -> ${Number(after.tempHp) || 0}`,
+    ].join(' · ');
+
+    return `
+      <article class="sheet-hp-log-entry">
+        <div>
+          <strong>${escapeHtml(summary)}</strong>
+          <span>${escapeHtml(change)}</span>
+          ${entry.note ? `<small>${escapeHtml(entry.note)}</small>` : ''}
+          ${entry.at ? `<small>${escapeHtml(formatHitPointLogTime(entry.at))}</small>` : ''}
+        </div>
+        ${latest ? `<button class="button button--ghost" type="button" data-sheet-undo-hp="${escapeAttr(entry.id)}">Annulla</button>` : ''}
+      </article>
+    `;
+  }
+
+  function hitPointActionSummary(action, amount) {
+    const label = hitPointActionLabel(action);
+    if (action === 'longRest') return label;
+    if (action === 'manual' && !amount) return label;
+    return `${label} ${amount}`;
+  }
+
+  function hitPointActionLabel(action) {
+    return {
+      damage: 'Danno',
+      heal: 'Cura',
+      temp: 'Temp',
+      hitDie: 'Dado vita',
+      longRest: 'Riposo lungo',
+      undo: 'Undo',
+      manual: 'Manuale',
+    }[action] || 'PF';
+  }
+
+  function formatHitPointLogTime(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+
+    return date.toLocaleString('it-IT', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
   function renderCombatStat(label, value, hint) {
@@ -113,6 +368,67 @@ export function createCharacterSheetCombatRenderer({
         <small>${escapeHtml(hint)}</small>
       </div>
     `;
+  }
+
+  function combatState() {
+    const source = appState.characterSheet.combatState || {};
+    return {
+      round: combatRound(),
+      actionUsed: Boolean(source.actionUsed),
+      bonusActionUsed: Boolean(source.bonusActionUsed),
+      reactionUsed: Boolean(source.reactionUsed),
+      movementUsed: movementUsed(),
+    };
+  }
+
+  function combatRound() {
+    return Math.min(999, Math.max(1, Number(appState.characterSheet.combatState?.round) || 1));
+  }
+
+  function movementUsed() {
+    const speed = Math.max(0, Number(appState.characterSheet.speed) || 0);
+    const used = Math.max(0, Number(appState.characterSheet.combatState?.movementUsed) || 0);
+    return speed ? Math.min(speed, used) : used;
+  }
+
+  function turnReadinessSummary() {
+    const state = combatState();
+    const ready = [state.actionUsed, state.bonusActionUsed, state.reactionUsed].filter((used) => !used).length;
+    return `${ready}/3`;
+  }
+
+  function formatMeters(value) {
+    const number = Number(value) || 0;
+    return Number.isInteger(number) ? String(number) : String(number).replace('.', ',');
+  }
+
+  function concentrationDc() {
+    return Math.max(10, Number(appState.characterSheet.status?.concentrationDc) || 10);
+  }
+
+  function concentrationSaveModifier() {
+    return abilityModifier(appState.characterSheet.abilities.con) +
+      (appState.characterSheet.savingThrows.con ? characterProficiencyBonus() : 0);
+  }
+
+  function hitDiceMaximum() {
+    return Math.min(20, Math.max(1, Number(appState.characterSheet.level) || 1));
+  }
+
+  function hitDiceUsed() {
+    return Math.min(hitDiceMaximum(), Math.max(0, Number(appState.characterSheet.hitDiceUsed) || 0));
+  }
+
+  function hitDiceAvailableSummary() {
+    return `${Math.max(0, hitDiceMaximum() - hitDiceUsed())}/${hitDiceMaximum()}`;
+  }
+
+  function hitDieFaces() {
+    return Number(String(appState.characterSheet.hitDice || '').match(/d(\d+)/i)?.[1]) || 8;
+  }
+
+  function hitDieAverageHealing() {
+    return Math.max(1, Math.floor(hitDieFaces() / 2) + 1 + abilityModifier(appState.characterSheet.abilities.con));
   }
 
   function renderSavingThrowControl(key, label) {
@@ -353,6 +669,80 @@ export function createCharacterSheetCombatRenderer({
         </div>
       </article>
     `;
+  }
+
+  function renderQuickActions() {
+    const actions = [
+      ...appState.characterSheet.attacks.map((attack) => quickAttackAction(attack)),
+      ...appState.characterSheet.resources
+        .filter((resource) => Math.max(0, Number(resource.max) || 0) > 0)
+        .map(quickResourceAction),
+      ...preparedSpellActions(),
+    ].filter(Boolean);
+
+    if (!actions.length) {
+      return '<p class="sheet-empty">Aggiungi attacchi, risorse o incantesimi preparati per avere pulsanti operativi qui.</p>';
+    }
+
+    return `
+      <div class="sheet-action-card-grid">
+        ${actions.map((action) => `
+          <article class="sheet-action-card">
+            <div>
+              <span>${escapeHtml(action.type)}</span>
+              <strong>${escapeHtml(action.name)}</strong>
+              <p>${escapeHtml(action.detail || '')}</p>
+            </div>
+            <div class="sheet-action-card-buttons">
+              ${action.roll ? `<button type="button" data-dice-roll="${escapeAttr(action.roll)}">${escapeHtml(action.rollLabel)}</button>` : ''}
+              ${action.damage ? `<button type="button" data-dice-roll="${escapeAttr(action.damage)}">Danni</button>` : ''}
+              ${action.resourceId ? `<button type="button" data-sheet-resource-delta="1" data-sheet-resource-id="${escapeAttr(action.resourceId)}">Usa</button>` : ''}
+              ${action.spellId ? `<button type="button" data-sheet-cast-spell="${escapeAttr(action.spellId)}">Lancia</button>` : ''}
+              ${action.href ? `<a class="button button--ghost" href="${escapeAttr(action.href)}">Apri</a>` : ''}
+            </div>
+          </article>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function quickAttackAction(attack) {
+    const attackBonus = characterAttackBonus(attack);
+    return {
+      type: 'Azione',
+      name: attack.name || 'Attacco',
+      detail: [attack.damage ? `Danni ${attack.damage}` : null, attack.damageType].filter(Boolean).join(' · '),
+      roll: rollFormula(20, attackBonus),
+      rollLabel: `Colpire ${formatSigned(attackBonus)}`,
+      damage: String(attack.damage || '').trim(),
+    };
+  }
+
+  function quickResourceAction(resource) {
+    const max = Math.max(0, Number(resource.max) || 0);
+    const used = Math.min(max, Math.max(0, Number(resource.used) || 0));
+    return {
+      type: 'Risorsa',
+      name: resource.name || 'Risorsa',
+      detail: [`${Math.max(0, max - used)}/${max} disponibili`, resource.recovery].filter(Boolean).join(' · '),
+      resourceId: resource.id,
+    };
+  }
+
+  function preparedSpellActions() {
+    const slotLabels = new Set(characterSpellSlots().map(([label]) => label.replace(/^Slot\s+/i, '')));
+
+    return appState.characterSheet.preparedSpells
+      .map((id) => appState.data.spells.find((spell) => spell.id === id))
+      .filter(Boolean)
+      .slice(0, 8)
+      .map((spell) => ({
+        type: spell.livello === 0 ? 'Trucchetto' : 'Incantesimo',
+        name: spell.nome || spell.id,
+        detail: [spellLevel(spell), spell.scuola, slotLabels.has(String(spell.livello)) ? 'slot disponibile' : null].filter(Boolean).join(' · '),
+        spellId: spell.id,
+        href: `#/spells/${encodeURIComponent(spell.id)}`,
+      }));
   }
 
   return { renderCharacterSheetCombat };

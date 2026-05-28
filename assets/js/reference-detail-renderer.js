@@ -1,5 +1,5 @@
-import { createReferenceSectionRenderer } from './reference-section-renderer.js?v=20260519-browserverify';
-import { formatDisplayValue } from './display-values.js?v=20260519-browserverify';
+import { createReferenceSectionRenderer } from './reference-section-renderer.js?v=20260520-guided';
+import { formatDisplayValue } from './display-values.js?v=20260520-guided';
 
 export function createReferenceDetailRenderer({
   appState,
@@ -35,6 +35,11 @@ export function createReferenceDetailRenderer({
     if (section === 'monsters') return renderMonster(item);
     if (section === 'spells') return renderSpell(item);
     if (section === 'classes') return renderClass(item);
+    if (section === 'species') return renderSpecies(item);
+    if (section === 'backgrounds') return renderBackground(item);
+    if (section === 'equipment') return renderEquipment(item);
+    if (section === 'feats') return renderFeat(item);
+    if (section === 'languages') return renderLanguage(item);
     if (section === 'rules') return renderRule(item);
     if (section === 'rules_glossary') return renderGlossaryEntry(item);
     return renderMagicItem(item);
@@ -166,6 +171,32 @@ export function createReferenceDetailRenderer({
 
       ${renderScalingEntries('Slot superiori', spell.scaling, spell)}
       ${renderSections('Sezioni', spell.sezioni)}
+      ${renderSummonedCreatureLink(spell)}
+    `;
+  }
+
+  /*
+   * Se l'incantesimo rimanda a una creatura evocata presente nel catalogo
+   * mostri, aggiunge un link diretto in fondo alla scheda.
+   */
+  function renderSummonedCreatureLink(spell) {
+    const summonedCreatureId = spell?.creatura_evocata?.id;
+
+    if (!summonedCreatureId || spell?.creatura_evocata?.fonte !== 'mostri') {
+      return '';
+    }
+
+    const monster = appState.data.monsters.find((entry) => entry.id === summonedCreatureId);
+
+    if (!monster) {
+      return '';
+    }
+
+    return `
+      <p class="summoned-creature-link">
+        <strong>Creatura evocata:</strong>
+        <a href="#/monsters/${encodeURIComponent(monster.id)}">${escapeHtml(monster.nome)}</a>
+      </p>
     `;
   }
 
@@ -326,6 +357,127 @@ export function createReferenceDetailRenderer({
       <div class="description">${formatInline(rule.descrizione || '')}</div>
 
       ${renderSections('Dettagli', rule.sezioni)}
+    `;
+  }
+
+  function renderSpecies(species) {
+    return `
+      ${renderHeader(
+        'species',
+        species,
+        [species.tipo_creatura, species.taglia, species.velocita].filter(Boolean).join(' · ')
+      )}
+      ${renderSheetActions('species', species)}
+
+      ${compactMeta([
+        ['Capitolo', species.capitolo],
+        ['Tipo creatura', species.tipo_creatura],
+        ['Taglia', species.taglia],
+        ['Velocità', species.velocita],
+        ['Pagine SRD', species.pagine_sorgente],
+      ])}
+
+      <div class="description">${formatInline(species.descrizione || '')}</div>
+
+      ${renderSections('Dettagli', species.sezioni)}
+    `;
+  }
+
+  function renderBackground(background) {
+    return `
+      ${renderHeader(
+        'backgrounds',
+        background,
+        [background.talento_origine, background.pagine_sorgente ? `pag. ${background.pagine_sorgente}` : null].filter(Boolean).join(' · ')
+      )}
+      ${renderSheetActions('backgrounds', background)}
+
+      ${compactMeta([
+        ['Capitolo', background.capitolo],
+        ['Caratteristiche', background.punteggi_caratteristica],
+        ['Talento origine', background.talento_origine],
+        ['Competenze', background.competenze],
+        ['Alternativa', background.equipaggiamento_alternativo],
+        ['Pagine SRD', background.pagine_sorgente],
+      ])}
+
+      <div class="description">${formatInline(background.descrizione || '')}</div>
+
+      ${renderSections('Dettagli', background.sezioni)}
+    `;
+  }
+
+  function renderEquipment(item) {
+    return `
+      ${renderHeader(
+        'equipment',
+        item,
+        [item.categoria || item.tipo, item.pagine_sorgente ? `pag. ${item.pagine_sorgente}` : null].filter(Boolean).join(' · ')
+      )}
+      ${renderSheetActions('equipment', item)}
+
+      ${compactMeta([
+        ['Capitolo', item.capitolo],
+        ['Tipo', item.tipo],
+        ['Categoria', item.categoria],
+        ['Danni', item.danni],
+        ['Classe Armatura', item.classe_armatura],
+        ['Proprietà', item.proprieta],
+        ['Padronanza', item.padronanza],
+        ['Caratteristica', item.caratteristica],
+        ['Costo', item.costo],
+        ['Peso', item.peso],
+        ['Pagine SRD', item.pagine_sorgente],
+      ])}
+
+      <div class="description">${formatInline(item.descrizione || '')}</div>
+
+      ${renderSections('Dettagli', item.sezioni)}
+    `;
+  }
+
+  function renderFeat(feat) {
+    return `
+      ${renderHeader(
+        'feats',
+        feat,
+        [feat.categoria, feat.prerequisito ? `Prerequisito: ${feat.prerequisito}` : null].filter(Boolean).join(' · ')
+      )}
+      ${renderSheetActions('feats', feat)}
+
+      ${compactMeta([
+        ['Capitolo', feat.capitolo],
+        ['Categoria', feat.categoria],
+        ['Prerequisito', feat.prerequisito],
+        ['Ripetibile', feat.ripetibile ? 'Sì' : 'No'],
+        ['Pagine SRD', feat.pagine_sorgente],
+      ])}
+
+      <div class="description">${formatInline(feat.descrizione || '')}</div>
+
+      ${renderSections('Dettagli', feat.sezioni)}
+    `;
+  }
+
+  function renderLanguage(language) {
+    return `
+      ${renderHeader(
+        'languages',
+        language,
+        [language.categoria, language.pagine_sorgente ? `pag. ${language.pagine_sorgente}` : null].filter(Boolean).join(' · ')
+      )}
+      ${renderSheetActions('languages', language)}
+
+      ${compactMeta([
+        ['Capitolo', language.capitolo],
+        ['Categoria', language.categoria],
+        ['Tiro casuale', language.tiro_casuale],
+        ['Pagine SRD', language.pagine_sorgente],
+      ])}
+
+      <div class="description">${formatInline(language.descrizione || '')}</div>
+
+      ${renderSections('Dettagli', language.sezioni)}
     `;
   }
 
