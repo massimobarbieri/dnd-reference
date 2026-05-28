@@ -58,7 +58,7 @@ export const CHARACTER_SHEET_TABS = [
 * Versione del formato salvato in localStorage/esportazione.
 * Incrementare quando si aggiungono campi persistenti alla scheda.
 */
-export const CHARACTER_SHEET_SCHEMA_VERSION = 11;
+export const CHARACTER_SHEET_SCHEMA_VERSION = 14;
 
 /*
 * Modello canonico della scheda. Tutte le importazioni e i salvataggi
@@ -101,12 +101,23 @@ export const DEFAULT_CHARACTER_SHEET = {
     currentHp: 0,
     maxHp: 0,
     tempHp: 0,
+    hitPointLog: [],
     hitDice: '1d8',
+    hitDiceUsed: 0,
     speed: 9,
     initiativeBonus: 0,
+    combatState: {
+      round: 1,
+      actionUsed: false,
+      bonusActionUsed: false,
+      reactionUsed: false,
+      movementUsed: 0,
+    },
     status: {
       inspiration: false,
       concentration: false,
+      concentrationSpell: '',
+      concentrationDc: 10,
       exhaustion: 0,
       deathSaveSuccesses: 0,
       deathSaveFailures: 0,

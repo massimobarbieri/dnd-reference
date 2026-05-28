@@ -11,11 +11,47 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
     classId: 'wizard',
     ancestry: 'Elfo',
     background: 'Accolito',
-  spellcastingAbility: 'int',
+    abilities: { con: 14, int: 16 },
+    currentHp: 12,
+    maxHp: 20,
+    hitDice: '1d6',
+    hitDiceUsed: 1,
+    combatState: {
+      round: 2,
+      actionUsed: true,
+      bonusActionUsed: false,
+      reactionUsed: true,
+      movementUsed: 3,
+    },
+    savingThrows: { con: true },
+    status: {
+      concentration: true,
+      concentrationSpell: 'Benedizione',
+      concentrationDc: 12,
+      conditions: ['prone'],
+    },
+    spellcastingAbility: 'int',
     preparedSpells: ['magic-missile', 'fire-bolt'],
     magicItems: [{ id: 'wand', name: 'Bacchetta', summary: 'rara · richiede sintonia' }],
     references: [{ section: 'rules', id: 'cover', name: 'Copertura', summary: 'Combattimento' }],
     equipmentItems: [{ id: 'eq-armor', name: 'Armatura di cuoio', quantity: 1, armorClass: '11 + Des', source: 'Armature' }],
+    hitPointLog: [{
+      id: 'hp-1',
+      action: 'damage',
+      amount: 5,
+      before: { currentHp: 20, tempHp: 2 },
+      after: { currentHp: 17, tempHp: 0 },
+      at: '2026-05-28T10:00:00.000Z',
+      note: 'Concentrazione: TS Costituzione CD 10.',
+    }, {
+      id: 'hp-rest',
+      action: 'longRest',
+      amount: 1,
+      before: { currentHp: 17, tempHp: 0, hitDiceUsed: 1 },
+      after: { currentHp: 20, tempHp: 0, hitDiceUsed: 0 },
+      at: '2026-05-28T11:00:00.000Z',
+      note: 'Recuperato 1 dado vita.',
+    }],
   });
 
   api.appState.characterSheet = sheet;
@@ -86,7 +122,6 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
     },
   ];
 
-  sheet.status.conditions = ['prone'];
   sheet.resources = [{ id: 'res-1', name: 'Azione Impetuosa', max: 1, used: 0, recovery: 'Riposo breve' }];
   sheet.attacks = [{ id: 'atk-1', name: 'Spada lunga', ability: 'str', proficient: true, bonus: 0, damage: '1d8', damageType: 'taglienti', notes: '' }];
 
@@ -141,8 +176,34 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
 
   api.renderCharacterSheet('combat');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-add-resource/);
+  assert.match(views['#detail-view'].innerHTML, /<span>Round<\/span>/);
+  assert.match(views['#detail-view'].innerHTML, /<strong>2<\/strong>/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-combat-new-turn/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-combat-toggle="actionUsed"/);
+  assert.match(views['#detail-view'].innerHTML, /Azione/);
+  assert.match(views['#detail-view'].innerHTML, /Usata/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-combat-movement-delta="3"/);
+  assert.match(views['#detail-view'].innerHTML, /3\/9 m/);
+  assert.match(views['#detail-view'].innerHTML, /Benedizione/);
+  assert.match(views['#detail-view'].innerHTML, /CD 12/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-concentration-drop/);
+  assert.match(views['#detail-view'].innerHTML, /data-dice-roll="1d20 \+ 4"/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-hp-form/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-hp-action="damage"/);
+  assert.match(views['#detail-view'].innerHTML, /Dadi vita/);
+  assert.match(views['#detail-view'].innerHTML, /2\/3/);
+  assert.match(views['#detail-view'].innerHTML, /1 spesi/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-spend-hit-die/);
+  assert.match(views['#detail-view'].innerHTML, /Spendi DV medio \+6/);
+  assert.match(views['#detail-view'].innerHTML, /data-dice-roll="1d6 \+ 2"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-hit-die-delta="-1"/);
+  assert.match(views['#detail-view'].innerHTML, /Cronologia PF/);
+  assert.match(views['#detail-view'].innerHTML, /Danno 5/);
+  assert.match(views['#detail-view'].innerHTML, /PF 20 -&gt; 17/);
+  assert.match(views['#detail-view'].innerHTML, /Riposo lungo/);
+  assert.doesNotMatch(views['#detail-view'].innerHTML, /Riposo lungo 1/);
+  assert.match(views['#detail-view'].innerHTML, /Recuperato 1 dado vita/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-undo-hp="hp-1"/);
   assert.match(views['#detail-view'].innerHTML, /Azione Impetuosa/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-add-attack/);
   assert.match(views['#detail-view'].innerHTML, /Spada lunga/);

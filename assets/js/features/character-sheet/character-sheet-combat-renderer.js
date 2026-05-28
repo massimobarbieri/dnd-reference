@@ -27,10 +27,13 @@ export function createCharacterSheetCombatRenderer({
     return `
       <section class="sheet-grid">
         ${renderCombatSummary(initiative)}
+        ${renderTurnEconomyPanel()}
 
         <div class="sheet-panel sheet-panel--control">
           <h3>Difesa e punti ferita</h3>
           ${renderHitPointQuickControls()}
+          ${renderHitDiceControls()}
+          ${renderHitPointLog()}
           <div class="sheet-form-grid sheet-form-grid--compact">
             ${sheetNumberField('armorClass', 'Classe Armatura', sheet.armorClass, 0)}
             ${sheetNumberField('currentHp', 'PF attuali', sheet.currentHp, 0)}
@@ -116,8 +119,102 @@ export function createCharacterSheetCombatRenderer({
           ${renderCombatStat('PF', `${Number(sheet.currentHp) || 0}/${Number(sheet.maxHp) || 0}`, 'Attuali / massimi')}
           ${renderCombatStat('Temp', Number(sheet.tempHp) || 0, 'Punti ferita')}
           ${renderCombatStat('Vel', Number(sheet.speed) || 0, 'metri')}
-          ${renderCombatStat('DV', sheet.hitDice || '-', 'Dadi vita')}
+          ${renderCombatStat('DV', hitDiceAvailableSummary(), sheet.hitDice || 'Dadi vita')}
+          ${renderCombatStat('Turno', turnReadinessSummary(), `Round ${combatRound()}`)}
           ${renderCombatStat('Iniz.', formatSigned(initiative), 'Totale')}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderTurnEconomyPanel() {
+    const state = combatState();
+    const speed = Math.max(0, Number(appState.characterSheet.speed) || 0);
+    const usedMovement = movementUsed();
+    const remainingMovement = Math.max(0, speed - usedMovement);
+
+    return `
+      <div class="sheet-panel sheet-panel--wide sheet-turn-panel">
+        <div class="sheet-turn-header">
+          <div>
+            <span>Round</span>
+            <strong>${escapeHtml(String(state.round))}</strong>
+          </div>
+          <div class="sheet-turn-header-actions">
+            <button type="button" data-sheet-combat-round-delta="-1">-</button>
+            <button type="button" data-sheet-combat-new-turn>Nuovo turno</button>
+            <button type="button" data-sheet-combat-round-delta="1">+</button>
+          </div>
+        </div>
+
+        <div class="sheet-turn-console" aria-label="Economia del turno">
+          <div class="sheet-turn-slots">
+            ${renderTurnSlot('actionUsed', 'Azione', state.actionUsed)}
+            ${renderTurnSlot('bonusActionUsed', 'Bonus', state.bonusActionUsed)}
+            ${renderTurnSlot('reactionUsed', 'Reazione', state.reactionUsed)}
+          </div>
+
+          <div class="sheet-movement-console">
+            <div class="sheet-movement-meter">
+              <span>Movimento</span>
+              <strong>${escapeHtml(`${formatMeters(usedMovement)}/${formatMeters(speed)} m`)}</strong>
+              <small>${escapeHtml(`${formatMeters(remainingMovement)} m restanti`)}</small>
+            </div>
+            <div class="sheet-movement-actions">
+              <button type="button" data-sheet-combat-movement-delta="1.5">+1,5 m</button>
+              <button type="button" data-sheet-combat-movement-delta="3">+3 m</button>
+              <button type="button" data-sheet-combat-reset-movement>Reset</button>
+            </div>
+          </div>
+
+          ${renderConcentrationConsole()}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderTurnSlot(field, label, used) {
+    return `
+      <button
+        class="sheet-turn-slot ${used ? 'is-used' : ''}"
+        type="button"
+        data-sheet-combat-toggle="${escapeAttr(field)}"
+        aria-pressed="${used ? 'true' : 'false'}"
+      >
+        <span>${escapeHtml(label)}</span>
+        <strong>${escapeHtml(used ? 'Usata' : 'Pronta')}</strong>
+      </button>
+    `;
+  }
+
+  function renderConcentrationConsole() {
+    const sheet = appState.characterSheet;
+    const status = sheet.status;
+    const active = Boolean(status.concentration);
+    const spellName = String(status.concentrationSpell || '').trim();
+    const dc = concentrationDc();
+    const saveModifier = concentrationSaveModifier();
+
+    return `
+      <div class="sheet-concentration-console ${active ? 'is-active' : ''}">
+        <div class="sheet-concentration-state">
+          <span>Concentrazione</span>
+          <strong>${escapeHtml(active ? (spellName || 'Attiva') : 'Non attiva')}</strong>
+          <small>${escapeHtml(active ? `CD ${dc}` : 'Nessun effetto')}</small>
+        </div>
+        <label>
+          <span>Effetto</span>
+          <input type="text" value="${escapeAttr(spellName)}" data-sheet-concentration-field="concentrationSpell" placeholder="Benedizione">
+        </label>
+        <label>
+          <span>CD</span>
+          <input type="number" min="10" value="${escapeAttr(String(dc))}" data-sheet-concentration-number="concentrationDc">
+        </label>
+        <div class="sheet-concentration-actions">
+          <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, saveModifier))}">${escapeHtml(`TS COS ${formatSigned(saveModifier)}`)}</button>
+          ${active
+            ? '<button type="button" data-sheet-concentration-clear-dc>CD ok</button><button type="button" data-sheet-concentration-drop>Persa</button>'
+            : '<button type="button" data-sheet-concentration-start>Avvia</button>'}
         </div>
       </div>
     `;
@@ -150,6 +247,119 @@ export function createCharacterSheetCombatRenderer({
     `;
   }
 
+  function renderHitDiceControls() {
+    const sheet = appState.characterSheet;
+    const max = hitDiceMaximum();
+    const used = hitDiceUsed();
+    const available = Math.max(0, max - used);
+    const faces = hitDieFaces();
+    const con = abilityModifier(sheet.abilities.con);
+    const averageHeal = hitDieAverageHealing();
+    const currentHp = Math.max(0, Number(sheet.currentHp) || 0);
+    const maxHp = Math.max(0, Number(sheet.maxHp) || 0);
+    const spendDisabled = available <= 0 || (maxHp > 0 && currentHp >= maxHp);
+
+    return `
+      <div class="sheet-hit-dice-console" aria-label="Dadi vita">
+        <div class="sheet-hit-dice-meter">
+          <span>Dadi vita</span>
+          <strong>${escapeHtml(`${available}/${max}`)}</strong>
+          <small>${escapeHtml(`${used} spesi`)}</small>
+        </div>
+        <div class="sheet-hit-dice-actions">
+          <button
+            type="button"
+            data-sheet-spend-hit-die
+            ${spendDisabled ? 'disabled' : ''}
+          >${escapeHtml(`Spendi DV medio +${averageHeal}`)}</button>
+          <button type="button" data-dice-roll="${escapeAttr(rollFormula(faces, con))}">
+            ${escapeHtml(`Tira d${faces} ${formatSigned(con)}`)}
+          </button>
+          <button
+            type="button"
+            data-sheet-hit-die-delta="-1"
+            ${used <= 0 ? 'disabled' : ''}
+          >Recupera DV</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderHitPointLog() {
+    const entries = Array.isArray(appState.characterSheet.hitPointLog)
+      ? appState.characterSheet.hitPointLog.slice(0, 5)
+      : [];
+
+    if (!entries.length) {
+      return '<p class="sheet-empty sheet-hp-log-empty">Nessuna modifica PF registrata.</p>';
+    }
+
+    return `
+      <div class="sheet-hp-log" aria-label="Cronologia punti ferita">
+        <div class="sheet-hp-log-heading">
+          <span>Cronologia PF</span>
+          <strong>${escapeHtml(String(appState.characterSheet.hitPointLog.length))}</strong>
+        </div>
+        <div class="sheet-hp-log-list">
+          ${entries.map((entry, index) => renderHitPointLogEntry(entry, index === 0)).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderHitPointLogEntry(entry, latest) {
+    const summary = hitPointActionSummary(entry.action, Number(entry.amount) || 0);
+    const before = entry.before || {};
+    const after = entry.after || {};
+    const change = [
+      `PF ${Number(before.currentHp) || 0} -> ${Number(after.currentHp) || 0}`,
+      `Temp ${Number(before.tempHp) || 0} -> ${Number(after.tempHp) || 0}`,
+    ].join(' · ');
+
+    return `
+      <article class="sheet-hp-log-entry">
+        <div>
+          <strong>${escapeHtml(summary)}</strong>
+          <span>${escapeHtml(change)}</span>
+          ${entry.note ? `<small>${escapeHtml(entry.note)}</small>` : ''}
+          ${entry.at ? `<small>${escapeHtml(formatHitPointLogTime(entry.at))}</small>` : ''}
+        </div>
+        ${latest ? `<button class="button button--ghost" type="button" data-sheet-undo-hp="${escapeAttr(entry.id)}">Annulla</button>` : ''}
+      </article>
+    `;
+  }
+
+  function hitPointActionSummary(action, amount) {
+    const label = hitPointActionLabel(action);
+    if (action === 'longRest') return label;
+    if (action === 'manual' && !amount) return label;
+    return `${label} ${amount}`;
+  }
+
+  function hitPointActionLabel(action) {
+    return {
+      damage: 'Danno',
+      heal: 'Cura',
+      temp: 'Temp',
+      hitDie: 'Dado vita',
+      longRest: 'Riposo lungo',
+      undo: 'Undo',
+      manual: 'Manuale',
+    }[action] || 'PF';
+  }
+
+  function formatHitPointLogTime(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+
+    return date.toLocaleString('it-IT', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
   function renderCombatStat(label, value, hint) {
     return `
       <div class="sheet-summary-stat">
@@ -158,6 +368,67 @@ export function createCharacterSheetCombatRenderer({
         <small>${escapeHtml(hint)}</small>
       </div>
     `;
+  }
+
+  function combatState() {
+    const source = appState.characterSheet.combatState || {};
+    return {
+      round: combatRound(),
+      actionUsed: Boolean(source.actionUsed),
+      bonusActionUsed: Boolean(source.bonusActionUsed),
+      reactionUsed: Boolean(source.reactionUsed),
+      movementUsed: movementUsed(),
+    };
+  }
+
+  function combatRound() {
+    return Math.min(999, Math.max(1, Number(appState.characterSheet.combatState?.round) || 1));
+  }
+
+  function movementUsed() {
+    const speed = Math.max(0, Number(appState.characterSheet.speed) || 0);
+    const used = Math.max(0, Number(appState.characterSheet.combatState?.movementUsed) || 0);
+    return speed ? Math.min(speed, used) : used;
+  }
+
+  function turnReadinessSummary() {
+    const state = combatState();
+    const ready = [state.actionUsed, state.bonusActionUsed, state.reactionUsed].filter((used) => !used).length;
+    return `${ready}/3`;
+  }
+
+  function formatMeters(value) {
+    const number = Number(value) || 0;
+    return Number.isInteger(number) ? String(number) : String(number).replace('.', ',');
+  }
+
+  function concentrationDc() {
+    return Math.max(10, Number(appState.characterSheet.status?.concentrationDc) || 10);
+  }
+
+  function concentrationSaveModifier() {
+    return abilityModifier(appState.characterSheet.abilities.con) +
+      (appState.characterSheet.savingThrows.con ? characterProficiencyBonus() : 0);
+  }
+
+  function hitDiceMaximum() {
+    return Math.min(20, Math.max(1, Number(appState.characterSheet.level) || 1));
+  }
+
+  function hitDiceUsed() {
+    return Math.min(hitDiceMaximum(), Math.max(0, Number(appState.characterSheet.hitDiceUsed) || 0));
+  }
+
+  function hitDiceAvailableSummary() {
+    return `${Math.max(0, hitDiceMaximum() - hitDiceUsed())}/${hitDiceMaximum()}`;
+  }
+
+  function hitDieFaces() {
+    return Number(String(appState.characterSheet.hitDice || '').match(/d(\d+)/i)?.[1]) || 8;
+  }
+
+  function hitDieAverageHealing() {
+    return Math.max(1, Math.floor(hitDieFaces() / 2) + 1 + abilityModifier(appState.characterSheet.abilities.con));
   }
 
   function renderSavingThrowControl(key, label) {

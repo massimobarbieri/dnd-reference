@@ -1578,7 +1578,7 @@ body:has(.character-roster) .app-shell {
 
 .sheet-stat-strip {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
   gap: .5rem;
 }
 
@@ -2143,6 +2143,159 @@ body:has(.character-roster) .app-shell {
   padding: .55rem;
 }
 
+.sheet-turn-panel {
+  display: grid;
+  gap: .75rem;
+}
+
+.sheet-turn-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .65rem;
+  align-items: center;
+}
+
+.sheet-turn-header span,
+.sheet-turn-slot span,
+.sheet-movement-meter span,
+.sheet-concentration-state span,
+.sheet-concentration-console label span {
+  display: block;
+  color: #6b7280;
+  font-size: .68rem;
+  font-weight: 820;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.sheet-turn-header strong {
+  display: block;
+  color: #111827;
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.sheet-turn-header-actions,
+.sheet-movement-actions,
+.sheet-concentration-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+}
+
+.sheet-turn-header-actions button,
+.sheet-movement-actions button,
+.sheet-concentration-actions button {
+  min-height: 2rem;
+  border: 1px solid rgba(17,24,39,.12);
+  border-radius: 8px;
+  background: rgba(255,255,255,.72);
+  color: #374151;
+  cursor: pointer;
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 780;
+  padding: 0 .62rem;
+}
+
+.sheet-turn-console {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(15rem, .9fr);
+  gap: .65rem;
+  align-items: stretch;
+}
+
+.sheet-turn-slots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .45rem;
+}
+
+.sheet-turn-slot {
+  display: grid;
+  gap: .1rem;
+  min-height: 4.2rem;
+  border: 1px solid rgba(64,115,78,.22);
+  border-radius: 8px;
+  background: rgba(238,247,238,.58);
+  cursor: pointer;
+  font: inherit;
+  justify-items: start;
+  padding: .62rem .68rem;
+  text-align: left;
+}
+
+.sheet-turn-slot strong {
+  color: #315b3b;
+  font-size: 1.08rem;
+}
+
+.sheet-turn-slot.is-used {
+  border-color: rgba(163,32,47,.22);
+  background: rgba(255,239,239,.7);
+}
+
+.sheet-turn-slot.is-used strong {
+  color: #a3202f;
+}
+
+.sheet-movement-console,
+.sheet-concentration-console {
+  display: grid;
+  gap: .48rem;
+  border: 1px solid rgba(17,24,39,.1);
+  border-radius: 8px;
+  background: #f9fafb;
+  padding: .62rem;
+}
+
+.sheet-movement-meter strong,
+.sheet-concentration-state strong {
+  display: block;
+  color: #111827;
+  font-size: 1.1rem;
+  line-height: 1.1;
+}
+
+.sheet-movement-meter small,
+.sheet-concentration-state small {
+  display: block;
+  color: var(--muted);
+  font-size: .76rem;
+  font-weight: 720;
+}
+
+.sheet-concentration-console {
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(10rem, .8fr) minmax(10rem, 1fr) minmax(5.5rem, .45fr) auto;
+  align-items: end;
+  border-color: rgba(163,32,47,.14);
+  background: rgba(255,250,242,.62);
+}
+
+.sheet-concentration-console.is-active {
+  border-color: rgba(163,32,47,.3);
+  background: rgba(255,245,235,.84);
+}
+
+.sheet-concentration-console label {
+  display: grid;
+  gap: .16rem;
+  min-width: 0;
+}
+
+.sheet-concentration-console input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255,255,255,.8);
+  color: var(--ink);
+  font: inherit;
+  min-height: 2.15rem;
+  padding: 0 .5rem;
+}
+
 .sheet-hp-meter {
   display: grid;
   place-items: center;
@@ -2207,6 +2360,142 @@ body:has(.character-roster) .app-shell {
   font: inherit;
   font-size: .84rem;
   font-weight: 780;
+}
+
+.sheet-hit-dice-console {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: .55rem;
+  align-items: center;
+  border: 1px solid rgba(64,115,78,.2);
+  border-radius: 8px;
+  background: rgba(238,247,238,.5);
+  margin-bottom: .65rem;
+  padding: .55rem;
+}
+
+.sheet-hit-dice-meter {
+  display: grid;
+  place-items: center;
+  min-width: 5.2rem;
+  border: 1px solid rgba(64,115,78,.18);
+  border-radius: 8px;
+  background: rgba(255,255,255,.62);
+  padding: .42rem;
+}
+
+.sheet-hit-dice-meter span,
+.sheet-hit-dice-meter small {
+  color: #40734e;
+  font-size: .68rem;
+  font-weight: 780;
+}
+
+.sheet-hit-dice-meter strong {
+  color: #315b3b;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.sheet-hit-dice-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .35rem;
+}
+
+.sheet-hit-dice-actions button {
+  min-height: 2.1rem;
+  border: 1px solid rgba(64,115,78,.28);
+  border-radius: 8px;
+  background: rgba(255,255,255,.62);
+  color: #315b3b;
+  cursor: pointer;
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 780;
+  padding-inline: .45rem;
+}
+
+.sheet-hit-dice-actions button:disabled {
+  cursor: not-allowed;
+  opacity: .5;
+}
+
+.sheet-hp-log {
+  display: grid;
+  gap: .38rem;
+  border: 1px solid rgba(138,63,35,.16);
+  border-radius: 8px;
+  background: rgba(255,255,255,.46);
+  margin-bottom: .65rem;
+  padding: .52rem;
+}
+
+.sheet-hp-log-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+}
+
+.sheet-hp-log-heading span {
+  color: var(--accent);
+  font-size: .7rem;
+  font-weight: 820;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.sheet-hp-log-heading strong {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 999px;
+  background: rgba(138,63,35,.12);
+  color: var(--accent);
+  font-size: .78rem;
+}
+
+.sheet-hp-log-list {
+  display: grid;
+  gap: .3rem;
+}
+
+.sheet-hp-log-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .4rem;
+  border-left: 3px solid rgba(138,63,35,.34);
+  background: rgba(255,250,242,.62);
+  padding: .38rem .45rem;
+}
+
+.sheet-hp-log-entry strong,
+.sheet-hp-log-entry span,
+.sheet-hp-log-entry small {
+  display: block;
+}
+
+.sheet-hp-log-entry strong {
+  color: var(--accent);
+  font-size: .84rem;
+}
+
+.sheet-hp-log-entry span,
+.sheet-hp-log-entry small {
+  color: var(--muted);
+  font-size: .76rem;
+}
+
+.sheet-hp-log-entry .button {
+  min-height: 1.85rem;
+  padding-inline: .5rem;
+}
+
+.sheet-hp-log-empty {
+  margin-bottom: .65rem;
 }
 
 .ability-card {
@@ -3861,6 +4150,25 @@ code {
     font-size: 1.08rem;
   }
 
+  .sheet-turn-header,
+  .sheet-turn-console,
+  .sheet-concentration-console {
+    grid-template-columns: 1fr;
+  }
+
+  .sheet-turn-header-actions,
+  .sheet-turn-header-actions button,
+  .sheet-movement-actions,
+  .sheet-movement-actions button,
+  .sheet-concentration-actions,
+  .sheet-concentration-actions button {
+    width: 100%;
+  }
+
+  .sheet-turn-slots {
+    grid-template-columns: 1fr;
+  }
+
   .sheet-skill-strip > div {
     display: grid;
     grid-template-columns: 1fr;
@@ -3979,12 +4287,29 @@ code {
     grid-template-columns: 1fr;
   }
 
+  .sheet-hit-dice-console {
+    grid-template-columns: 1fr;
+  }
+
   .sheet-hp-actions {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .sheet-hit-dice-actions {
+    grid-template-columns: 1fr;
+  }
+
   .sheet-hp-actions label {
     grid-column: 1 / -1;
+  }
+
+  .sheet-hp-log-entry {
+    grid-template-columns: 1fr;
+  }
+
+  .sheet-hp-log-entry .button {
+    width: 100%;
+    justify-content: center;
   }
 
   .sheet-condition-list {

@@ -242,6 +242,77 @@ export function createCharacterSheetEventsController({
       });
     });
 
+    views.detail.querySelectorAll('[data-sheet-combat-toggle]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        toggleCombatState(event.currentTarget.dataset.sheetCombatToggle);
+        saveCharacterSheet();
+        renderCharacterSheet('combat');
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-combat-round-delta]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        adjustCombatRound(Number(event.currentTarget.dataset.sheetCombatRoundDelta) || 0);
+        saveCharacterSheet();
+        renderCharacterSheet('combat');
+      });
+    });
+
+    views.detail.querySelector('[data-sheet-combat-new-turn]')?.addEventListener('click', () => {
+      resetCombatTurn();
+      saveCharacterSheet();
+      renderCharacterSheet('combat');
+    });
+
+    views.detail.querySelectorAll('[data-sheet-combat-movement-delta]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        adjustCombatMovement(Number(event.currentTarget.dataset.sheetCombatMovementDelta) || 0);
+        saveCharacterSheet();
+        renderCharacterSheet('combat');
+      });
+    });
+
+    views.detail.querySelector('[data-sheet-combat-reset-movement]')?.addEventListener('click', () => {
+      ensureCombatState().movementUsed = 0;
+      saveCharacterSheet();
+      renderCharacterSheet('combat');
+    });
+
+    views.detail.querySelectorAll('[data-sheet-concentration-field]').forEach((node) => {
+      node.addEventListener('input', (event) => {
+        appState.characterSheet.status[event.currentTarget.dataset.sheetConcentrationField] = event.currentTarget.value;
+        saveCharacterSheet();
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-concentration-number]').forEach((node) => {
+      node.addEventListener('input', (event) => {
+        appState.characterSheet.status[event.currentTarget.dataset.sheetConcentrationNumber] = Math.max(10, Number(event.currentTarget.value) || 10);
+        saveCharacterSheet();
+      });
+
+      node.addEventListener('change', () => renderCharacterSheet('combat'));
+    });
+
+    views.detail.querySelector('[data-sheet-concentration-start]')?.addEventListener('click', () => {
+      appState.characterSheet.status.concentration = true;
+      appState.characterSheet.status.concentrationDc = Math.max(10, Number(appState.characterSheet.status.concentrationDc) || 10);
+      saveCharacterSheet();
+      renderCharacterSheet('combat');
+    });
+
+    views.detail.querySelector('[data-sheet-concentration-clear-dc]')?.addEventListener('click', () => {
+      appState.characterSheet.status.concentrationDc = 10;
+      saveCharacterSheet();
+      renderCharacterSheet('combat');
+    });
+
+    views.detail.querySelector('[data-sheet-concentration-drop]')?.addEventListener('click', () => {
+      clearConcentration();
+      saveCharacterSheet();
+      renderCharacterSheet('combat');
+    });
+
     views.detail.querySelector('[data-sheet-hp-form]')?.addEventListener('submit', (event) => {
       event.preventDefault();
       const form = event.currentTarget;
@@ -250,6 +321,14 @@ export function createCharacterSheetEventsController({
       applyHitPointAction(action, amount);
       saveCharacterSheet();
       renderCharacterSheet('combat');
+    });
+
+    views.detail.querySelectorAll('[data-sheet-undo-hp]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        if (!undoHitPointAction(event.currentTarget.dataset.sheetUndoHp)) return;
+        saveCharacterSheet();
+        renderCharacterSheet('combat');
+      });
     });
 
     views.detail.querySelector('[data-sheet-add-condition]')?.addEventListener('change', (event) => {
@@ -330,15 +409,21 @@ export function createCharacterSheetEventsController({
 
     views.detail.querySelectorAll('[data-sheet-reset-resources]').forEach((node) => {
       node.addEventListener('click', (event) => {
-        resetCharacterResources(event.currentTarget.dataset.sheetResetResources);
-        if (event.currentTarget.dataset.sheetResetResources === 'long') {
-          appState.characterSheet.spellSlotsUsed = {};
-          appState.characterSheet.currentHp = Number(appState.characterSheet.maxHp) || appState.characterSheet.currentHp;
-          appState.characterSheet.tempHp = 0;
-          appState.characterSheet.status.concentration = false;
-          appState.characterSheet.status.deathSaveSuccesses = 0;
-          appState.characterSheet.status.deathSaveFailures = 0;
-        }
+        applyRest(event.currentTarget.dataset.sheetResetResources);
+        saveCharacterSheet();
+        renderCharacterSheet('combat');
+      });
+    });
+
+    views.detail.querySelector('[data-sheet-spend-hit-die]')?.addEventListener('click', () => {
+      if (!spendHitDie()) return;
+      saveCharacterSheet();
+      renderCharacterSheet('combat');
+    });
+
+    views.detail.querySelectorAll('[data-sheet-hit-die-delta]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        if (!adjustHitDiceUsed(Number(event.currentTarget.dataset.sheetHitDieDelta) || 0)) return;
         saveCharacterSheet();
         renderCharacterSheet('combat');
       });
@@ -769,20 +854,265 @@ export function createCharacterSheetEventsController({
     const max = Math.max(0, Number(appState.characterSheet.maxHp) || 0);
     const current = Math.max(0, Number(appState.characterSheet.currentHp) || 0);
     const temp = Math.max(0, Number(appState.characterSheet.tempHp) || 0);
+    const before = hitPointSnapshot();
 
     if (action === 'heal') {
       appState.characterSheet.currentHp = max ? Math.min(max, current + amount) : current + amount;
+      recordHitPointAction(action, amount, before);
       return;
     }
 
     if (action === 'temp') {
       appState.characterSheet.tempHp = Math.max(temp, amount);
+      recordHitPointAction(action, amount, before);
       return;
     }
 
     const tempAbsorbed = Math.min(temp, amount);
     appState.characterSheet.tempHp = temp - tempAbsorbed;
     appState.characterSheet.currentHp = Math.max(0, current - Math.max(0, amount - tempAbsorbed));
+    recordHitPointAction(action, amount, before, concentrationNote(amount));
+  }
+
+  function undoHitPointAction(id) {
+    const log = Array.isArray(appState.characterSheet.hitPointLog) ? appState.characterSheet.hitPointLog : [];
+    const [latest] = log;
+    if (!latest || latest.id !== id) return false;
+
+    appState.characterSheet.currentHp = Math.max(0, Number(latest.before?.currentHp) || 0);
+    appState.characterSheet.tempHp = Math.max(0, Number(latest.before?.tempHp) || 0);
+    if (latest.before?.hitDiceUsed !== undefined) {
+      appState.characterSheet.hitDiceUsed = clampHitDiceUsed(latest.before.hitDiceUsed);
+    }
+    if (Array.isArray(latest.before?.resources)) {
+      appState.characterSheet.resources = cloneSheetValue(latest.before.resources);
+    }
+    if (latest.before?.spellSlotsUsed && typeof latest.before.spellSlotsUsed === 'object') {
+      appState.characterSheet.spellSlotsUsed = cloneSheetValue(latest.before.spellSlotsUsed);
+    }
+    if (latest.before?.status && typeof latest.before.status === 'object') {
+      restoreRestStatus(latest.before.status);
+    }
+    appState.characterSheet.hitPointLog = log.slice(1);
+    return true;
+  }
+
+  function recordHitPointAction(action, amount, before, note = '', options = {}) {
+    const after = hitPointSnapshot(Boolean(options.includeRestState));
+    if (hitPointSnapshotsMatch(before, after)) return;
+
+    const log = Array.isArray(appState.characterSheet.hitPointLog) ? appState.characterSheet.hitPointLog : [];
+    appState.characterSheet.hitPointLog = [
+      {
+        id: `hp-log-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+        action,
+        amount,
+        before,
+        after,
+        at: new Date().toISOString(),
+        note,
+      },
+      ...log,
+    ].slice(0, 25);
+  }
+
+  function hitPointSnapshot(includeRestState = false) {
+    const snapshot = {
+      currentHp: Math.max(0, Number(appState.characterSheet.currentHp) || 0),
+      tempHp: Math.max(0, Number(appState.characterSheet.tempHp) || 0),
+      hitDiceUsed: clampHitDiceUsed(appState.characterSheet.hitDiceUsed),
+    };
+
+    if (includeRestState) {
+      snapshot.resources = cloneSheetValue(appState.characterSheet.resources || []);
+      snapshot.spellSlotsUsed = cloneSheetValue(appState.characterSheet.spellSlotsUsed || {});
+      snapshot.status = {
+        concentration: Boolean(appState.characterSheet.status?.concentration),
+        concentrationSpell: appState.characterSheet.status?.concentrationSpell ? String(appState.characterSheet.status.concentrationSpell) : '',
+        concentrationDc: Math.max(10, Number(appState.characterSheet.status?.concentrationDc) || 10),
+        deathSaveSuccesses: Math.min(3, Math.max(0, Number(appState.characterSheet.status?.deathSaveSuccesses) || 0)),
+        deathSaveFailures: Math.min(3, Math.max(0, Number(appState.characterSheet.status?.deathSaveFailures) || 0)),
+      };
+    }
+
+    return snapshot;
+  }
+
+  function hitPointSnapshotsMatch(before, after) {
+    return before.currentHp === after.currentHp &&
+      before.tempHp === after.tempHp &&
+      before.hitDiceUsed === after.hitDiceUsed &&
+      snapshotPartMatches(before.resources, after.resources) &&
+      snapshotPartMatches(before.spellSlotsUsed, after.spellSlotsUsed) &&
+      snapshotPartMatches(before.status, after.status);
+  }
+
+  function snapshotPartMatches(before, after) {
+    return JSON.stringify(before ?? null) === JSON.stringify(after ?? null);
+  }
+
+  function restoreRestStatus(status) {
+    appState.characterSheet.status = appState.characterSheet.status || {};
+    appState.characterSheet.status.concentration = Boolean(status.concentration);
+    appState.characterSheet.status.concentrationSpell = status.concentrationSpell ? String(status.concentrationSpell) : '';
+    appState.characterSheet.status.concentrationDc = Math.max(10, Number(status.concentrationDc) || 10);
+    appState.characterSheet.status.deathSaveSuccesses = Math.min(3, Math.max(0, Number(status.deathSaveSuccesses) || 0));
+    appState.characterSheet.status.deathSaveFailures = Math.min(3, Math.max(0, Number(status.deathSaveFailures) || 0));
+  }
+
+  function ensureCombatState() {
+    appState.characterSheet.combatState = {
+      round: combatRound(),
+      actionUsed: Boolean(appState.characterSheet.combatState?.actionUsed),
+      bonusActionUsed: Boolean(appState.characterSheet.combatState?.bonusActionUsed),
+      reactionUsed: Boolean(appState.characterSheet.combatState?.reactionUsed),
+      movementUsed: movementUsed(),
+    };
+
+    return appState.characterSheet.combatState;
+  }
+
+  function toggleCombatState(field) {
+    if (!['actionUsed', 'bonusActionUsed', 'reactionUsed'].includes(field)) return;
+    const state = ensureCombatState();
+    state[field] = !state[field];
+  }
+
+  function adjustCombatRound(delta) {
+    if (!delta) return;
+    const state = ensureCombatState();
+    state.round = Math.min(999, Math.max(1, state.round + delta));
+  }
+
+  function resetCombatTurn() {
+    const state = ensureCombatState();
+    state.actionUsed = false;
+    state.bonusActionUsed = false;
+    state.reactionUsed = false;
+    state.movementUsed = 0;
+  }
+
+  function adjustCombatMovement(delta) {
+    if (!delta) return;
+    const state = ensureCombatState();
+    const speed = Math.max(0, Number(appState.characterSheet.speed) || 0);
+    const next = Math.max(0, state.movementUsed + delta);
+    state.movementUsed = speed ? Math.min(speed, next) : next;
+  }
+
+  function combatRound() {
+    return Math.min(999, Math.max(1, Number(appState.characterSheet.combatState?.round) || 1));
+  }
+
+  function movementUsed() {
+    const speed = Math.max(0, Number(appState.characterSheet.speed) || 0);
+    const used = Math.max(0, Number(appState.characterSheet.combatState?.movementUsed) || 0);
+    return speed ? Math.min(speed, used) : used;
+  }
+
+  function clearConcentration() {
+    appState.characterSheet.status.concentration = false;
+    appState.characterSheet.status.concentrationSpell = '';
+    appState.characterSheet.status.concentrationDc = 10;
+  }
+
+  function concentrationNote(amount) {
+    if (!appState.characterSheet.status?.concentration || !amount) return '';
+
+    const dc = Math.max(10, Math.floor(amount / 2));
+    appState.characterSheet.status.concentrationDc = dc;
+    return `Concentrazione: TS Costituzione CD ${dc}.`;
+  }
+
+  function spendHitDie() {
+    const maxHp = Math.max(0, Number(appState.characterSheet.maxHp) || 0);
+    const currentHp = Math.max(0, Number(appState.characterSheet.currentHp) || 0);
+    const available = hitDiceMaximum() - clampHitDiceUsed(appState.characterSheet.hitDiceUsed);
+    if (available <= 0 || (maxHp > 0 && currentHp >= maxHp)) return false;
+
+    const before = hitPointSnapshot();
+    const healing = hitDieAverageHealing();
+    appState.characterSheet.hitDiceUsed = clampHitDiceUsed(before.hitDiceUsed + 1);
+    appState.characterSheet.currentHp = maxHp ? Math.min(maxHp, currentHp + healing) : currentHp + healing;
+    recordHitPointAction('hitDie', healing, before, `Speso 1 dado vita medio (${hitDieFormula()}).`);
+    return true;
+  }
+
+  function adjustHitDiceUsed(delta) {
+    if (!delta) return false;
+
+    const before = hitPointSnapshot();
+    appState.characterSheet.hitDiceUsed = clampHitDiceUsed(before.hitDiceUsed + delta);
+    recordHitPointAction('manual', Math.abs(delta), before, delta > 0 ? 'Dado vita segnato come speso.' : 'Dado vita recuperato manualmente.');
+    return before.hitDiceUsed !== appState.characterSheet.hitDiceUsed;
+  }
+
+  function applyRest(restType) {
+    if (restType !== 'long') {
+      resetCharacterResources(restType);
+      resetCombatTurn();
+      return;
+    }
+
+    const before = hitPointSnapshot(true);
+    resetCharacterResources(restType);
+    resetCombatTurn();
+    const recoveredHitDice = recoverHitDiceOnLongRest();
+
+    appState.characterSheet.spellSlotsUsed = {};
+    appState.characterSheet.currentHp = Number(appState.characterSheet.maxHp) || appState.characterSheet.currentHp;
+    appState.characterSheet.tempHp = 0;
+    clearConcentration();
+    appState.characterSheet.status.deathSaveSuccesses = 0;
+    appState.characterSheet.status.deathSaveFailures = 0;
+
+    recordHitPointAction(
+      'longRest',
+      recoveredHitDice,
+      before,
+      recoveredHitDice ? recoveredHitDiceNote(recoveredHitDice) : 'PF, slot e stati di morte ripristinati.',
+      { includeRestState: true }
+    );
+  }
+
+  function recoveredHitDiceNote(amount) {
+    return amount === 1 ? 'Recuperato 1 dado vita.' : `Recuperati ${amount} dadi vita.`;
+  }
+
+  function recoverHitDiceOnLongRest() {
+    const used = clampHitDiceUsed(appState.characterSheet.hitDiceUsed);
+    if (!used) return 0;
+
+    const recovered = Math.min(used, Math.max(1, Math.floor(hitDiceMaximum() / 2)));
+    appState.characterSheet.hitDiceUsed = used - recovered;
+    return recovered;
+  }
+
+  function hitDiceMaximum() {
+    return Math.min(20, Math.max(1, Number(appState.characterSheet.level) || 1));
+  }
+
+  function clampHitDiceUsed(value) {
+    return Math.min(hitDiceMaximum(), Math.max(0, Number(value) || 0));
+  }
+
+  function hitDieFaces() {
+    return Number(String(appState.characterSheet.hitDice || '').match(/d(\d+)/i)?.[1]) || 8;
+  }
+
+  function hitDieFormula() {
+    const con = Math.floor(((Number(appState.characterSheet.abilities?.con) || 10) - 10) / 2);
+    if (!con) return `1d${hitDieFaces()}`;
+    return `1d${hitDieFaces()} ${con > 0 ? '+' : '-'} ${Math.abs(con)}`;
+  }
+
+  function hitDieAverageHealing() {
+    const con = Math.floor(((Number(appState.characterSheet.abilities?.con) || 10) - 10) / 2);
+    return Math.max(1, Math.floor(hitDieFaces() / 2) + 1 + con);
+  }
+
+  function cloneSheetValue(value) {
+    return JSON.parse(JSON.stringify(value));
   }
 
   function applyLevelUp() {
@@ -819,16 +1149,33 @@ export function createCharacterSheetEventsController({
   function castPreparedSpell(id) {
     const spell = appState.data.spells.find((entry) => entry.id === id);
     const level = Number(spell?.livello) || 0;
-    if (!spell || level <= 0) return true;
+    if (!spell) return false;
+    const requiresConcentration = spellRequiresConcentration(spell);
+
+    if (level <= 0) {
+      if (requiresConcentration) startSpellConcentration(spell);
+      return true;
+    }
 
     const slot = firstAvailableSpellSlot(level);
     if (!slot) return false;
+    if (requiresConcentration) startSpellConcentration(spell);
 
     appState.characterSheet.spellSlotsUsed[slot.label] = Math.min(
       slot.max,
       (Number(appState.characterSheet.spellSlotsUsed[slot.label]) || 0) + 1
     );
     return true;
+  }
+
+  function spellRequiresConcentration(spell) {
+    return String(spell?.durata || '').toLowerCase().includes('concentrazione');
+  }
+
+  function startSpellConcentration(spell) {
+    appState.characterSheet.status.concentration = true;
+    appState.characterSheet.status.concentrationSpell = spell.nome || spell.id;
+    appState.characterSheet.status.concentrationDc = 10;
   }
 
   function firstAvailableSpellSlot(level) {

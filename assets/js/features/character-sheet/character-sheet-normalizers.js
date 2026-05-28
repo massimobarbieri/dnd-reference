@@ -33,6 +33,9 @@ export function normalizeCharacterSheet(sheet) {
       status: normalizeCharacterStatus(migrated.status),
       resources: normalizeLegacyResources(migrated.resources),
       attacks: normalizeLegacyAttacks(migrated.attacks),
+      hitPointLog: normalizeHitPointLog(migrated.hitPointLog),
+      hitDiceUsed: normalizeHitDiceUsed(migrated.hitDiceUsed),
+      combatState: normalizeCombatState(migrated.combatState),
       spellSlotsUsed: normalizeSpellSlotsUsed(migrated.spellSlotsUsed),
       preparedSpells: Array.isArray(migrated.preparedSpells) ? migrated.preparedSpells : [],
       magicItems: Array.isArray(migrated.magicItems) ? migrated.magicItems : [],
@@ -100,6 +103,19 @@ export function migrateCharacterSheet(value) {
 
     if (sheet.schemaVersion < 11) {
       sheet.equipmentItems = normalizeEquipmentItems(sheet.equipmentItems);
+    }
+
+    if (sheet.schemaVersion < 12) {
+      sheet.hitPointLog = normalizeHitPointLog(sheet.hitPointLog);
+    }
+
+    if (sheet.schemaVersion < 13) {
+      sheet.hitDiceUsed = normalizeHitDiceUsed(sheet.hitDiceUsed);
+    }
+
+    if (sheet.schemaVersion < 14) {
+      sheet.combatState = normalizeCombatState(sheet.combatState);
+      sheet.status = normalizeCharacterStatus(sheet.status);
     }
 
     return sheet;
@@ -193,11 +209,25 @@ export function normalizeCharacterStatus(status) {
     return {
       inspiration: Boolean(source.inspiration),
       concentration: Boolean(source.concentration),
+      concentrationSpell: source.concentrationSpell ? String(source.concentrationSpell) : '',
+      concentrationDc: Math.max(10, Number(source.concentrationDc) || 10),
       exhaustion: Math.min(6, Math.max(0, Number(source.exhaustion) || 0)),
       deathSaveSuccesses: Math.min(3, Math.max(0, Number(source.deathSaveSuccesses) || 0)),
       deathSaveFailures: Math.min(3, Math.max(0, Number(source.deathSaveFailures) || 0)),
       conditions: normalizeIdList(source.conditions),
       notes: source.notes ? String(source.notes) : '',
+    };
+  }
+
+export function normalizeCombatState(value) {
+    const source = value && typeof value === 'object' ? value : {};
+
+    return {
+      round: Math.min(999, Math.max(1, Number(source.round) || 1)),
+      actionUsed: Boolean(source.actionUsed),
+      bonusActionUsed: Boolean(source.bonusActionUsed),
+      reactionUsed: Boolean(source.reactionUsed),
+      movementUsed: Math.min(999, Math.max(0, Number(source.movementUsed) || 0)),
     };
   }
 
@@ -254,6 +284,66 @@ export function normalizeEquipmentItems(value) {
         };
       })
       .filter(Boolean);
+  }
+
+export function normalizeHitPointLog(value) {
+    if (!Array.isArray(value)) return [];
+
+    return value
+      .map((entry, index) => {
+        if (!entry || typeof entry !== 'object') return null;
+
+        return {
+          id: entry.id ? String(entry.id) : `hp-log-${index + 1}`,
+          action: ['damage', 'heal', 'temp', 'hitDie', 'longRest', 'undo', 'manual'].includes(entry.action) ? entry.action : 'manual',
+          amount: Math.max(0, Number(entry.amount) || 0),
+          before: normalizeHitPointSnapshot(entry.before),
+          after: normalizeHitPointSnapshot(entry.after),
+          at: entry.at ? String(entry.at) : '',
+          note: entry.note ? String(entry.note) : '',
+        };
+      })
+      .filter(Boolean)
+      .slice(0, 25);
+  }
+
+function normalizeHitPointSnapshot(value) {
+    const source = value && typeof value === 'object' ? value : {};
+    const snapshot = {
+      currentHp: Math.max(0, Number(source.currentHp) || 0),
+      tempHp: Math.max(0, Number(source.tempHp) || 0),
+      hitDiceUsed: normalizeHitDiceUsed(source.hitDiceUsed),
+    };
+
+    if (Array.isArray(source.resources)) {
+      snapshot.resources = normalizeLegacyResources(source.resources);
+    }
+
+    if (source.spellSlotsUsed && typeof source.spellSlotsUsed === 'object') {
+      snapshot.spellSlotsUsed = normalizeSpellSlotsUsed(source.spellSlotsUsed);
+    }
+
+    if (source.status && typeof source.status === 'object') {
+      snapshot.status = normalizeHitPointStatusSnapshot(source.status);
+    }
+
+    return snapshot;
+  }
+
+function normalizeHitPointStatusSnapshot(value) {
+    const source = value && typeof value === 'object' ? value : {};
+
+    return {
+      concentration: Boolean(source.concentration),
+      concentrationSpell: source.concentrationSpell ? String(source.concentrationSpell) : '',
+      concentrationDc: Math.max(10, Number(source.concentrationDc) || 10),
+      deathSaveSuccesses: Math.min(3, Math.max(0, Number(source.deathSaveSuccesses) || 0)),
+      deathSaveFailures: Math.min(3, Math.max(0, Number(source.deathSaveFailures) || 0)),
+    };
+  }
+
+export function normalizeHitDiceUsed(value) {
+    return Math.min(20, Math.max(0, Number(value) || 0));
   }
 
 export function normalizeSkillProficiencies(value) {
