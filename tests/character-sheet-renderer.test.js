@@ -34,7 +34,10 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
     preparedSpells: ['magic-missile', 'fire-bolt'],
     magicItems: [{ id: 'wand', name: 'Bacchetta', summary: 'rara · richiede sintonia' }],
     references: [{ section: 'rules', id: 'cover', name: 'Copertura', summary: 'Combattimento' }],
-    equipmentItems: [{ id: 'eq-armor', name: 'Armatura di cuoio', quantity: 1, weight: '5 kg', armorClass: '11 + Des', source: 'Armature' }],
+    equipmentItems: [
+      { id: 'eq-armor', name: 'Armatura di cuoio', quantity: 1, weight: '5 kg', armorClass: '11 + Des', source: 'Armature', equipped: true },
+      { id: 'eq-shield', name: 'Scudo', quantity: 1, weight: '3 kg', armorClass: '+2', source: 'Armature', equipped: true },
+    ],
     coins: { pp: 0, mo: 25, ma: 25, mr: 0 },
     hitPointLog: [{
       id: 'hp-1',
@@ -232,11 +235,17 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-apply-starting-equipment="background-coins"/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-coin="mo"/);
   assert.match(views['#detail-view'].innerHTML, /role="meter"/);
-  assert.match(views['#detail-view'].innerHTML, /5,5 kg \/ 75 kg/);
-  assert.match(views['#detail-view'].innerHTML, /Oggetti 5 kg · monete 0,5 kg/);
+  assert.match(views['#detail-view'].innerHTML, /8,5 kg \/ 75 kg/);
+  assert.match(views['#detail-view'].innerHTML, /Oggetti 8 kg · monete 0,5 kg/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-add-equipment/);
   assert.match(views['#detail-view'].innerHTML, /Armatura di cuoio/);
+  assert.match(views['#detail-view'].innerHTML, /indossata/);
+  assert.match(views['#detail-view'].innerHTML, /Togli armatura/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-apply-armor="eq-armor"/);
+  assert.match(views['#detail-view'].innerHTML, /Scudo/);
+  assert.match(views['#detail-view'].innerHTML, /scudo equipaggiato/);
+  assert.match(views['#detail-view'].innerHTML, /Togli scudo \+2/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-apply-armor="eq-shield"/);
   assert.match(views['#detail-view'].innerHTML, /Bacchetta/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-toggle-attunement="wand"/);
 

@@ -174,6 +174,8 @@ export function createCharacterSheetInventoryRenderer({
   }
 
   function renderEquipmentItem(item) {
+    const armorKind = characterSheetDerived.equipmentArmorKind(item);
+
     return `
       <article class="sheet-equipment-item">
         <div class="sheet-equipment-main">
@@ -183,7 +185,7 @@ export function createCharacterSheetInventoryRenderer({
             item.weight ? `peso ${item.weight}` : null,
             item.cost ? `costo ${item.cost}` : null,
             item.armorClass ? `CA ${item.armorClass}` : null,
-            item.equipped ? 'equipaggiato' : null,
+            item.equipped ? equippedLabel(armorKind) : null,
           ].filter(Boolean).join(' · '))}</span>
           ${item.source ? `<small>${escapeHtml(item.source)}</small>` : ''}
           ${item.notes ? `<p>${escapeHtml(item.notes)}</p>` : ''}
@@ -211,11 +213,35 @@ export function createCharacterSheetInventoryRenderer({
           </label>
         </div>
         <div class="sheet-equipment-actions">
-          ${item.armorClass ? `<button type="button" data-sheet-apply-armor="${escapeAttr(item.id)}">Imposta CA ${escapeHtml(item.armorClass)}</button>` : ''}
+          ${renderDefenseEquipmentAction(item, armorKind)}
           <button class="button button--ghost" type="button" data-sheet-remove-equipment="${escapeAttr(item.id)}">Rimuovi</button>
         </div>
       </article>
     `;
+  }
+
+  function renderDefenseEquipmentAction(item, armorKind) {
+    if (!item.armorClass || !armorKind) return '';
+
+    return `
+      <button type="button" data-sheet-apply-armor="${escapeAttr(item.id)}">
+        ${escapeHtml(defenseEquipmentActionLabel(item, armorKind))}
+      </button>
+    `;
+  }
+
+  function defenseEquipmentActionLabel(item, armorKind) {
+    if (armorKind === 'shield') {
+      return item.equipped ? `Togli scudo ${item.armorClass}` : `Equipaggia scudo ${item.armorClass}`;
+    }
+
+    return item.equipped ? `Togli armatura` : `Indossa CA ${item.armorClass}`;
+  }
+
+  function equippedLabel(armorKind) {
+    if (armorKind === 'shield') return 'scudo equipaggiato';
+    if (armorKind === 'armor') return 'indossata';
+    return 'equipaggiato';
   }
 
   function renderInventoryStat(label, value, hint) {

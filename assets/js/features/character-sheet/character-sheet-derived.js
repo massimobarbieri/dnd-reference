@@ -375,11 +375,24 @@ export function createCharacterSheetDerivedModel({
   }
 
   function characterSuggestedArmorClass() {
-    const equippedArmor = appState.characterSheet.equipmentItems.find((item) => item.equipped && item.armorClass);
-    const armorClass = armorClassFromEquipment(equippedArmor);
-    if (armorClass !== null) return armorClass;
+    return characterArmorLoadout().armorClass;
+  }
 
-    return 10 + abilityModifier(appState.characterSheet.abilities.dex);
+  function characterArmorLoadout() {
+    const equippedItems = appState.characterSheet.equipmentItems
+      .filter((item) => item.equipped && item.armorClass);
+    const armor = equippedItems.find((item) => equipmentArmorKind(item) === 'armor') || null;
+    const shield = equippedItems.find((item) => equipmentArmorKind(item) === 'shield') || null;
+    const baseArmorClass = armor ? armorClassFromText(armor.armorClass) : unarmoredArmorClass();
+    const shieldBonus = shield ? shieldBonusFromText(shield.armorClass) || 0 : 0;
+
+    return {
+      armor,
+      shield,
+      baseArmorClass,
+      shieldBonus,
+      armorClass: (baseArmorClass || unarmoredArmorClass()) + shieldBonus,
+    };
   }
 
   function characterCarryingLoad() {
@@ -459,7 +472,28 @@ export function createCharacterSheetDerivedModel({
   }
 
   function armorClassFromEquipment(item) {
+    if (equipmentArmorKind(item) === 'shield') {
+      return characterBaseArmorClass() + (shieldBonusFromText(item?.armorClass) || 0);
+    }
+
     return armorClassFromText(item?.armorClass);
+  }
+
+  function equipmentArmorKind(item) {
+    if (!item?.armorClass) return '';
+    if (shieldBonusFromText(item.armorClass) !== null) return 'shield';
+    return armorClassFromText(item.armorClass) !== null ? 'armor' : '';
+  }
+
+  function characterBaseArmorClass() {
+    const equippedArmor = appState.characterSheet.equipmentItems
+      .find((item) => item.equipped && equipmentArmorKind(item) === 'armor');
+
+    return equippedArmor ? armorClassFromText(equippedArmor.armorClass) || unarmoredArmorClass() : unarmoredArmorClass();
+  }
+
+  function unarmoredArmorClass() {
+    return 10 + abilityModifier(appState.characterSheet.abilities.dex);
   }
 
   function classStartingEquipmentText() {
@@ -522,16 +556,15 @@ export function createCharacterSheetDerivedModel({
   }
 
   /*
-   * Interpreta le formule CA dei dati equipaggiamento SRD, ad esempio
-   * "11 + Des", "14 + Des (max 2)" o "+2" per uno scudo.
+   * Interpreta le formule CA delle armature; gli scudi "+2" vengono
+   * classificati a parte per poterli sommare a un'armatura indossata.
    */
   function armorClassFromText(value) {
     const text = String(value || '').trim();
     if (!text) return null;
 
     const dex = abilityModifier(appState.characterSheet.abilities.dex);
-    const shield = text.match(/^\+(\d+)/);
-    if (shield) return (Number(appState.characterSheet.armorClass) || 10) + Number(shield[1]);
+    if (shieldBonusFromText(text) !== null) return null;
 
     const base = Number(text.match(/\d+/)?.[0]);
     if (!Number.isFinite(base)) return null;
@@ -541,11 +574,17 @@ export function createCharacterSheetDerivedModel({
     return base + (maxMatch ? Math.min(dex, Number(maxMatch[1])) : dex);
   }
 
+  function shieldBonusFromText(value) {
+    const match = String(value || '').trim().match(/^\+(\d+)/);
+    return match ? Number(match[1]) : null;
+  }
+
   return {
     armorClassFromEquipment,
     backgroundStartingCoinsOption,
     backgroundStartingCoinsText,
     characterAbilityGuidance,
+    characterArmorLoadout,
     characterBackgroundEntry,
     characterBackgroundSkills,
     characterBuilderChecklist,
@@ -561,6 +600,7 @@ export function createCharacterSheetDerivedModel({
     characterSuggestedHitPoints,
     classStartingEquipmentOptions,
     classStartingEquipmentText,
+    equipmentArmorKind,
     selectedClassTraits,
     skillSources,
     startingEquipmentAlreadyImported,

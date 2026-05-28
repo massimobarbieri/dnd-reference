@@ -572,14 +572,16 @@ export function createCharacterSheetEventsController({
         const id = event.currentTarget.dataset.sheetApplyArmor;
         const item = appState.characterSheet.equipmentItems.find((entry) => entry.id === id);
         const armorClass = characterSheetDerived.armorClassFromEquipment(item);
+        const kind = characterSheetDerived.equipmentArmorKind(item);
 
-        if (!item || armorClass === null) return;
+        if (!item || armorClass === null || !kind) return;
 
-        appState.characterSheet.armorClass = armorClass;
+        const shouldEquip = !item.equipped;
         appState.characterSheet.equipmentItems = appState.characterSheet.equipmentItems.map((entry) => ({
           ...entry,
-          equipped: entry.id === id,
+          equipped: nextDefenseEquipmentState(entry, id, kind, shouldEquip),
         }));
+        appState.characterSheet.armorClass = characterSheetDerived.characterSuggestedArmorClass();
         saveCharacterSheet();
         renderCharacterSheet('inventory');
       });
@@ -781,6 +783,18 @@ export function createCharacterSheetEventsController({
       saveCharacterSheet();
       renderCharacterSheet(appState.characterSheetTab);
     }
+  }
+
+  function nextDefenseEquipmentState(entry, selectedId, selectedKind, shouldEquip) {
+    const entryKind = characterSheetDerived.equipmentArmorKind(entry);
+
+    if (selectedKind === 'shield') {
+      if (entryKind !== 'shield') return Boolean(entry.equipped);
+      return entry.id === selectedId ? shouldEquip : false;
+    }
+
+    if (entryKind !== 'armor') return Boolean(entry.equipped);
+    return entry.id === selectedId ? shouldEquip : false;
   }
 
   function applyStandardArray() {
