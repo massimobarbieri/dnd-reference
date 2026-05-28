@@ -58,7 +58,7 @@ export const CHARACTER_SHEET_TABS = [
 * Versione del formato salvato in localStorage/esportazione.
 * Incrementare quando si aggiungono campi persistenti alla scheda.
 */
-export const CHARACTER_SHEET_SCHEMA_VERSION = 14;
+export const CHARACTER_SHEET_SCHEMA_VERSION = 15;
 
 /*
 * Modello canonico della scheda. Tutte le importazioni e i salvataggi
@@ -102,6 +102,7 @@ export const DEFAULT_CHARACTER_SHEET = {
     maxHp: 0,
     tempHp: 0,
     hitPointLog: [],
+    sessionLog: [],
     hitDice: '1d8',
     hitDiceUsed: 0,
     speed: 9,

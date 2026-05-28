@@ -47,10 +47,27 @@ const { pathToFileURL } = require('node:url');
       },
       null,
     ],
+    sessionLog: [
+      {
+        id: 'session-1',
+        type: 'spell',
+        label: 'Incantesimo lanciato',
+        detail: 'Dardo Incantato · Slot 1',
+        at: '2026-05-28T12:00:00.000Z',
+      },
+      {
+        type: 'status',
+        label: 'Condizione aggiunta',
+      },
+      {
+        label: '',
+      },
+      null,
+    ],
     hitDiceUsed: 99,
   });
 
-  assert.equal(sheet.schemaVersion, 14);
+  assert.equal(sheet.schemaVersion, 15);
   assert.equal(sheet.hitDiceUsed, 20);
   assert.equal(sheet.hitPointLog.length, 3);
   assert.deepEqual(sheet.hitPointLog[0], {
@@ -82,6 +99,22 @@ const { pathToFileURL } = require('node:url');
   assert.equal(sheet.hitPointLog[2].action, 'manual');
   assert.equal(sheet.hitPointLog[2].amount, 0);
   assert.deepEqual(sheet.hitPointLog[2].before, { currentHp: 0, tempHp: 0, hitDiceUsed: 0 });
+  assert.deepEqual(sheet.sessionLog, [
+    {
+      id: 'session-1',
+      type: 'spell',
+      label: 'Incantesimo lanciato',
+      detail: 'Dardo Incantato · Slot 1',
+      at: '2026-05-28T12:00:00.000Z',
+    },
+    {
+      id: 'session-log-2',
+      type: 'status',
+      label: 'Condizione aggiunta',
+      detail: '',
+      at: '',
+    },
+  ]);
 
   const longLog = normalizeCharacterSheet({
     hitPointLog: Array.from({ length: 30 }, (_value, index) => ({
@@ -97,7 +130,19 @@ const { pathToFileURL } = require('node:url');
   assert.equal(longLog.hitPointLog[0].id, 'entry-0');
   assert.equal(longLog.hitPointLog.at(-1).id, 'entry-24');
 
-  console.log('Cronologia PF scheda OK');
+  const longSessionLog = normalizeCharacterSheet({
+    sessionLog: Array.from({ length: 60 }, (_value, index) => ({
+      id: `session-${index}`,
+      type: 'resource',
+      label: `Evento ${index}`,
+    })),
+  });
+
+  assert.equal(longSessionLog.sessionLog.length, 50);
+  assert.equal(longSessionLog.sessionLog[0].id, 'session-0');
+  assert.equal(longSessionLog.sessionLog.at(-1).id, 'session-49');
+
+  console.log('Cronologia PF e registro sessione scheda OK');
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

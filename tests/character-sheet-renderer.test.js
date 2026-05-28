@@ -56,6 +56,19 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
       at: '2026-05-28T11:00:00.000Z',
       note: 'Recuperato 1 dado vita.',
     }],
+    sessionLog: [{
+      id: 'session-spell',
+      type: 'spell',
+      label: 'Incantesimo lanciato',
+      detail: 'Dardo Incantato · Slot 1',
+      at: '2026-05-28T12:00:00.000Z',
+    }, {
+      id: 'session-resource',
+      type: 'resource',
+      label: 'Risorsa usata',
+      detail: 'Azione Impetuosa: 0/1 disponibili',
+      at: '2026-05-28T12:05:00.000Z',
+    }],
   });
 
   api.appState.characterSheet = sheet;
@@ -188,6 +201,10 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /Usata/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-combat-movement-delta="3"/);
   assert.match(views['#detail-view'].innerHTML, /3\/9 m/);
+  assert.match(views['#detail-view'].innerHTML, /Registro sessione/);
+  assert.match(views['#detail-view'].innerHTML, /Incantesimo lanciato/);
+  assert.match(views['#detail-view'].innerHTML, /Dardo Incantato · Slot 1/);
+  assert.match(views['#detail-view'].innerHTML, /Risorsa usata/);
   assert.match(views['#detail-view'].innerHTML, /Benedizione/);
   assert.match(views['#detail-view'].innerHTML, /CD 12/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-concentration-drop/);

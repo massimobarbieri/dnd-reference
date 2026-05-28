@@ -28,6 +28,7 @@ export function createCharacterSheetCombatRenderer({
       <section class="sheet-grid">
         ${renderCombatSummary(initiative)}
         ${renderTurnEconomyPanel()}
+        ${renderSessionLog()}
 
         <div class="sheet-panel sheet-panel--control">
           <h3>Difesa e punti ferita</h3>
@@ -283,6 +284,56 @@ export function createCharacterSheetCombatRenderer({
         </div>
       </div>
     `;
+  }
+
+  function renderSessionLog() {
+    const entries = Array.isArray(appState.characterSheet.sessionLog)
+      ? appState.characterSheet.sessionLog.slice(0, 8)
+      : [];
+
+    return `
+      <div class="sheet-panel sheet-panel--wide sheet-session-log-panel">
+        <div class="sheet-session-log-heading">
+          <div>
+            <h3>Registro sessione</h3>
+            <p>${escapeHtml(entries.length ? `${appState.characterSheet.sessionLog.length} eventi tracciati` : 'Eventi chiave di combattimento, risorse e inventario.')}</p>
+          </div>
+        </div>
+        ${entries.length ? `
+          <div class="sheet-session-log-list">
+            ${entries.map((entry) => renderSessionLogEntry(entry)).join('')}
+          </div>
+        ` : '<p class="sheet-empty">Nessun evento di sessione registrato.</p>'}
+      </div>
+    `;
+  }
+
+  function renderSessionLogEntry(entry) {
+    return `
+      <article class="sheet-session-log-entry is-${escapeAttr(entry.type || 'manual')}">
+        <span>${escapeHtml(sessionLogTypeLabel(entry.type))}</span>
+        <div>
+          <strong>${escapeHtml(entry.label || 'Evento')}</strong>
+          ${entry.detail ? `<p>${escapeHtml(entry.detail)}</p>` : ''}
+        </div>
+        ${entry.at ? `<time>${escapeHtml(formatHitPointLogTime(entry.at))}</time>` : ''}
+      </article>
+    `;
+  }
+
+  function sessionLogTypeLabel(type) {
+    return {
+      attack: 'Attacco',
+      equipment: 'Inventario',
+      hp: 'PF',
+      level: 'Livello',
+      resource: 'Risorsa',
+      rest: 'Riposo',
+      spell: 'Magia',
+      status: 'Stato',
+      turn: 'Turno',
+      undo: 'Undo',
+    }[type] || 'Evento';
   }
 
   function renderHitPointLog() {

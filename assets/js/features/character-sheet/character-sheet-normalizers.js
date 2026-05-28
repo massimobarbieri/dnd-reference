@@ -34,6 +34,7 @@ export function normalizeCharacterSheet(sheet) {
       resources: normalizeLegacyResources(migrated.resources),
       attacks: normalizeLegacyAttacks(migrated.attacks),
       hitPointLog: normalizeHitPointLog(migrated.hitPointLog),
+      sessionLog: normalizeSessionLog(migrated.sessionLog),
       hitDiceUsed: normalizeHitDiceUsed(migrated.hitDiceUsed),
       combatState: normalizeCombatState(migrated.combatState),
       spellSlotsUsed: normalizeSpellSlotsUsed(migrated.spellSlotsUsed),
@@ -116,6 +117,10 @@ export function migrateCharacterSheet(value) {
     if (sheet.schemaVersion < 14) {
       sheet.combatState = normalizeCombatState(sheet.combatState);
       sheet.status = normalizeCharacterStatus(sheet.status);
+    }
+
+    if (sheet.schemaVersion < 15) {
+      sheet.sessionLog = normalizeSessionLog(sheet.sessionLog);
     }
 
     return sheet;
@@ -305,6 +310,27 @@ export function normalizeHitPointLog(value) {
       })
       .filter(Boolean)
       .slice(0, 25);
+  }
+
+export function normalizeSessionLog(value) {
+    if (!Array.isArray(value)) return [];
+
+    return value
+      .map((entry, index) => {
+        if (!entry || typeof entry !== 'object') return null;
+        const label = entry.label ? String(entry.label).trim() : '';
+        if (!label) return null;
+
+        return {
+          id: entry.id ? String(entry.id) : `session-log-${index + 1}`,
+          type: entry.type ? String(entry.type) : 'manual',
+          label,
+          detail: entry.detail ? String(entry.detail) : '',
+          at: entry.at ? String(entry.at) : '',
+        };
+      })
+      .filter(Boolean)
+      .slice(0, 50);
   }
 
 function normalizeHitPointSnapshot(value) {

@@ -24,7 +24,7 @@ const { pathToFileURL } = require('node:url');
     },
   });
 
-  assert.equal(sheet.schemaVersion, 14);
+  assert.equal(sheet.schemaVersion, 15);
   assert.deepEqual(sheet.combatState, {
     round: 999,
     actionUsed: true,

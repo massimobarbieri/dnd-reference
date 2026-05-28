@@ -218,7 +218,13 @@ export function createCharacterSheetEventsController({
 
     views.detail.querySelectorAll('[data-sheet-status-check]').forEach((node) => {
       node.addEventListener('change', (event) => {
-        appState.characterSheet.status[event.currentTarget.dataset.sheetStatusCheck] = event.currentTarget.checked;
+        const key = event.currentTarget.dataset.sheetStatusCheck;
+        appState.characterSheet.status[key] = event.currentTarget.checked;
+        addSessionLog(
+          'status',
+          event.currentTarget.checked ? 'Stato attivato' : 'Stato disattivato',
+          statusFieldLabel(key)
+        );
         saveCharacterSheet();
         renderCharacterSheet('combat');
       });
@@ -232,7 +238,11 @@ export function createCharacterSheetEventsController({
         saveCharacterSheet();
       });
 
-      node.addEventListener('change', () => renderCharacterSheet('combat'));
+      node.addEventListener('change', (event) => {
+        const key = event.currentTarget.dataset.sheetStatusNumber;
+        addSessionLog('status', statusFieldLabel(key), String(appState.characterSheet.status[key] || 0));
+        renderCharacterSheet('combat');
+      });
     });
 
     views.detail.querySelectorAll('[data-sheet-status-field]').forEach((node) => {
@@ -245,6 +255,7 @@ export function createCharacterSheetEventsController({
     views.detail.querySelectorAll('[data-sheet-combat-toggle]').forEach((node) => {
       node.addEventListener('click', (event) => {
         toggleCombatState(event.currentTarget.dataset.sheetCombatToggle);
+        addSessionLog('turn', 'Turno aggiornato', combatToggleLabel(event.currentTarget.dataset.sheetCombatToggle));
         saveCharacterSheet();
         renderCharacterSheet('combat');
       });
@@ -260,6 +271,7 @@ export function createCharacterSheetEventsController({
 
     views.detail.querySelector('[data-sheet-combat-new-turn]')?.addEventListener('click', () => {
       resetCombatTurn();
+      addSessionLog('turn', 'Nuovo turno', `Round ${combatRound()}`);
       saveCharacterSheet();
       renderCharacterSheet('combat');
     });
@@ -297,18 +309,22 @@ export function createCharacterSheetEventsController({
     views.detail.querySelector('[data-sheet-concentration-start]')?.addEventListener('click', () => {
       appState.characterSheet.status.concentration = true;
       appState.characterSheet.status.concentrationDc = Math.max(10, Number(appState.characterSheet.status.concentrationDc) || 10);
+      addSessionLog('status', 'Concentrazione avviata', appState.characterSheet.status.concentrationSpell || 'Effetto manuale');
       saveCharacterSheet();
       renderCharacterSheet('combat');
     });
 
     views.detail.querySelector('[data-sheet-concentration-clear-dc]')?.addEventListener('click', () => {
       appState.characterSheet.status.concentrationDc = 10;
+      addSessionLog('status', 'Concentrazione stabile', 'CD riportata a 10');
       saveCharacterSheet();
       renderCharacterSheet('combat');
     });
 
     views.detail.querySelector('[data-sheet-concentration-drop]')?.addEventListener('click', () => {
+      const spellName = appState.characterSheet.status.concentrationSpell || 'Effetto manuale';
       clearConcentration();
+      addSessionLog('status', 'Concentrazione persa', spellName);
       saveCharacterSheet();
       renderCharacterSheet('combat');
     });
@@ -336,6 +352,7 @@ export function createCharacterSheetEventsController({
       if (!id) return;
 
       appState.characterSheet.status.conditions = normalizeIdList([...appState.characterSheet.status.conditions, id]);
+      addSessionLog('status', 'Condizione aggiunta', conditionName(id));
       saveCharacterSheet();
       renderCharacterSheet('combat');
     });
@@ -344,6 +361,7 @@ export function createCharacterSheetEventsController({
       node.addEventListener('click', (event) => {
         const id = event.currentTarget.dataset.sheetRemoveCondition;
         appState.characterSheet.status.conditions = appState.characterSheet.status.conditions.filter((conditionId) => conditionId !== id);
+        addSessionLog('status', 'Condizione rimossa', conditionName(id));
         saveCharacterSheet();
         renderCharacterSheet('combat');
       });
@@ -364,6 +382,7 @@ export function createCharacterSheetEventsController({
         used: 0,
         recovery: String(data.get('recovery') || '').trim(),
       });
+      addSessionLog('resource', 'Risorsa aggiunta', name);
       saveCharacterSheet();
       renderCharacterSheet('combat');
     });
@@ -377,7 +396,15 @@ export function createCharacterSheetEventsController({
         if (!resource) return;
 
         const max = Math.max(0, Number(resource.max) || 0);
+        const beforeUsed = Math.min(max, Math.max(0, Number(resource.used) || 0));
         resource.used = Math.min(max, Math.max(0, (Number(resource.used) || 0) + delta));
+        if (resource.used !== beforeUsed) {
+          addSessionLog(
+            'resource',
+            delta > 0 ? 'Risorsa usata' : 'Risorsa recuperata',
+            `${resource.name || 'Risorsa'}: ${Math.max(0, max - resource.used)}/${max} disponibili`
+          );
+        }
         saveCharacterSheet();
         renderCharacterSheet('combat');
       });
@@ -431,6 +458,7 @@ export function createCharacterSheetEventsController({
 
     views.detail.querySelector('[data-sheet-apply-derived-ac]')?.addEventListener('click', () => {
       appState.characterSheet.armorClass = characterSheetDerived.characterSuggestedArmorClass();
+      addSessionLog('equipment', 'CA applicata', `Classe Armatura ${appState.characterSheet.armorClass}`);
       saveCharacterSheet();
       renderCharacterSheet('combat');
     });
@@ -441,6 +469,7 @@ export function createCharacterSheetEventsController({
       if (!Number(appState.characterSheet.currentHp)) {
         appState.characterSheet.currentHp = hp;
       }
+      addSessionLog('hp', 'PF applicati', `PF massimi ${hp}`);
       saveCharacterSheet();
       renderCharacterSheet('combat');
     });
@@ -448,7 +477,9 @@ export function createCharacterSheetEventsController({
     views.detail.querySelectorAll('[data-sheet-remove-resource]').forEach((node) => {
       node.addEventListener('click', (event) => {
         const id = event.currentTarget.dataset.sheetRemoveResource;
+        const resource = appState.characterSheet.resources.find((entry) => entry.id === id);
         appState.characterSheet.resources = appState.characterSheet.resources.filter((resource) => resource.id !== id);
+        if (resource) addSessionLog('resource', 'Risorsa rimossa', resource.name || 'Risorsa');
         saveCharacterSheet();
         renderCharacterSheet('combat');
       });
@@ -472,6 +503,7 @@ export function createCharacterSheetEventsController({
         damageType: String(data.get('damageType') || '').trim(),
         notes: '',
       });
+      addSessionLog('attack', 'Attacco aggiunto', name);
       saveCharacterSheet();
       renderCharacterSheet('combat');
     });
@@ -479,7 +511,9 @@ export function createCharacterSheetEventsController({
     views.detail.querySelectorAll('[data-sheet-remove-attack]').forEach((node) => {
       node.addEventListener('click', (event) => {
         const id = event.currentTarget.dataset.sheetRemoveAttack;
+        const attack = appState.characterSheet.attacks.find((entry) => entry.id === id);
         appState.characterSheet.attacks = appState.characterSheet.attacks.filter((attack) => attack.id !== id);
+        if (attack) addSessionLog('attack', 'Attacco rimosso', attack.name || 'Attacco');
         saveCharacterSheet();
         renderCharacterSheet('combat');
       });
@@ -544,6 +578,7 @@ export function createCharacterSheetEventsController({
         armorClass: '',
         equipped: false,
       });
+      addSessionLog('equipment', 'Equipaggiamento aggiunto', name);
       saveCharacterSheet();
       renderCharacterSheet('inventory');
     });
@@ -582,6 +617,11 @@ export function createCharacterSheetEventsController({
           equipped: nextDefenseEquipmentState(entry, id, kind, shouldEquip),
         }));
         appState.characterSheet.armorClass = characterSheetDerived.characterSuggestedArmorClass();
+        addSessionLog(
+          'equipment',
+          shouldEquip ? 'Difesa equipaggiata' : 'Difesa rimossa',
+          `${item.name || 'Equipaggiamento'} · CA ${appState.characterSheet.armorClass}`
+        );
         saveCharacterSheet();
         renderCharacterSheet('inventory');
       });
@@ -590,7 +630,9 @@ export function createCharacterSheetEventsController({
     views.detail.querySelectorAll('[data-sheet-remove-equipment]').forEach((node) => {
       node.addEventListener('click', (event) => {
         const id = event.currentTarget.dataset.sheetRemoveEquipment;
+        const item = appState.characterSheet.equipmentItems.find((entry) => entry.id === id);
         appState.characterSheet.equipmentItems = appState.characterSheet.equipmentItems.filter((item) => item.id !== id);
+        if (item) addSessionLog('equipment', 'Equipaggiamento rimosso', item.name || 'Oggetto');
         saveCharacterSheet();
         renderCharacterSheet('inventory');
       });
@@ -644,8 +686,16 @@ export function createCharacterSheetEventsController({
         const delta = Number(event.currentTarget.dataset.sheetSlotDelta) || 0;
         const max = Number(characterSpellSlots().find(([slotLabel]) => slotLabel === label)?.[1]) || 0;
         const used = Math.min(max, Math.max(0, (Number(appState.characterSheet.spellSlotsUsed[label]) || 0) + delta));
+        const beforeUsed = Number(appState.characterSheet.spellSlotsUsed[label]) || 0;
 
         appState.characterSheet.spellSlotsUsed[label] = used;
+        if (used !== beforeUsed) {
+          addSessionLog(
+            'spell',
+            delta > 0 ? 'Slot usato' : 'Slot recuperato',
+            `${label}: ${Math.max(0, max - used)}/${max} residui`
+          );
+        }
         saveCharacterSheet();
         renderCharacterSheet('spells');
       });
@@ -653,6 +703,7 @@ export function createCharacterSheetEventsController({
 
     views.detail.querySelector('[data-sheet-reset-spell-slots]')?.addEventListener('click', () => {
       appState.characterSheet.spellSlotsUsed = {};
+      addSessionLog('spell', 'Slot ripristinati', 'Riposo lungo');
       saveCharacterSheet();
       renderCharacterSheet('spells');
     });
@@ -660,8 +711,10 @@ export function createCharacterSheetEventsController({
     views.detail.querySelectorAll('[data-sheet-remove-magic-item]').forEach((node) => {
       node.addEventListener('click', (event) => {
         const id = event.currentTarget.dataset.sheetRemoveMagicItem;
+        const item = appState.characterSheet.magicItems.find((entry) => entry.id === id);
         appState.characterSheet.magicItems = appState.characterSheet.magicItems.filter((item) => item.id !== id);
         appState.characterSheet.attunedMagicItems = appState.characterSheet.attunedMagicItems.filter((itemId) => itemId !== id);
+        if (item) addSessionLog('equipment', 'Oggetto magico rimosso', item.name || item.id);
         saveCharacterSheet();
         renderCharacterSheet('inventory');
       });
@@ -675,6 +728,7 @@ export function createCharacterSheetEventsController({
         } else {
           appState.characterSheet.attunedMagicItems = appState.characterSheet.attunedMagicItems.filter((itemId) => itemId !== id);
         }
+        addSessionLog('equipment', event.currentTarget.checked ? 'Sintonia attivata' : 'Sintonia rimossa', magicItemName(id));
         saveCharacterSheet();
         renderCharacterSheet('inventory');
       });
@@ -750,6 +804,7 @@ export function createCharacterSheetEventsController({
     }
     if (action === 'apply-derived-ac') {
       appState.characterSheet.armorClass = characterSheetDerived.characterSuggestedArmorClass();
+      addSessionLog('equipment', 'CA applicata', `Classe Armatura ${appState.characterSheet.armorClass}`);
       saveCharacterSheet();
       renderCharacterSheet(appState.characterSheetTab);
       return;
@@ -760,6 +815,7 @@ export function createCharacterSheetEventsController({
       if (!Number(appState.characterSheet.currentHp)) {
         appState.characterSheet.currentHp = hp;
       }
+      addSessionLog('hp', 'PF applicati', `PF massimi ${hp}`);
       saveCharacterSheet();
       renderCharacterSheet(appState.characterSheetTab);
       return;
@@ -795,6 +851,60 @@ export function createCharacterSheetEventsController({
 
     if (entryKind !== 'armor') return Boolean(entry.equipped);
     return entry.id === selectedId ? shouldEquip : false;
+  }
+
+  function addSessionLog(type, label, detail = '') {
+    if (!label) return;
+
+    const log = Array.isArray(appState.characterSheet.sessionLog) ? appState.characterSheet.sessionLog : [];
+    appState.characterSheet.sessionLog = [
+      {
+        id: `session-log-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+        type,
+        label,
+        detail,
+        at: new Date().toISOString(),
+      },
+      ...log,
+    ].slice(0, 50);
+  }
+
+  function hitPointSessionDetail(entry) {
+    const before = entry.before || {};
+    const after = entry.after || {};
+    return [
+      `PF ${Number(before.currentHp) || 0} -> ${Number(after.currentHp) || 0}`,
+      `Temp ${Number(before.tempHp) || 0} -> ${Number(after.tempHp) || 0}`,
+      entry.note,
+    ].filter(Boolean).join(' · ');
+  }
+
+  function statusFieldLabel(key) {
+    return {
+      concentration: 'Concentrazione',
+      deathSaveFailures: 'TS morte falliti',
+      deathSaveSuccesses: 'TS morte riusciti',
+      exhaustion: 'Indebolimento',
+      inspiration: 'Ispirazione',
+    }[key] || key;
+  }
+
+  function combatToggleLabel(field) {
+    return {
+      actionUsed: 'Azione',
+      bonusActionUsed: 'Azione bonus',
+      reactionUsed: 'Reazione',
+    }[field] || 'Turno';
+  }
+
+  function conditionName(id) {
+    return appState.data.rules_glossary.find((entry) => entry.id === id)?.nome || id;
+  }
+
+  function magicItemName(id) {
+    const source = appState.data.magic_items.find((entry) => entry.id === id);
+    const sheetItem = appState.characterSheet.magicItems.find((entry) => entry.id === id);
+    return source?.nome || sheetItem?.name || id;
   }
 
   function applyStandardArray() {
@@ -851,6 +961,7 @@ export function createCharacterSheetEventsController({
     if (mode === 'background-coins') {
       applyCoinsFromText(characterSheetDerived.backgroundStartingCoinsText());
       appendEquipmentNote(marker);
+      addSessionLog('equipment', 'Monete iniziali applicate', characterSheetDerived.backgroundStartingCoinsText());
       return;
     }
 
@@ -862,6 +973,7 @@ export function createCharacterSheetEventsController({
       appendEquipmentNote(`Da verificare (${result.source}): ${result.unmatched.join(', ')}`);
     }
     appendEquipmentNote(marker);
+    addSessionLog('equipment', 'Equipaggiamento iniziale importato', optionText || text);
   }
 
   function applyHitPointAction(action, amount) {
@@ -908,6 +1020,7 @@ export function createCharacterSheetEventsController({
       restoreRestStatus(latest.before.status);
     }
     appState.characterSheet.hitPointLog = log.slice(1);
+    addSessionLog('undo', 'Undo PF', hitPointActionSummary(latest.action, Number(latest.amount) || 0));
     return true;
   }
 
@@ -916,18 +1029,17 @@ export function createCharacterSheetEventsController({
     if (hitPointSnapshotsMatch(before, after)) return;
 
     const log = Array.isArray(appState.characterSheet.hitPointLog) ? appState.characterSheet.hitPointLog : [];
-    appState.characterSheet.hitPointLog = [
-      {
-        id: `hp-log-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
-        action,
-        amount,
-        before,
-        after,
-        at: new Date().toISOString(),
-        note,
-      },
-      ...log,
-    ].slice(0, 25);
+    const entry = {
+      id: `hp-log-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+      action,
+      amount,
+      before,
+      after,
+      at: new Date().toISOString(),
+      note,
+    };
+    appState.characterSheet.hitPointLog = [entry, ...log].slice(0, 25);
+    addSessionLog('hp', hitPointActionSummary(action, amount), hitPointSessionDetail(entry));
   }
 
   function hitPointSnapshot(includeRestState = false) {
@@ -1065,6 +1177,7 @@ export function createCharacterSheetEventsController({
     if (restType !== 'long') {
       resetCharacterResources(restType);
       resetCombatTurn();
+      addSessionLog('rest', 'Riposo breve', 'Risorse compatibili e turno ripristinati.');
       return;
     }
 
@@ -1148,6 +1261,7 @@ export function createCharacterSheetEventsController({
     appState.characterSheet.maxHp = previousMaxHp ? previousMaxHp + hpIncrease : nextSuggestedHp;
     appState.characterSheet.currentHp = Math.min(appState.characterSheet.maxHp, previousCurrentHp + hpIncrease);
     appendLevelUpNote(currentLevel + 1, hpIncrease, summary);
+    addSessionLog('level', 'Level up', `Livello ${currentLevel} -> ${currentLevel + 1} · +${hpIncrease} PF`);
 
     saveCharacterSheet();
     renderCharacterSheet('overview');
@@ -1168,6 +1282,7 @@ export function createCharacterSheetEventsController({
 
     if (level <= 0) {
       if (requiresConcentration) startSpellConcentration(spell);
+      addSessionLog('spell', 'Incantesimo lanciato', spell.nome || spell.id);
       return true;
     }
 
@@ -1179,6 +1294,7 @@ export function createCharacterSheetEventsController({
       slot.max,
       (Number(appState.characterSheet.spellSlotsUsed[slot.label]) || 0) + 1
     );
+    addSessionLog('spell', 'Incantesimo lanciato', `${spell.nome || spell.id} · ${slot.label}`);
     return true;
   }
 
