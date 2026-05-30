@@ -158,7 +158,7 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /<option value="elfo" selected>Elfo<\/option>/);
   assert.match(views['#detail-view'].innerHTML, /<option value="accolito" selected>Accolito<\/option>/);
   assert.match(views['#detail-view'].innerHTML, /Talento: Iniziato alla magia/);
-  assert.doesNotMatch(views['#detail-view'].innerHTML, /Percorso guidato/);
+  assert.match(views['#detail-view'].innerHTML, /sheet-guided-entry/); // link al wizard dall'header (non e il wizard stesso)
   assert.doesNotMatch(views['#detail-view'].innerHTML, /sheet-wizard-steps/);
   assert.doesNotMatch(views['#detail-view'].innerHTML, /Continua a caratteristiche/);
   assert.match(views['#detail-view'].innerHTML, /id="sheet-builder-skills"/);
@@ -186,11 +186,23 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.doesNotMatch(views['#detail-view'].innerHTML, /Checklist creazione/);
   assert.doesNotMatch(views['#detail-view'].innerHTML, />Creazione<\/a>/);
 
+  // Passo Identita: scelte a carte invece dei menu a tendina.
+  api.appState.characterSheetBuilderStep = 'identity';
+  api.renderCharacterSheet('builder');
+  assert.match(views['#detail-view'].innerHTML, /sheet-identity-picker/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-pick="classId"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-pick="ancestry"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-pick="background"/);
+
   api.appState.characterSheetBuilderStep = 'abilities';
   api.renderCharacterSheet('builder');
   assert.match(views['#detail-view'].innerHTML, /Serie standard/);
   assert.match(views['#detail-view'].innerHTML, /Acquisto punti/);
   assert.match(views['#detail-view'].innerHTML, /Generazione casuale/);
+  // Caratteristiche interattive: stepper +/- per l'acquisto punti.
+  assert.match(views['#detail-view'].innerHTML, /ability-step/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-ability-delta="1"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-ability-delta="-1"/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-builder-action="apply-standard-array"/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-builder-action="apply-point-buy-base"/);
   assert.match(views['#detail-view'].innerHTML, /data-dice-roll="4d6dl1"/);

@@ -260,20 +260,100 @@ export function createCharacterSheetOverviewRenderer({
           <h3>Identita</h3>
           <p>Parti dalle scelte che sbloccano suggerimenti SRD: classe, specie e background guidano il resto della scheda.</p>
         </div>
-        <div class="sheet-form-grid">
+        <div class="sheet-form-grid sheet-form-grid--compact">
           ${sheetField('name', 'Nome', sheet.name)}
-          ${sheetSelect('classId', 'Classe', sheet.classId, characterClassOptions())}
           ${sheetNumberField('level', 'Livello', sheet.level, 1, 20)}
-          ${originSelectOrField('ancestry', 'Specie', sheet.ancestry, appState.data.species, 'Nessuna specie')}
-          ${originSelectOrField('background', 'Background', sheet.background, appState.data.backgrounds, 'Nessun background')}
           ${sheetField('alignment', 'Allineamento', sheet.alignment)}
           ${sheetNumberField('xp', 'PE', sheet.xp, 0)}
         </div>
+        ${renderIdentityClassPicker()}
+        ${renderIdentitySpeciesPicker()}
+        ${renderIdentityBackgroundPicker()}
         ${renderStepActions([
           { label: 'Continua', target: 'abilities' },
         ])}
       </div>
     `;
+  }
+
+  function renderIdentityClassPicker() {
+    const selected = appState.characterSheet.classId;
+    const cards = (appState.data.classes || []).map((entry) => ({
+      value: entry.id,
+      name: String(entry.nome || entry.id).replace(/^Classe:\s*/i, ''),
+      meta: [classTraitValue(entry, 'Caratteristica primaria'), classTraitValue(entry, 'Dado Vita')].filter(Boolean).join(' · '),
+      summary: '',
+      selected: entry.id === selected,
+    }));
+    return renderIdentityPicker('classId', 'Classe', cards, 'Importa dado vita, tiri salvezza, competenze e progressione.');
+  }
+
+  function renderIdentitySpeciesPicker() {
+    const selected = appState.characterSheet.ancestry;
+    const cards = [
+      { value: '', name: 'Nessuna specie', meta: '', summary: '', selected: !selected },
+      ...(appState.data.species || []).map((entry) => ({
+        value: entry.id,
+        name: entry.nome || entry.id,
+        meta: [entry.taglia, entry.velocita].filter(Boolean).join(' · '),
+        summary: truncateGuide(entry.tratti_sintesi || entry.descrizione),
+        selected: entry.id === selected || entry.nome === selected,
+      })),
+    ];
+    return renderIdentityPicker('ancestry', 'Specie', cards, 'Applica velocita e collega tratti e taglia.');
+  }
+
+  function renderIdentityBackgroundPicker() {
+    const selected = appState.characterSheet.background;
+    const cards = [
+      { value: '', name: 'Nessun background', meta: '', summary: '', selected: !selected },
+      ...(appState.data.backgrounds || []).map((entry) => ({
+        value: entry.id,
+        name: entry.nome || entry.id,
+        meta: entry.talento_origine ? `Talento: ${entry.talento_origine}` : '',
+        summary: truncateGuide(Array.isArray(entry.competenze?.abilita) ? `Abilita: ${entry.competenze.abilita.join(', ')}` : ''),
+        selected: entry.id === selected || entry.nome === selected,
+      })),
+    ];
+    return renderIdentityPicker('background', 'Background', cards, 'Applica abilita, talento origine e monete alternative.');
+  }
+
+  function renderIdentityPicker(field, title, cards, hint) {
+    return `
+      <div class="sheet-identity-picker" role="group" aria-label="${escapeAttr(title)}">
+        <div class="sheet-identity-picker-head">
+          <strong>${escapeHtml(title)}</strong>
+          ${hint ? `<span>${escapeHtml(hint)}</span>` : ''}
+        </div>
+        <div class="sheet-identity-grid">
+          ${cards.map((card) => `
+            <button
+              type="button"
+              class="sheet-identity-card${card.selected ? ' is-selected' : ''}"
+              data-sheet-pick="${escapeAttr(field)}"
+              data-sheet-pick-value="${escapeAttr(card.value)}"
+              aria-pressed="${card.selected ? 'true' : 'false'}"
+            >
+              <strong>${escapeHtml(card.name)}</strong>
+              ${card.meta ? `<span>${escapeHtml(card.meta)}</span>` : ''}
+              ${card.summary ? `<small>${escapeHtml(card.summary)}</small>` : ''}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function classTraitValue(entry, voce) {
+    const section = entry?.sezioni?.find((part) => String(part.titolo || '').startsWith('Tratti '));
+    const row = section?.righe?.find((item) => (item.Voce || item.chiave) === voce);
+    return String(row?.Riepilogo || row?.valore || '').replace(/\.$/, '').trim();
+  }
+
+  function truncateGuide(value, max = 90) {
+    const text = String(value || '').trim();
+    if (text.length <= max) return text;
+    return `${text.slice(0, max - 1).trimEnd()}…`;
   }
 
   function builderSteps() {
@@ -842,22 +922,17 @@ export function createCharacterSheetOverviewRenderer({
     `;
   }
 
+  function pointBuyCosts() {
+    return { 8: 0, 9: 1, 10: 2, 11: 3, 12: 4, 13: 5, 14: 7, 15: 9 };
+  }
+
   function pointBuyState() {
-    const costs = {
-      8: 0,
-      9: 1,
-      10: 2,
-      11: 3,
-      12: 4,
-      13: 5,
-      14: 7,
-      15: 9,
-    };
+    const costs = pointBuyCosts();
     const values = ABILITY_META.map(([key]) => Number(appState.characterSheet.abilities[key]) || 10);
     const valid = values.every((value) => Object.hasOwn(costs, value));
     const spent = valid ? values.reduce((total, value) => total + costs[value], 0) : 0;
 
-    return { valid, spent };
+    return { valid, spent, remaining: valid ? 27 - spent : 27 };
   }
 
   function classStandardArrayPreset() {
@@ -961,6 +1036,13 @@ export function createCharacterSheetOverviewRenderer({
   function renderAbilityCard(key, label, short) {
     const value = Number(appState.characterSheet.abilities[key]) || 10;
     const modifier = abilityModifier(value);
+    const costs = pointBuyCosts();
+    const pointBuy = pointBuyState();
+    const canDecrease = value > 8;
+    const marginalCost = Object.hasOwn(costs, value + 1) && Object.hasOwn(costs, value)
+      ? costs[value + 1] - costs[value]
+      : Infinity;
+    const canIncrease = value < 15 && (!pointBuy.valid || marginalCost <= pointBuy.remaining);
 
     return `
       <div class="ability-card">
@@ -968,7 +1050,11 @@ export function createCharacterSheetOverviewRenderer({
           <span>${escapeHtml(label)}</span>
           <input type="number" min="1" max="30" value="${escapeAttr(String(value))}" data-sheet-ability="${escapeAttr(key)}">
         </label>
-        <strong>${escapeHtml(short)}</strong>
+        <div class="ability-stepper">
+          <button type="button" class="ability-step" data-sheet-ability-delta="-1" data-sheet-ability-key="${escapeAttr(key)}" ${canDecrease ? '' : 'disabled'} aria-label="Riduci ${escapeAttr(label)}">−</button>
+          <strong>${escapeHtml(short)}</strong>
+          <button type="button" class="ability-step" data-sheet-ability-delta="1" data-sheet-ability-key="${escapeAttr(key)}" ${canIncrease ? '' : 'disabled'} aria-label="Aumenta ${escapeAttr(label)}">+</button>
+        </div>
         <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, modifier))}">${escapeHtml(formatSigned(modifier))}</button>
       </div>
     `;

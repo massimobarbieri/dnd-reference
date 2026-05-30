@@ -66,6 +66,17 @@ export function createCharacterSheetEventsController({
       });
     });
 
+    views.detail.querySelectorAll('[data-sheet-pick]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        applyIdentityPick(
+          event.currentTarget.dataset.sheetPick,
+          event.currentTarget.dataset.sheetPickValue || '',
+        );
+        saveCharacterSheet();
+        renderCharacterSheet(appState.characterSheetTab);
+      });
+    });
+
     views.detail.querySelector('[data-sheet-notice-dismiss]')?.addEventListener('click', () => {
       appState.characterSheetNotice = '';
       renderCharacterSheet(appState.characterSheetTab);
@@ -93,6 +104,16 @@ export function createCharacterSheetEventsController({
       });
 
       node.addEventListener('change', () => renderCharacterSheet(appState.characterSheetTab));
+    });
+
+    views.detail.querySelectorAll('[data-sheet-ability-delta]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        const key = event.currentTarget.dataset.sheetAbilityKey;
+        const delta = Number(event.currentTarget.dataset.sheetAbilityDelta) || 0;
+        if (!adjustPointBuyAbility(key, delta)) return;
+        saveCharacterSheet();
+        renderCharacterSheet(appState.characterSheetTab);
+      });
     });
 
     views.detail.querySelectorAll('[data-sheet-save]').forEach((node) => {
@@ -1677,6 +1698,40 @@ export function createCharacterSheetEventsController({
     if (!selected || !Array.isArray(entries)) return null;
 
     return entries.find((entry) => entry.id === selected || entry.nome === selected) || null;
+  }
+
+  /*
+   * Applica una scelta di identita da carta (classe/specie/background),
+   * con la stessa logica del menu a tendina ma da pulsante del wizard.
+   */
+  function applyIdentityPick(field, value) {
+    if (field === 'classId') {
+      appState.characterSheet.classId = value;
+      const classEntry = characterClassEntry();
+      if (classEntry) applyClassToCharacterSheet(classEntry);
+    } else if (field === 'ancestry') {
+      const species = originEntry(appState.data.species, value);
+      if (species) applySpeciesToCharacterSheet(species);
+      else appState.characterSheet.ancestry = value;
+    } else if (field === 'background') {
+      const background = originEntry(appState.data.backgrounds, value);
+      if (background) applyBackgroundToCharacterSheet(background);
+      else appState.characterSheet.background = value;
+    }
+  }
+
+  /*
+   * Incremento/decremento di un punteggio nei limiti dell'acquisto punti (8-15).
+   * Il campo numerico resta disponibile per valori liberi (es. tiri di dado).
+   */
+  function adjustPointBuyAbility(key, delta) {
+    if (!key || !appState.characterSheet.abilities) return false;
+    const current = Number(appState.characterSheet.abilities[key]) || 10;
+    const next = current + delta;
+    if (next < 8 || next > 15) return false;
+
+    appState.characterSheet.abilities[key] = next;
+    return true;
   }
 
   return { bindCharacterSheetEvents };

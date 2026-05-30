@@ -67,8 +67,8 @@ import {
 
 import { createCharacterSheetClassController } from './features/character-sheet/character-sheet-classes.js?v=20260527-upstream-dev';
 import { createCharacterSheetActionsController } from './features/character-sheet/character-sheet-actions.js?v=20260527-upstream-dev';
-import { createCharacterSheetEventsController } from './features/character-sheet/character-sheet-events.js?v=20260530-effects';
-import { createCharacterSheetRenderer } from './features/character-sheet/character-sheet-renderers.js?v=20260530-effects';
+import { createCharacterSheetEventsController } from './features/character-sheet/character-sheet-events.js?v=20260530-wizard';
+import { createCharacterSheetRenderer } from './features/character-sheet/character-sheet-renderers.js?v=20260530-wizard';
 import { createCharacterSheetSelectors } from './features/character-sheet/character-sheet-selectors.js?v=20260530-effects';
 import { createCharacterSheetDerivedModel } from './features/character-sheet/character-sheet-derived.js?v=20260530-effects';
 import { createCharacterSheetBackupWorkflow } from './features/character-sheet/character-sheet-backup-workflow.js?v=20260527-upstream-dev';

@@ -25,6 +25,7 @@ I dati SRD sono mantenuti nel submodule `data` e vengono caricati dal browser co
 - Ricerca full text nelle schede.
 - Schede dettagliate per mostri, incantesimi, classi, specie, background, equipaggiamento, talenti, lingue, oggetti magici, regole e glossario.
 - Scheda personaggio locale con caratteristiche, HUD combattimento, azioni di turno, concentrazione, dadi vita, riposi, cronologia PF con undo, incantesimi, inventario, import ed export JSON.
+- Creazione guidata a passi: classe, specie e background scelti da carte con riepilogo SRD; caratteristiche con acquisto punti interattivo (stepper +/- e budget 27).
 - Vista "Tavolo": plancia di gioco pulita con dashboard PF/CA/velocità/iniziativa, economia del turno, palette delle azioni SRD, opzioni pronte (attacchi, incantesimi preparati, risorse), tratti rapidi e registro compatto.
 - Effetti attivi (buff/debuff) con durata (turni, round, riposi, concentrazione, scena, manuale) e modificatori a CA, velocità, iniziativa, tiri per colpire, danni, tiri salvezza, CD incantesimi e prove di abilità. I modificatori si applicano in modo coerente in tutte le schede (Principale, Combattimento, Tavolo, Incantesimi) e avanzano o scadono automaticamente al cambio turno/round e ai riposi.
 - Gli effetti possono aggiungere anche un dado al bersaglio (es. Benedizione +1d4 ai tiri salvezza): il dado si fonde direttamente nel tiro principale (1d20 + bonus + 1d4), grazie al supporto del dice roller per le formule composte.

@@ -2,7 +2,7 @@ import { createCharacterSheetCombatRenderer } from './character-sheet-combat-ren
 import { createCharacterSheetCombatShared } from './character-sheet-combat-shared.js?v=20260530-effects';
 import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260527-upstream-dev';
 import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260527-upstream-dev';
-import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260530-effects';
+import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260530-wizard';
 import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260530-effects';
 import { createCharacterSheetTableRenderer } from './character-sheet-table-renderer.js?v=20260530-effects';
 
@@ -413,6 +413,7 @@ export function createCharacterSheetRenderer({
           <span class="sheet-kicker">Scheda personaggio</span>
           <h2 class="detail-title">${escapeHtml(sheet.name || 'Scheda personaggio')}</h2>
           <p class="detail-kicker">${escapeHtml([className, level ? `livello ${level}` : null, sheet.ancestry].filter(Boolean).join(' · '))}</p>
+          ${activeTab !== 'builder' ? `<a class="button button--ghost sheet-guided-entry" href="#/character_sheet/builder">Percorso guidato →</a>` : ''}
         </div>
         <div class="sheet-badges" aria-label="Riepilogo personaggio">
           <span>BC ${escapeHtml(String(characterProficiencyBonus()))}</span>

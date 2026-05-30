@@ -5857,6 +5857,111 @@ code {
   }
 }
 
+.sheet-guided-entry {
+  display: inline-flex;
+  margin-top: .55rem;
+  font-size: .9rem;
+}
+
+/* Carte di scelta del passo Identita del wizard (classe/specie/background). */
+.sheet-identity-picker {
+  margin-top: .9rem;
+}
+
+.sheet-identity-picker-head {
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+  margin-bottom: .5rem;
+}
+
+.sheet-identity-picker-head strong {
+  font-size: .72rem;
+  font-weight: 860;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+.sheet-identity-picker-head span {
+  font-size: .85rem;
+  color: #6b5b47;
+}
+
+.sheet-identity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: .55rem;
+}
+
+.sheet-identity-card {
+  display: flex;
+  flex-direction: column;
+  gap: .2rem;
+  text-align: left;
+  padding: .6rem .7rem;
+  border: 1px solid rgba(17, 24, 39, .12);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+.sheet-identity-card:hover {
+  border-color: #b08968;
+}
+
+.sheet-identity-card.is-selected {
+  border-color: #7a1f1f;
+  background: #fbf2ec;
+  box-shadow: inset 0 0 0 1px #7a1f1f;
+}
+
+.sheet-identity-card strong {
+  font-size: .98rem;
+  color: #2a1d12;
+}
+
+.sheet-identity-card span {
+  font-size: .8rem;
+  color: #7a6a55;
+}
+
+.sheet-identity-card small {
+  font-size: .78rem;
+  color: #6b5b47;
+  line-height: 1.25;
+}
+
+/* Stepper +/- per l'acquisto punti nelle caratteristiche. */
+.ability-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+}
+
+.ability-step {
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(17, 24, 39, .18);
+  background: #fff;
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ability-step:hover:not(:disabled) {
+  border-color: #7a1f1f;
+}
+
+.ability-step:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+}
+
 /*
 * Foglio di stampa della scheda personaggio.
 * Obiettivo: un foglio pulito da portare al tavolo. Stampa la tab attiva
