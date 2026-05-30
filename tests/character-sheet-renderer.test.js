@@ -246,7 +246,8 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /Spada lunga/);
   assert.match(views['#detail-view'].innerHTML, /Prono/);
   // Gli effetti attivi si propagano alla tab Combattimento, non solo al Tavolo.
-  assert.match(views['#detail-view'].innerHTML, /effetti \+2/); // CA: armorClass +2 dall'effetto
+  assert.match(views['#detail-view'].innerHTML, /sheet-vital--hp/); // PF ad anello
+  assert.match(views['#detail-view'].innerHTML, /aria-label="Classe armatura 12"/); // CA effettiva: base 10 + 2 dall'effetto
   assert.match(views['#detail-view'].innerHTML, /TS COS \+5/); // TS concentrazione: +2 COS +2 comp +1 effetto savingThrows
   // Il dado dell'effetto (Benedizione 1d4) si fonde nella formula del tiro salvezza.
   assert.match(views['#detail-view'].innerHTML, /1d20 \+ 5 \+ 1d4/);

@@ -1,10 +1,10 @@
-import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260530-ui';
-import { createCharacterSheetCombatShared } from './character-sheet-combat-shared.js?v=20260530-effects';
+import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260530-ui6';
+import { createCharacterSheetCombatShared } from './character-sheet-combat-shared.js?v=20260530-ui6';
 import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260527-upstream-dev';
 import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260527-upstream-dev';
 import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260530-ui2';
 import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260530-effects';
-import { createCharacterSheetTableRenderer } from './character-sheet-table-renderer.js?v=20260530-effects';
+import { createCharacterSheetTableRenderer } from './character-sheet-table-renderer.js?v=20260530-ui6';
 
 export function createCharacterSheetRenderer({
   appState,

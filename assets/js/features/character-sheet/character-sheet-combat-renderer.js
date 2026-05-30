@@ -25,6 +25,8 @@ export function createCharacterSheetCombatRenderer({
   formatMeters,
   renderTurnSlot,
   renderHitPointQuickControls,
+  renderHpVital,
+  renderAcVital,
 }) {
   function renderCharacterSheetCombat() {
     const sheet = appState.characterSheet;
@@ -123,9 +125,11 @@ export function createCharacterSheetCombatRenderer({
             <button type="button" data-dice-roll="${escapeAttr(rollWithEffects(20, initiative, 'initiative'))}">Iniziativa ${escapeHtml(formatSigned(initiative))}</button>
           </div>
         </div>
+        <div class="sheet-vitals">
+          ${renderHpVital()}
+          ${renderAcVital()}
+        </div>
         <div class="sheet-stat-strip">
-          ${renderCombatStat('CA', characterSheetDerived.characterEffectiveArmorClass(), effectStatHint('Classe armatura', 'armorClass'))}
-          ${renderCombatStat('PF', `${Number(sheet.currentHp) || 0}/${Number(sheet.maxHp) || 0}`, 'Attuali / massimi')}
           ${renderCombatStat('Temp', Number(sheet.tempHp) || 0, 'Punti ferita')}
           ${renderCombatStat('Vel', characterSheetDerived.characterEffectiveSpeed(), effectStatHint('metri', 'speed'))}
           ${renderCombatStat('DV', hitDiceAvailableSummary(), sheet.hitDice || 'Dadi vita')}

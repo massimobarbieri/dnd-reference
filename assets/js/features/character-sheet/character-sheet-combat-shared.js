@@ -88,6 +88,51 @@ export function createCharacterSheetCombatShared({
     `;
   }
 
+  /*
+   * Vitali visuali (anello PF colorato per percentuale, scudo CA):
+   * danno alla scheda un colpo d'occhio da cruscotto invece di soli numeri.
+   */
+  function renderHpVital() {
+    const sheet = appState.characterSheet;
+    const current = Math.max(0, Number(sheet.currentHp) || 0);
+    const max = Math.max(0, Number(sheet.maxHp) || 0);
+    const temp = Math.max(0, Number(sheet.tempHp) || 0);
+    const percent = max ? Math.min(100, Math.round((current / max) * 100)) : 0;
+    const tone = percent > 50 ? 'ok' : percent > 25 ? 'warn' : 'low';
+    const radius = 26;
+    const circumference = 2 * Math.PI * radius;
+    const filled = (circumference * percent) / 100;
+
+    return `
+      <div class="sheet-vital sheet-vital--hp is-${tone}" role="img" aria-label="Punti ferita ${current} su ${max}">
+        <svg class="hp-ring" viewBox="0 0 64 64" aria-hidden="true">
+          <circle class="hp-ring-track" cx="32" cy="32" r="${radius}"></circle>
+          <circle class="hp-ring-fill" cx="32" cy="32" r="${radius}" stroke-dasharray="${filled.toFixed(1)} ${circumference.toFixed(1)}" transform="rotate(-90 32 32)"></circle>
+        </svg>
+        <div class="sheet-vital-body">
+          <strong>${current}<span>/${max}</span></strong>
+          <small>${temp ? `PF · +${temp} temp` : 'PF'}</small>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderAcVital() {
+    const value = characterSheetDerived.characterEffectiveArmorClass();
+
+    return `
+      <div class="sheet-vital sheet-vital--ac" role="img" aria-label="Classe armatura ${value}">
+        <div class="ac-shield-wrap">
+          <svg class="ac-shield" viewBox="0 0 48 54" aria-hidden="true">
+            <path d="M24 2 44 9v17c0 13-9 22-20 26C13 48 4 39 4 26V9z"></path>
+          </svg>
+          <strong class="ac-value">${value}</strong>
+        </div>
+        <small>CA</small>
+      </div>
+    `;
+  }
+
   return {
     combatRound,
     movementUsed,
@@ -97,5 +142,7 @@ export function createCharacterSheetCombatShared({
     formatMeters,
     renderTurnSlot,
     renderHitPointQuickControls,
+    renderHpVital,
+    renderAcVital,
   };
 }

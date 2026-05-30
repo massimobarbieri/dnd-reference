@@ -25,6 +25,8 @@ export function createCharacterSheetTableRenderer({
   formatMeters,
   renderTurnSlot,
   renderHitPointQuickControls,
+  renderHpVital,
+  renderAcVital,
 }) {
   function renderCharacterSheetTable() {
     return `
@@ -79,9 +81,11 @@ export function createCharacterSheetTableRenderer({
             <button type="button" data-dice-roll="${escapeAttr(rollWithEffects(20, initiative, 'initiative'))}">Iniziativa ${escapeHtml(formatSigned(initiative))}</button>
           </div>
         </div>
+        <div class="sheet-vitals">
+          ${renderHpVital()}
+          ${renderAcVital()}
+        </div>
         <div class="sheet-stat-strip">
-          ${renderTableStat('CA', armorClass, statEffectHint('Difesa', 'armorClass'))}
-          ${renderTableStat('PF', `${Number(sheet.currentHp) || 0}/${Number(sheet.maxHp) || 0}`, 'Attuali')}
           ${renderTableStat('Temp', Number(sheet.tempHp) || 0, 'PF temp')}
           ${renderTableStat('Vel', `${formatMeters(speed)} m`, statEffectHint('Movimento', 'speed'))}
           ${renderTableStat('DV', hitDiceAvailableSummary(), sheet.hitDice || 'Dadi vita')}
