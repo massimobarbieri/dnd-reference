@@ -2213,7 +2213,9 @@ body:has(.character-roster) .app-shell {
 .ability-card input:focus,
 .sheet-resource-edit input:focus,
 .sheet-attack-edit input:focus,
-.sheet-attack-edit select:focus {
+.sheet-attack-edit select:focus,
+.sheet-concentration-console input:focus,
+.sheet-hp-actions input:focus {
   outline: none;
   border-bottom-color: rgba(138,63,35,.85);
   background: rgba(255,253,248,.7);
@@ -2431,13 +2433,15 @@ body:has(.character-roster) .app-shell {
 .sheet-concentration-console input {
   width: 100%;
   min-width: 0;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: rgba(255,255,255,.8);
+  border: none;
+  border-bottom: 1px solid rgba(217,199,179,.85);
+  border-radius: 0;
+  background: transparent;
   color: var(--ink);
   font: inherit;
-  min-height: 2.15rem;
-  padding: 0 .5rem;
+  font-weight: 640;
+  min-height: 1.9rem;
+  padding: .25rem .15rem;
 }
 
 .sheet-hp-meter {
@@ -2485,13 +2489,15 @@ body:has(.character-roster) .app-shell {
 .sheet-hp-actions input {
   width: 100%;
   min-width: 0;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: rgba(255,255,255,.74);
+  border: none;
+  border-bottom: 1px solid rgba(217,199,179,.85);
+  border-radius: 0;
+  background: transparent;
   color: var(--ink);
   font: inherit;
-  min-height: 2.1rem;
-  padding: 0 .45rem;
+  font-weight: 640;
+  min-height: 1.9rem;
+  padding: .25rem .15rem;
 }
 
 .sheet-hp-actions button {
@@ -3125,14 +3131,16 @@ body:has(.character-roster) .app-shell {
 .sheet-resource-edit input {
   width: 100%;
   min-width: 0;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: rgba(255,250,242,.78);
+  border: none;
+  border-bottom: 1px solid rgba(217,199,179,.85);
+  border-radius: 0;
+  background: transparent;
   color: var(--ink);
   font: inherit;
   font-size: .86rem;
-  min-height: 2rem;
-  padding: 0 .45rem;
+  font-weight: 640;
+  min-height: 1.85rem;
+  padding: .25rem .15rem;
 }
 
 .sheet-resource-actions {
@@ -3287,14 +3295,16 @@ body:has(.character-roster) .app-shell {
 .sheet-attack-edit select {
   width: 100%;
   min-width: 0;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: rgba(255,250,242,.78);
+  border: none;
+  border-bottom: 1px solid rgba(217,199,179,.85);
+  border-radius: 0;
+  background: transparent;
   color: var(--ink);
   font: inherit;
   font-size: .86rem;
-  min-height: 2rem;
-  padding: 0 .45rem;
+  font-weight: 640;
+  min-height: 1.85rem;
+  padding: .25rem .15rem;
 }
 
 .sheet-attack-edit .sheet-check {
