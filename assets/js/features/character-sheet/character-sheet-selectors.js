@@ -1,3 +1,5 @@
+import { activeEffectModifier } from './character-sheet-normalizers.js?v=20260530-effects';
+
 export function createCharacterSheetSelectors({
   appState,
   abilityMeta,
@@ -37,7 +39,10 @@ export function createCharacterSheetSelectors({
     const ability = abilityMeta.some(([key]) => key === attack.ability) ? attack.ability : 'str';
     const proficiency = attack.proficient ? characterProficiencyBonus() : 0;
 
-    return abilityModifier(appState.characterSheet.abilities[ability]) + proficiency + (Number(attack.bonus) || 0);
+    return abilityModifier(appState.characterSheet.abilities[ability]) +
+      proficiency +
+      (Number(attack.bonus) || 0) +
+      activeEffectModifier(appState.characterSheet.activeEffects, 'attack');
   }
 
   function abilityOptions() {

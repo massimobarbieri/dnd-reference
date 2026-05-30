@@ -1,3 +1,5 @@
+import { activeEffectModifier, activeEffectDice } from './character-sheet-normalizers.js?v=20260530-effects';
+
 export function createCharacterSheetDerivedModel({
   appState,
   abilityModifier,
@@ -360,8 +362,26 @@ export function createCharacterSheetDerivedModel({
     return skillMeta.find(([skillKey]) => skillKey === key)?.[1] || key;
   }
 
+  function characterActiveEffectModifier(target) {
+    return activeEffectModifier(appState.characterSheet.activeEffects, target);
+  }
+
+  function characterActiveEffectDice(target) {
+    return activeEffectDice(appState.characterSheet.activeEffects, target);
+  }
+
   function characterInitiative() {
-    return abilityModifier(appState.characterSheet.abilities.dex) + (Number(appState.characterSheet.initiativeBonus) || 0);
+    return abilityModifier(appState.characterSheet.abilities.dex) +
+      (Number(appState.characterSheet.initiativeBonus) || 0) +
+      characterActiveEffectModifier('initiative');
+  }
+
+  function characterEffectiveArmorClass() {
+    return (Number(appState.characterSheet.armorClass) || 10) + characterActiveEffectModifier('armorClass');
+  }
+
+  function characterEffectiveSpeed() {
+    return Math.max(0, (Number(appState.characterSheet.speed) || 0) + characterActiveEffectModifier('speed'));
   }
 
   function characterSuggestedHitPoints() {
@@ -584,7 +604,11 @@ export function createCharacterSheetDerivedModel({
     backgroundStartingCoinsOption,
     backgroundStartingCoinsText,
     characterAbilityGuidance,
+    characterActiveEffectModifier,
+    characterActiveEffectDice,
     characterArmorLoadout,
+    characterEffectiveArmorClass,
+    characterEffectiveSpeed,
     characterBackgroundEntry,
     characterBackgroundSkills,
     characterBuilderChecklist,

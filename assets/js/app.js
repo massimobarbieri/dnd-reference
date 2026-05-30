@@ -46,7 +46,7 @@ import {
   uniqueCharacterSheets,
   createCharacterSheetId,
   cloneJson,
-} from './features/character-sheet/character-sheet-normalizers.js?v=20260527-upstream-dev';
+} from './features/character-sheet/character-sheet-normalizers.js?v=20260530-effects';
 
 import {
   readJsonStorage,
@@ -67,10 +67,10 @@ import {
 
 import { createCharacterSheetClassController } from './features/character-sheet/character-sheet-classes.js?v=20260527-upstream-dev';
 import { createCharacterSheetActionsController } from './features/character-sheet/character-sheet-actions.js?v=20260527-upstream-dev';
-import { createCharacterSheetEventsController } from './features/character-sheet/character-sheet-events.js?v=20260527-upstream-dev';
-import { createCharacterSheetRenderer } from './features/character-sheet/character-sheet-renderers.js?v=20260527-upstream-dev';
-import { createCharacterSheetSelectors } from './features/character-sheet/character-sheet-selectors.js?v=20260527-upstream-dev';
-import { createCharacterSheetDerivedModel } from './features/character-sheet/character-sheet-derived.js?v=20260527-upstream-dev';
+import { createCharacterSheetEventsController } from './features/character-sheet/character-sheet-events.js?v=20260530-effects';
+import { createCharacterSheetRenderer } from './features/character-sheet/character-sheet-renderers.js?v=20260530-effects';
+import { createCharacterSheetSelectors } from './features/character-sheet/character-sheet-selectors.js?v=20260530-effects';
+import { createCharacterSheetDerivedModel } from './features/character-sheet/character-sheet-derived.js?v=20260530-effects';
 import { createCharacterSheetBackupWorkflow } from './features/character-sheet/character-sheet-backup-workflow.js?v=20260527-upstream-dev';
 
 import {
@@ -80,7 +80,7 @@ import {
   CHARACTER_SHEET_TABS,
   CHARACTER_SHEET_SCHEMA_VERSION,
   DEFAULT_CHARACTER_SHEET,
-} from './features/character-sheet/character-sheet-view.js?v=20260527-upstream-dev';
+} from './features/character-sheet/character-sheet-view.js?v=20260529-effects';
 
 (() => {
   'use strict';
@@ -262,6 +262,8 @@ import {
     formatDiceFormula,
     isLikelyTableDie,
     parseDiceFormula,
+    parseRollExpression,
+    rollExpression,
     randomInt,
     rollDice,
   } = window.DndDiceRoller;
@@ -302,8 +304,11 @@ import {
   } = window.DndRollTray.createRollTrayController({
     appState,
     DICE_LIMITS,
-    parseDiceFormula,
-    rollDice,
+    // Il roll-tray esegue le formule della scheda, che possono includere dadi
+    // da effetto (es. 1d20 + 5 + 1d4): usa il parser composto. Il riconoscimento
+    // inline nel testo SRD resta invece a gruppo singolo.
+    parseDiceFormula: parseRollExpression,
+    rollDice: rollExpression,
     randomInt,
     escapeHtml,
     escapeAttr,

@@ -30,6 +30,10 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
       concentrationDc: 12,
       conditions: ['prone'],
     },
+    activeEffects: [
+      { id: 'effect-speed', name: 'Velocita', source: 'Incantesimo', duration: 'turns', remaining: 2, modifierTarget: 'armorClass', modifierValue: 2, notes: 'Azione extra limitata.' },
+      { id: 'effect-bless', name: 'Benedizione', source: 'Incantesimo', duration: 'concentration', remaining: 0, modifierTarget: 'savingThrows', modifierValue: 1, modifierDice: '1d4', notes: '1d4 ai TS.' },
+    ],
     spellcastingAbility: 'int',
     preparedSpells: ['magic-missile', 'fire-bolt'],
     magicItems: [{ id: 'wand', name: 'Bacchetta', summary: 'rara · richiede sintonia' }],
@@ -208,7 +212,7 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /Benedizione/);
   assert.match(views['#detail-view'].innerHTML, /CD 12/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-concentration-drop/);
-  assert.match(views['#detail-view'].innerHTML, /data-dice-roll="1d20 \+ 4"/);
+  assert.match(views['#detail-view'].innerHTML, /data-dice-roll="1d20 \+ 4 \+ 1d4"/); // TS INT +4 fuso con Benedizione 1d4
   assert.match(views['#detail-view'].innerHTML, /data-sheet-hp-form/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-hp-action="damage"/);
   assert.match(views['#detail-view'].innerHTML, /Dadi vita/);
@@ -229,6 +233,52 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-add-attack/);
   assert.match(views['#detail-view'].innerHTML, /Spada lunga/);
   assert.match(views['#detail-view'].innerHTML, /Prono/);
+  // Gli effetti attivi si propagano alla tab Combattimento, non solo al Tavolo.
+  assert.match(views['#detail-view'].innerHTML, /effetti \+2/); // CA: armorClass +2 dall'effetto
+  assert.match(views['#detail-view'].innerHTML, /TS COS \+5/); // TS concentrazione: +2 COS +2 comp +1 effetto savingThrows
+  // Il dado dell'effetto (Benedizione 1d4) si fonde nella formula del tiro salvezza.
+  assert.match(views['#detail-view'].innerHTML, /1d20 \+ 5 \+ 1d4/);
+
+  api.renderCharacterSheet('table');
+  assert.match(views['#detail-view'].innerHTML, /sheet-table-layout/);
+  assert.match(views['#detail-view'].innerHTML, /sheet-table-command/);
+  assert.match(views['#detail-view'].innerHTML, /sheet-table-panel--actions/);
+  assert.match(views['#detail-view'].innerHTML, /Tavolo/);
+  assert.match(views['#detail-view'].innerHTML, /sheet-dashboard--table/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-hp-form/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-concentration-drop/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-combat-new-turn/);
+  assert.match(views['#detail-view'].innerHTML, /Azioni del turno/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-table-use-action="Hide"/);
+  assert.match(views['#detail-view'].innerHTML, /Furtivita \+0/);
+  assert.match(views['#detail-view'].innerHTML, /Influence/);
+  assert.match(views['#detail-view'].innerHTML, /Search/);
+  assert.match(views['#detail-view'].innerHTML, /Study/);
+  assert.match(views['#detail-view'].innerHTML, /Opportunity Attack/);
+  assert.match(views['#detail-view'].innerHTML, /Opzioni pronte/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-table-use-action="Spada lunga"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-table-cast-spell="fire-bolt"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-table-cast-spell="magic-missile"/);
+  assert.match(views['#detail-view'].innerHTML, /Slot finiti/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-resource-id="res-1"/);
+  assert.match(views['#detail-view'].innerHTML, /Effetti attivi/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-add-effect/);
+  assert.match(views['#detail-view'].innerHTML, /Velocita/);
+  assert.match(views['#detail-view'].innerHTML, /2 turni/);
+  assert.match(views['#detail-view'].innerHTML, /CA \+2/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-effect-tick="effect-speed"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-remove-effect="effect-bless"/);
+  assert.match(views['#detail-view'].innerHTML, /Tratti rapidi/);
+  assert.match(views['#detail-view'].innerHTML, /Classe L3/);
+  assert.match(views['#detail-view'].innerHTML, /Tradizione Arcana/);
+  assert.match(views['#detail-view'].innerHTML, /Talento origine/);
+  assert.match(views['#detail-view'].innerHTML, /Iniziato alla magia/);
+  assert.match(views['#detail-view'].innerHTML, /Scurovisione/);
+  assert.match(views['#detail-view'].innerHTML, /Bacchetta/);
+  assert.match(views['#detail-view'].innerHTML, /Copertura/);
+  assert.match(views['#detail-view'].innerHTML, /Stato critico/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-status-check-button="inspiration"/);
+  assert.match(views['#detail-view'].innerHTML, /Registro recente/);
 
   api.renderCharacterSheet('spells');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-add-spell/);

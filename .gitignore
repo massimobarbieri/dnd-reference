@@ -1,0 +1,6 @@
+# Dipendenze (non usate: app statica senza build)
+node_modules/
+
+# Artefatti locali dell'editor/agente
+.claude/
+.DS_Store

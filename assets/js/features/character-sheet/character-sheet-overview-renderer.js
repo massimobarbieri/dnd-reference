@@ -718,16 +718,26 @@ export function createCharacterSheetOverviewRenderer({
     `;
   }
 
+  /*
+   * Formula di tiro che fonde i dadi da effetto sul bersaglio (es. Guida +1d4).
+   */
+  function rollWithEffects(faces, modifier, target) {
+    const base = rollFormula(faces, modifier);
+    const dice = characterSheetDerived.characterActiveEffectDice(target);
+    return dice ? `${base} + ${dice}` : base;
+  }
+
   function renderOverviewSummary() {
     const sheet = appState.characterSheet;
-    const initiative = abilityModifier(sheet.abilities.dex) + (Number(sheet.initiativeBonus) || 0);
-    const passivePerception = 10 + skillModifier('perception');
+    const initiative = characterSheetDerived.characterInitiative();
+    const passivePerception = 10 + skillModifier('perception', { includeEffects: false });
+    const skillEffect = characterSheetDerived.characterActiveEffectModifier('skillChecks');
     const activeSkills = SKILL_META
       .map(([key, label, ability]) => ({
         key,
         label,
         rank: Number(sheet.skillProficiencies[key]) || 0,
-        modifier: abilityModifier(sheet.abilities[ability]) + skillProficiencyBonus(sheet.skillProficiencies[key]),
+        modifier: abilityModifier(sheet.abilities[ability]) + skillProficiencyBonus(sheet.skillProficiencies[key]) + skillEffect,
       }))
       .filter((skill) => skill.rank > 0)
       .sort((a, b) => b.modifier - a.modifier || a.label.localeCompare(b.label, 'it'))
@@ -748,20 +758,20 @@ export function createCharacterSheetOverviewRenderer({
           </div>
           <div class="sheet-hero-rolls">
             ${renderOverviewCreationCta()}
-            <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, initiative))}">
+            <button type="button" data-dice-roll="${escapeAttr(rollWithEffects(20, initiative, 'initiative'))}">
               Tira iniziativa ${escapeHtml(formatSigned(initiative))}
             </button>
-            <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, skillModifier('perception')))}">
+            <button type="button" data-dice-roll="${escapeAttr(rollWithEffects(20, skillModifier('perception'), 'skillChecks'))}">
               Tira percezione ${escapeHtml(formatSigned(skillModifier('perception')))}
             </button>
           </div>
         </div>
 
         <div class="sheet-stat-strip" aria-label="Statistiche principali">
-          ${renderSummaryStat('CA', Number(sheet.armorClass) || 10, 'Difesa')}
+          ${renderSummaryStat('CA', characterSheetDerived.characterEffectiveArmorClass(), 'Difesa')}
           ${renderSummaryStat('PF', `${Number(sheet.currentHp) || 0}/${Number(sheet.maxHp) || 0}`, 'Attuali / massimi')}
           ${renderSummaryStat('Temp', Number(sheet.tempHp) || 0, 'Punti ferita')}
-          ${renderSummaryStat('Vel', Number(sheet.speed) || 0, 'metri')}
+          ${renderSummaryStat('Vel', characterSheetDerived.characterEffectiveSpeed(), 'metri')}
           ${renderSummaryStat('BC', formatSigned(characterProficiencyBonus()), 'Competenza')}
           ${renderSummaryStat('Passiva', passivePerception, 'Percezione')}
         </div>
@@ -771,7 +781,7 @@ export function createCharacterSheetOverviewRenderer({
           ${activeSkills.length ? `
             <div>
               ${activeSkills.map((skill) => `
-                <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, skill.modifier))}">
+                <button type="button" data-dice-roll="${escapeAttr(rollWithEffects(20, skill.modifier, 'skillChecks'))}">
                   ${escapeHtml(skill.label)} ${escapeHtml(formatSigned(skill.modifier))}
                 </button>
               `).join('')}
@@ -940,10 +950,12 @@ export function createCharacterSheetOverviewRenderer({
     return options;
   }
 
-  function skillModifier(key) {
+  function skillModifier(key, { includeEffects = true } = {}) {
     const skill = SKILL_META.find(([skillKey]) => skillKey === key);
     if (!skill) return 0;
-    return abilityModifier(appState.characterSheet.abilities[skill[2]]) + skillProficiencyBonus(appState.characterSheet.skillProficiencies[key]);
+    return abilityModifier(appState.characterSheet.abilities[skill[2]]) +
+      skillProficiencyBonus(appState.characterSheet.skillProficiencies[key]) +
+      (includeEffects ? characterSheetDerived.characterActiveEffectModifier('skillChecks') : 0);
   }
 
   function renderAbilityCard(key, label, short) {
@@ -1051,7 +1063,9 @@ export function createCharacterSheetOverviewRenderer({
 
   function renderSkillControl(key, label, ability) {
     const rank = Number(appState.characterSheet.skillProficiencies[key]) || 0;
-    const modifier = abilityModifier(appState.characterSheet.abilities[ability]) + skillProficiencyBonus(rank);
+    const modifier = abilityModifier(appState.characterSheet.abilities[ability]) +
+      skillProficiencyBonus(rank) +
+      characterSheetDerived.characterActiveEffectModifier('skillChecks');
     const abilityShort = ABILITY_META.find(([abilityKey]) => abilityKey === ability)?.[2] || '';
     const sources = skillSources(key);
 
@@ -1066,7 +1080,7 @@ export function createCharacterSheetOverviewRenderer({
           <option value="1"${rank === 1 ? ' selected' : ''}>C</option>
           <option value="2"${rank === 2 ? ' selected' : ''}>M</option>
         </select>
-        <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, modifier))}">${escapeHtml(formatSigned(modifier))}</button>
+        <button type="button" data-dice-roll="${escapeAttr(rollWithEffects(20, modifier, 'skillChecks'))}">${escapeHtml(formatSigned(modifier))}</button>
       </div>
     `;
   }

@@ -47,6 +47,7 @@ export const SKILL_META = [
 ];
 
 export const CHARACTER_SHEET_TABS = [
+    ['table', 'Tavolo'],
     ['overview', 'Principale'],
     ['combat', 'Combattimento'],
     ['spells', 'Incantesimi'],
@@ -58,7 +59,7 @@ export const CHARACTER_SHEET_TABS = [
 * Versione del formato salvato in localStorage/esportazione.
 * Incrementare quando si aggiungono campi persistenti alla scheda.
 */
-export const CHARACTER_SHEET_SCHEMA_VERSION = 15;
+export const CHARACTER_SHEET_SCHEMA_VERSION = 16;
 
 /*
 * Modello canonico della scheda. Tutte le importazioni e i salvataggi
@@ -125,6 +126,7 @@ export const DEFAULT_CHARACTER_SHEET = {
       conditions: [],
       notes: '',
     },
+    activeEffects: [],
     resources: [],
     attacks: [],
     spellcastingAbility: 'int',

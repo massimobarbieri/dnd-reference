@@ -67,7 +67,7 @@ const { pathToFileURL } = require('node:url');
     hitDiceUsed: 99,
   });
 
-  assert.equal(sheet.schemaVersion, 15);
+  assert.equal(sheet.schemaVersion, 16);
   assert.equal(sheet.hitDiceUsed, 20);
   assert.equal(sheet.hitPointLog.length, 3);
   assert.deepEqual(sheet.hitPointLog[0], {

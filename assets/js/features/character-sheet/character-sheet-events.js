@@ -1,3 +1,5 @@
+import { normalizeEffectDice } from './character-sheet-normalizers.js?v=20260530-effects';
+
 export function createCharacterSheetEventsController({
   appState,
   views,
@@ -226,7 +228,7 @@ export function createCharacterSheetEventsController({
           statusFieldLabel(key)
         );
         saveCharacterSheet();
-        renderCharacterSheet('combat');
+        renderCharacterSheet(activePlayTab());
       });
     });
 
@@ -241,7 +243,7 @@ export function createCharacterSheetEventsController({
       node.addEventListener('change', (event) => {
         const key = event.currentTarget.dataset.sheetStatusNumber;
         addSessionLog('status', statusFieldLabel(key), String(appState.characterSheet.status[key] || 0));
-        renderCharacterSheet('combat');
+        renderCharacterSheet(activePlayTab());
       });
     });
 
@@ -257,37 +259,102 @@ export function createCharacterSheetEventsController({
         toggleCombatState(event.currentTarget.dataset.sheetCombatToggle);
         addSessionLog('turn', 'Turno aggiornato', combatToggleLabel(event.currentTarget.dataset.sheetCombatToggle));
         saveCharacterSheet();
-        renderCharacterSheet('combat');
+        renderCharacterSheet(activePlayTab());
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-table-use-action]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        const actionName = event.currentTarget.dataset.sheetTableUseAction || 'Azione';
+        const slot = event.currentTarget.dataset.sheetTableSlot || 'actionUsed';
+        markTurnSlot(slot, actionName);
+        saveCharacterSheet();
+        renderCharacterSheet('table');
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-table-cast-spell]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        const id = event.currentTarget.dataset.sheetTableCastSpell;
+        if (!castPreparedSpell(id)) return;
+        markTurnSlot(event.currentTarget.dataset.sheetTableSlot || 'actionUsed', spellName(id));
+        saveCharacterSheet();
+        renderCharacterSheet('table');
+      });
+    });
+
+    views.detail.querySelector('[data-sheet-add-effect]')?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const effect = activeEffectFromForm(new FormData(event.currentTarget));
+      if (!effect) return;
+
+      addActiveEffect(effect);
+      event.currentTarget.reset();
+      saveCharacterSheet();
+      renderCharacterSheet('table');
+    });
+
+    views.detail.querySelectorAll('[data-sheet-effect-tick]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        if (!advanceSingleEffect(event.currentTarget.dataset.sheetEffectTick)) return;
+        saveCharacterSheet();
+        renderCharacterSheet('table');
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-remove-effect]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        if (!removeActiveEffect(event.currentTarget.dataset.sheetRemoveEffect, 'Effetto rimosso')) return;
+        saveCharacterSheet();
+        renderCharacterSheet('table');
+      });
+    });
+
+    views.detail.querySelectorAll('[data-sheet-status-check-button]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        const key = event.currentTarget.dataset.sheetStatusCheckButton;
+        if (!key) return;
+        appState.characterSheet.status[key] = !appState.characterSheet.status[key];
+        addSessionLog(
+          'status',
+          appState.characterSheet.status[key] ? 'Stato attivato' : 'Stato disattivato',
+          statusFieldLabel(key)
+        );
+        saveCharacterSheet();
+        renderCharacterSheet(activePlayTab());
       });
     });
 
     views.detail.querySelectorAll('[data-sheet-combat-round-delta]').forEach((node) => {
       node.addEventListener('click', (event) => {
-        adjustCombatRound(Number(event.currentTarget.dataset.sheetCombatRoundDelta) || 0);
+        const delta = Number(event.currentTarget.dataset.sheetCombatRoundDelta) || 0;
+        adjustCombatRound(delta);
+        if (delta > 0) advanceTimedEffects('rounds');
         saveCharacterSheet();
-        renderCharacterSheet('combat');
+        renderCharacterSheet(activePlayTab());
       });
     });
 
     views.detail.querySelector('[data-sheet-combat-new-turn]')?.addEventListener('click', () => {
       resetCombatTurn();
+      advanceTimedEffects('turns');
       addSessionLog('turn', 'Nuovo turno', `Round ${combatRound()}`);
       saveCharacterSheet();
-      renderCharacterSheet('combat');
+      renderCharacterSheet(activePlayTab());
     });
 
     views.detail.querySelectorAll('[data-sheet-combat-movement-delta]').forEach((node) => {
       node.addEventListener('click', (event) => {
         adjustCombatMovement(Number(event.currentTarget.dataset.sheetCombatMovementDelta) || 0);
         saveCharacterSheet();
-        renderCharacterSheet('combat');
+        renderCharacterSheet(activePlayTab());
       });
     });
 
     views.detail.querySelector('[data-sheet-combat-reset-movement]')?.addEventListener('click', () => {
       ensureCombatState().movementUsed = 0;
       saveCharacterSheet();
-      renderCharacterSheet('combat');
+      renderCharacterSheet(activePlayTab());
     });
 
     views.detail.querySelectorAll('[data-sheet-concentration-field]').forEach((node) => {
@@ -303,22 +370,23 @@ export function createCharacterSheetEventsController({
         saveCharacterSheet();
       });
 
-      node.addEventListener('change', () => renderCharacterSheet('combat'));
+      node.addEventListener('change', () => renderCharacterSheet(activePlayTab()));
     });
 
     views.detail.querySelector('[data-sheet-concentration-start]')?.addEventListener('click', () => {
       appState.characterSheet.status.concentration = true;
       appState.characterSheet.status.concentrationDc = Math.max(10, Number(appState.characterSheet.status.concentrationDc) || 10);
+      upsertConcentrationEffect(appState.characterSheet.status.concentrationSpell || 'Concentrazione', 'Manuale', '');
       addSessionLog('status', 'Concentrazione avviata', appState.characterSheet.status.concentrationSpell || 'Effetto manuale');
       saveCharacterSheet();
-      renderCharacterSheet('combat');
+      renderCharacterSheet(activePlayTab());
     });
 
     views.detail.querySelector('[data-sheet-concentration-clear-dc]')?.addEventListener('click', () => {
       appState.characterSheet.status.concentrationDc = 10;
       addSessionLog('status', 'Concentrazione stabile', 'CD riportata a 10');
       saveCharacterSheet();
-      renderCharacterSheet('combat');
+      renderCharacterSheet(activePlayTab());
     });
 
     views.detail.querySelector('[data-sheet-concentration-drop]')?.addEventListener('click', () => {
@@ -326,7 +394,7 @@ export function createCharacterSheetEventsController({
       clearConcentration();
       addSessionLog('status', 'Concentrazione persa', spellName);
       saveCharacterSheet();
-      renderCharacterSheet('combat');
+      renderCharacterSheet(activePlayTab());
     });
 
     views.detail.querySelector('[data-sheet-hp-form]')?.addEventListener('submit', (event) => {
@@ -336,14 +404,14 @@ export function createCharacterSheetEventsController({
       const action = event.submitter?.dataset.sheetHpAction || 'damage';
       applyHitPointAction(action, amount);
       saveCharacterSheet();
-      renderCharacterSheet('combat');
+      renderCharacterSheet(activePlayTab());
     });
 
     views.detail.querySelectorAll('[data-sheet-undo-hp]').forEach((node) => {
       node.addEventListener('click', (event) => {
         if (!undoHitPointAction(event.currentTarget.dataset.sheetUndoHp)) return;
         saveCharacterSheet();
-        renderCharacterSheet('combat');
+        renderCharacterSheet(activePlayTab());
       });
     });
 
@@ -354,7 +422,7 @@ export function createCharacterSheetEventsController({
       appState.characterSheet.status.conditions = normalizeIdList([...appState.characterSheet.status.conditions, id]);
       addSessionLog('status', 'Condizione aggiunta', conditionName(id));
       saveCharacterSheet();
-      renderCharacterSheet('combat');
+      renderCharacterSheet(activePlayTab());
     });
 
     views.detail.querySelectorAll('[data-sheet-remove-condition]').forEach((node) => {
@@ -363,7 +431,7 @@ export function createCharacterSheetEventsController({
         appState.characterSheet.status.conditions = appState.characterSheet.status.conditions.filter((conditionId) => conditionId !== id);
         addSessionLog('status', 'Condizione rimossa', conditionName(id));
         saveCharacterSheet();
-        renderCharacterSheet('combat');
+        renderCharacterSheet(activePlayTab());
       });
     });
 
@@ -384,7 +452,7 @@ export function createCharacterSheetEventsController({
       });
       addSessionLog('resource', 'Risorsa aggiunta', name);
       saveCharacterSheet();
-      renderCharacterSheet('combat');
+      renderCharacterSheet(activePlayTab());
     });
 
     views.detail.querySelectorAll('[data-sheet-resource-delta]').forEach((node) => {
@@ -406,7 +474,7 @@ export function createCharacterSheetEventsController({
           );
         }
         saveCharacterSheet();
-        renderCharacterSheet('combat');
+        renderCharacterSheet(activePlayTab());
       });
     });
 
@@ -431,28 +499,28 @@ export function createCharacterSheetEventsController({
         saveCharacterSheet();
       });
 
-      node.addEventListener('change', () => renderCharacterSheet('combat'));
+      node.addEventListener('change', () => renderCharacterSheet(activePlayTab()));
     });
 
     views.detail.querySelectorAll('[data-sheet-reset-resources]').forEach((node) => {
       node.addEventListener('click', (event) => {
         applyRest(event.currentTarget.dataset.sheetResetResources);
         saveCharacterSheet();
-        renderCharacterSheet('combat');
+        renderCharacterSheet(activePlayTab());
       });
     });
 
     views.detail.querySelector('[data-sheet-spend-hit-die]')?.addEventListener('click', () => {
       if (!spendHitDie()) return;
       saveCharacterSheet();
-      renderCharacterSheet('combat');
+      renderCharacterSheet(activePlayTab());
     });
 
     views.detail.querySelectorAll('[data-sheet-hit-die-delta]').forEach((node) => {
       node.addEventListener('click', (event) => {
         if (!adjustHitDiceUsed(Number(event.currentTarget.dataset.sheetHitDieDelta) || 0)) return;
         saveCharacterSheet();
-        renderCharacterSheet('combat');
+        renderCharacterSheet(activePlayTab());
       });
     });
 
@@ -460,7 +528,7 @@ export function createCharacterSheetEventsController({
       appState.characterSheet.armorClass = characterSheetDerived.characterSuggestedArmorClass();
       addSessionLog('equipment', 'CA applicata', `Classe Armatura ${appState.characterSheet.armorClass}`);
       saveCharacterSheet();
-      renderCharacterSheet('combat');
+      renderCharacterSheet(activePlayTab());
     });
 
     views.detail.querySelector('[data-sheet-apply-derived-hp]')?.addEventListener('click', () => {
@@ -471,7 +539,7 @@ export function createCharacterSheetEventsController({
       }
       addSessionLog('hp', 'PF applicati', `PF massimi ${hp}`);
       saveCharacterSheet();
-      renderCharacterSheet('combat');
+      renderCharacterSheet(activePlayTab());
     });
 
     views.detail.querySelectorAll('[data-sheet-remove-resource]').forEach((node) => {
@@ -481,7 +549,7 @@ export function createCharacterSheetEventsController({
         appState.characterSheet.resources = appState.characterSheet.resources.filter((resource) => resource.id !== id);
         if (resource) addSessionLog('resource', 'Risorsa rimossa', resource.name || 'Risorsa');
         saveCharacterSheet();
-        renderCharacterSheet('combat');
+        renderCharacterSheet(activePlayTab());
       });
     });
 
@@ -505,7 +573,7 @@ export function createCharacterSheetEventsController({
       });
       addSessionLog('attack', 'Attacco aggiunto', name);
       saveCharacterSheet();
-      renderCharacterSheet('combat');
+      renderCharacterSheet(activePlayTab());
     });
 
     views.detail.querySelectorAll('[data-sheet-remove-attack]').forEach((node) => {
@@ -515,7 +583,7 @@ export function createCharacterSheetEventsController({
         appState.characterSheet.attacks = appState.characterSheet.attacks.filter((attack) => attack.id !== id);
         if (attack) addSessionLog('attack', 'Attacco rimosso', attack.name || 'Attacco');
         saveCharacterSheet();
-        renderCharacterSheet('combat');
+        renderCharacterSheet(activePlayTab());
       });
     });
 
@@ -540,7 +608,7 @@ export function createCharacterSheetEventsController({
       node.addEventListener('input', updateAttack);
       node.addEventListener('change', (event) => {
         updateAttack(event);
-        renderCharacterSheet('combat');
+        renderCharacterSheet(activePlayTab());
       });
     });
 
@@ -667,7 +735,7 @@ export function createCharacterSheetEventsController({
       node.addEventListener('click', (event) => {
         castPreparedSpell(event.currentTarget.dataset.sheetCastSpell);
         saveCharacterSheet();
-        renderCharacterSheet(appState.characterSheetTab === 'combat' ? 'combat' : 'spells');
+        renderCharacterSheet(appState.characterSheetTab === 'combat' ? 'combat' : appState.characterSheetTab === 'table' ? 'table' : 'spells');
       });
     });
 
@@ -841,6 +909,190 @@ export function createCharacterSheetEventsController({
     }
   }
 
+  function activePlayTab() {
+    return appState.characterSheetTab === 'table' ? 'table' : 'combat';
+  }
+
+  function markTurnSlot(slot, label) {
+    if (!['actionUsed', 'bonusActionUsed', 'reactionUsed'].includes(slot)) return false;
+    const state = ensureCombatState();
+    if (state[slot]) return false;
+
+    state[slot] = true;
+    addSessionLog('turn', `${combatToggleLabel(slot)} usata`, label || combatToggleLabel(slot));
+    return true;
+  }
+
+  function activeEffectFromForm(data) {
+    const name = String(data.get('name') || '').trim();
+    if (!name) return null;
+
+    return {
+      id: `effect-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+      name,
+      source: 'Manuale',
+      duration: normalizeEffectDuration(data.get('duration')),
+      remaining: Math.min(999, Math.max(0, Number(data.get('remaining')) || 0)),
+      modifierTarget: normalizeEffectTarget(data.get('modifierTarget')),
+      modifierValue: Math.min(99, Math.max(-99, Number(data.get('modifierValue')) || 0)),
+      modifierDice: normalizeEffectDice(data.get('modifierDice')),
+      notes: String(data.get('notes') || '').trim(),
+    };
+  }
+
+  function addActiveEffect(effect) {
+    ensureActiveEffects();
+    if (effect.duration === 'concentration') {
+      removeConcentrationEffects();
+      appState.characterSheet.status.concentration = true;
+      appState.characterSheet.status.concentrationSpell = effect.name;
+      appState.characterSheet.status.concentrationDc = 10;
+    }
+
+    appState.characterSheet.activeEffects = [
+      effect,
+      ...appState.characterSheet.activeEffects.filter((entry) => entry.id !== effect.id),
+    ].slice(0, 30);
+    addSessionLog('effect', 'Effetto aggiunto', effectSummary(effect));
+  }
+
+  function advanceSingleEffect(id) {
+    const effect = ensureActiveEffects().find((entry) => entry.id === id);
+    if (!effect || !effectUsesRemaining(effect)) return false;
+
+    effect.remaining = Math.max(0, (Number(effect.remaining) || 0) - 1);
+    if (effect.remaining <= 0) {
+      removeActiveEffect(effect.id, 'Effetto scaduto');
+      return true;
+    }
+
+    addSessionLog('effect', 'Effetto avanzato', effectSummary(effect));
+    return true;
+  }
+
+  function advanceTimedEffects(duration) {
+    const effects = ensureActiveEffects().filter((effect) => effect.duration === duration && effectUsesRemaining(effect));
+    if (!effects.length) return false;
+
+    effects.forEach((effect) => {
+      effect.remaining = Math.max(0, (Number(effect.remaining) || 0) - 1);
+    });
+    const expired = effects.filter((effect) => effect.remaining <= 0);
+    if (expired.length) {
+      const expiredIds = new Set(expired.map((effect) => effect.id));
+      appState.characterSheet.activeEffects = appState.characterSheet.activeEffects.filter((effect) => !expiredIds.has(effect.id));
+      expired.forEach((effect) => addSessionLog('effect', 'Effetto scaduto', effectSummary(effect)));
+    }
+    return true;
+  }
+
+  function removeActiveEffect(id, label = 'Effetto rimosso') {
+    const effect = ensureActiveEffects().find((entry) => entry.id === id);
+    if (!effect) return false;
+
+    appState.characterSheet.activeEffects = appState.characterSheet.activeEffects.filter((entry) => entry.id !== id);
+    if (effect.duration === 'concentration' && appState.characterSheet.status.concentrationSpell === effect.name) {
+      clearConcentration({ removeEffects: false });
+    }
+    addSessionLog('effect', label, effectSummary(effect));
+    return true;
+  }
+
+  function expireRestEffects(restType) {
+    const longRest = restType === 'long';
+    const removable = new Set(longRest ? ['shortRest', 'longRest', 'concentration'] : ['shortRest']);
+    const effects = ensureActiveEffects();
+    const expired = effects.filter((effect) => removable.has(effect.duration));
+    if (!expired.length) return false;
+
+    appState.characterSheet.activeEffects = effects.filter((effect) => !removable.has(effect.duration));
+    expired.forEach((effect) => addSessionLog('effect', 'Effetto terminato dal riposo', effectSummary(effect)));
+    return true;
+  }
+
+  function upsertConcentrationEffect(name, source, notes = '') {
+    const effectName = String(name || 'Concentrazione').trim() || 'Concentrazione';
+    removeConcentrationEffects();
+    addActiveEffect({
+      id: `effect-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+      name: effectName,
+      source: source || 'Concentrazione',
+      duration: 'concentration',
+      remaining: 0,
+      modifierTarget: '',
+      modifierValue: 0,
+      notes,
+    });
+  }
+
+  function removeConcentrationEffects() {
+    ensureActiveEffects();
+    appState.characterSheet.activeEffects = appState.characterSheet.activeEffects
+      .filter((effect) => effect.duration !== 'concentration');
+  }
+
+  function ensureActiveEffects() {
+    if (!Array.isArray(appState.characterSheet.activeEffects)) {
+      appState.characterSheet.activeEffects = [];
+    }
+    return appState.characterSheet.activeEffects;
+  }
+
+  function effectUsesRemaining(effect) {
+    return ['turns', 'rounds', 'scene'].includes(effect.duration) && Number(effect.remaining) > 0;
+  }
+
+  function normalizeEffectDuration(value) {
+    const duration = String(value || '');
+    return ['turns', 'rounds', 'shortRest', 'longRest', 'concentration', 'scene', 'manual'].includes(duration)
+      ? duration
+      : 'manual';
+  }
+
+  function normalizeEffectTarget(value) {
+    const target = String(value || '');
+    return ['', 'armorClass', 'speed', 'initiative', 'attack', 'damage', 'savingThrows', 'spellDc', 'skillChecks'].includes(target)
+      ? target
+      : '';
+  }
+
+  function effectSummary(effect) {
+    return [
+      effect.name,
+      effectDurationLabel(effect),
+      effect.modifierTarget && Number(effect.modifierValue) ? `${effectTargetLabel(effect.modifierTarget)} ${formatSignedEffect(effect.modifierValue)}` : '',
+      effect.modifierTarget && effect.modifierDice ? `${effectTargetLabel(effect.modifierTarget)} + ${effect.modifierDice}` : '',
+    ].filter(Boolean).join(' · ');
+  }
+
+  function effectDurationLabel(effect) {
+    if (effect.duration === 'turns') return `${Number(effect.remaining) || 0} turni`;
+    if (effect.duration === 'rounds') return `${Number(effect.remaining) || 0} round`;
+    if (effect.duration === 'scene') return `${Number(effect.remaining) || 0} scene`;
+    if (effect.duration === 'shortRest') return 'fino a riposo breve';
+    if (effect.duration === 'longRest') return 'fino a riposo lungo';
+    if (effect.duration === 'concentration') return 'concentrazione';
+    return '';
+  }
+
+  function effectTargetLabel(target) {
+    return {
+      armorClass: 'CA',
+      speed: 'Velocita',
+      initiative: 'Iniziativa',
+      attack: 'Colpire',
+      damage: 'Danni',
+      savingThrows: 'TS',
+      spellDc: 'CD incantesimi',
+      skillChecks: 'Prove',
+    }[target] || 'Bonus';
+  }
+
+  function formatSignedEffect(value) {
+    const number = Number(value) || 0;
+    return `${number >= 0 ? '+' : '-'}${Math.abs(number)}`;
+  }
+
   function nextDefenseEquipmentState(entry, selectedId, selectedKind, shouldEquip) {
     const entryKind = characterSheetDerived.equipmentArmorKind(entry);
 
@@ -905,6 +1157,10 @@ export function createCharacterSheetEventsController({
     const source = appState.data.magic_items.find((entry) => entry.id === id);
     const sheetItem = appState.characterSheet.magicItems.find((entry) => entry.id === id);
     return source?.nome || sheetItem?.name || id;
+  }
+
+  function spellName(id) {
+    return appState.data.spells.find((entry) => entry.id === id)?.nome || id;
   }
 
   function applyStandardArray() {
@@ -1019,6 +1275,9 @@ export function createCharacterSheetEventsController({
     if (latest.before?.status && typeof latest.before.status === 'object') {
       restoreRestStatus(latest.before.status);
     }
+    if (Array.isArray(latest.before?.activeEffects)) {
+      appState.characterSheet.activeEffects = cloneSheetValue(latest.before.activeEffects);
+    }
     appState.characterSheet.hitPointLog = log.slice(1);
     addSessionLog('undo', 'Undo PF', hitPointActionSummary(latest.action, Number(latest.amount) || 0));
     return true;
@@ -1059,6 +1318,7 @@ export function createCharacterSheetEventsController({
         deathSaveSuccesses: Math.min(3, Math.max(0, Number(appState.characterSheet.status?.deathSaveSuccesses) || 0)),
         deathSaveFailures: Math.min(3, Math.max(0, Number(appState.characterSheet.status?.deathSaveFailures) || 0)),
       };
+      snapshot.activeEffects = cloneSheetValue(appState.characterSheet.activeEffects || []);
     }
 
     return snapshot;
@@ -1136,7 +1396,8 @@ export function createCharacterSheetEventsController({
     return speed ? Math.min(speed, used) : used;
   }
 
-  function clearConcentration() {
+  function clearConcentration({ removeEffects = true } = {}) {
+    if (removeEffects) removeConcentrationEffects();
     appState.characterSheet.status.concentration = false;
     appState.characterSheet.status.concentrationSpell = '';
     appState.characterSheet.status.concentrationDc = 10;
@@ -1177,6 +1438,7 @@ export function createCharacterSheetEventsController({
     if (restType !== 'long') {
       resetCharacterResources(restType);
       resetCombatTurn();
+      expireRestEffects(restType);
       addSessionLog('rest', 'Riposo breve', 'Risorse compatibili e turno ripristinati.');
       return;
     }
@@ -1184,6 +1446,7 @@ export function createCharacterSheetEventsController({
     const before = hitPointSnapshot(true);
     resetCharacterResources(restType);
     resetCombatTurn();
+    expireRestEffects(restType);
     const recoveredHitDice = recoverHitDiceOnLongRest();
 
     appState.characterSheet.spellSlotsUsed = {};
@@ -1306,6 +1569,7 @@ export function createCharacterSheetEventsController({
     appState.characterSheet.status.concentration = true;
     appState.characterSheet.status.concentrationSpell = spell.nome || spell.id;
     appState.characterSheet.status.concentrationDc = 10;
+    upsertConcentrationEffect(spell.nome || spell.id, 'Incantesimo', spell.durata || '');
   }
 
   function firstAvailableSpellSlot(level) {

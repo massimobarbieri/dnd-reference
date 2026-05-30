@@ -1,8 +1,10 @@
-import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260527-upstream-dev';
+import { createCharacterSheetCombatRenderer } from './character-sheet-combat-renderer.js?v=20260530-effects';
+import { createCharacterSheetCombatShared } from './character-sheet-combat-shared.js?v=20260530-effects';
 import { createCharacterSheetFields } from './character-sheet-fields.js?v=20260527-upstream-dev';
 import { createCharacterSheetInventoryRenderer } from './character-sheet-inventory-renderer.js?v=20260527-upstream-dev';
-import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260527-upstream-dev';
-import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260527-upstream-dev';
+import { createCharacterSheetOverviewRenderer } from './character-sheet-overview-renderer.js?v=20260530-effects';
+import { createCharacterSheetSpellsRenderer } from './character-sheet-spells-renderer.js?v=20260530-effects';
+import { createCharacterSheetTableRenderer } from './character-sheet-table-renderer.js?v=20260530-effects';
 
 export function createCharacterSheetRenderer({
   appState,
@@ -38,7 +40,6 @@ export function createCharacterSheetRenderer({
   classProgressionRow,
   classProgressionResources,
   classSkillChoiceCount,
-  classTraitsMap,
   splitClassFeatures,
   classSubclassRows,
   nextLevelSummary,
@@ -86,6 +87,35 @@ export function createCharacterSheetRenderer({
     spellLevel,
   });
 
+  const combatShared = createCharacterSheetCombatShared({
+    appState,
+    characterSheetDerived,
+    escapeAttr,
+    escapeHtml,
+  });
+
+  const { renderCharacterSheetTable } = createCharacterSheetTableRenderer({
+    appState,
+    escapeAttr,
+    escapeHtml,
+    ABILITY_META,
+    SKILL_META,
+    abilityModifier,
+    rollFormula,
+    formatSigned,
+    characterProficiencyBonus,
+    skillProficiencyBonus,
+    characterAttackBonus,
+    characterSpellSlots,
+    spellLevel,
+    characterSheetDerived,
+    characterClassEntry,
+    classProgressionSection,
+    splitClassFeatures,
+    classSubclassRows,
+    ...combatShared,
+  });
+
   const { renderCharacterSheetCombat } = createCharacterSheetCombatRenderer({
     appState,
     escapeAttr,
@@ -105,6 +135,7 @@ export function createCharacterSheetRenderer({
     characterSpellOptions,
     spellLevel,
     characterSheetDerived,
+    ...combatShared,
   });
 
   const { renderCharacterSheetBuilder, renderCharacterSheetOverview } = createCharacterSheetOverviewRenderer({
@@ -227,7 +258,7 @@ export function createCharacterSheetRenderer({
         ${renderCharacterSheetNotice()}
         ${renderCharacterSheetArchiveImportPrompt()}
         ${renderAppBackupImportPrompt()}
-        ${renderCharacterSheetHeader()}
+        ${renderCharacterSheetHeader(validTab)}
         ${renderCharacterSheetTabs(validTab)}
         ${renderCharacterSheetTab(validTab)}
         ${renderCharacterSheetManager()}
@@ -370,13 +401,14 @@ export function createCharacterSheetRenderer({
   /*
    * Header della scheda con riepilogo derivato.
    */
-  function renderCharacterSheetHeader() {
+  function renderCharacterSheetHeader(activeTab = 'overview') {
     const sheet = appState.characterSheet;
     const className = characterSheetClassName();
     const level = characterLevel();
+    const isTable = activeTab === 'table';
 
     return `
-      <header class="detail-header character-sheet-header">
+      <header class="detail-header character-sheet-header${isTable ? ' character-sheet-header--table' : ''}">
         <div>
           <span class="sheet-kicker">Scheda personaggio</span>
           <h2 class="detail-title">${escapeHtml(sheet.name || 'Scheda personaggio')}</h2>
@@ -414,6 +446,7 @@ export function createCharacterSheetRenderer({
    */
   function renderCharacterSheetTab(tab) {
     if (tab === 'builder') return renderCharacterSheetBuilder();
+    if (tab === 'table') return renderCharacterSheetTable();
     if (tab === 'combat') return renderCharacterSheetCombat();
     if (tab === 'spells') return renderCharacterSheetSpells();
     if (tab === 'inventory') return renderCharacterSheetInventory();
