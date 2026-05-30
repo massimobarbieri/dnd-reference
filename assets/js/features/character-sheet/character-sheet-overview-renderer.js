@@ -83,58 +83,48 @@ export function createCharacterSheetOverviewRenderer({
    */
   function renderCharacterSheetBuilder() {
     const activeStep = characterBuilderActiveStep();
+    const active = builderSteps().find((step) => step.id === activeStep) || builderSteps()[0];
 
     return `
-      <section class="sheet-grid sheet-grid--builder">
-        ${renderGuidedBuilder(activeStep)}
-        ${renderBuilderStepPanel(activeStep)}
+      <section class="sheet-wizard">
+        <div class="sheet-wizard-main">
+          <div class="sheet-wizard-head">
+            <div>
+              <span class="sheet-kicker">Percorso guidato</span>
+              <p>${escapeHtml(active.summary)}</p>
+            </div>
+            <a class="button button--ghost" href="#/character_sheet/overview">Torna alla scheda</a>
+          </div>
+          ${renderWizardProgress(activeStep)}
+          ${renderBuilderStepPanel(activeStep)}
+        </div>
+        <aside class="sheet-wizard-preview" aria-label="Anteprima personaggio">
+          ${renderWizardPreview()}
+        </aside>
       </section>
     `;
   }
 
-  function renderGuidedBuilder(activeStep) {
-    const steps = builderSteps();
-    const active = steps.find((step) => step.id === activeStep) || steps[0];
-    const complete = characterBuilderChecklist().filter((item) => item.complete).length;
-
-    return `
-      <div class="sheet-panel sheet-panel--wide sheet-guided-builder">
-        <div class="sheet-guide-heading">
-          <div>
-            <h3>Percorso guidato</h3>
-            <p>${escapeHtml(active.summary)}</p>
-          </div>
-          <a class="button button--ghost" href="#/character_sheet/overview">Torna alla scheda</a>
-        </div>
-        ${renderWizardSteps(activeStep)}
-        <div class="sheet-builder-progress" aria-label="Avanzamento creazione">
-          <strong>${escapeHtml(`${complete}/${characterBuilderChecklist().length}`)}</strong>
-          <span>${escapeHtml(nextGuidedStep().hint)}</span>
-        </div>
-        <div class="sheet-guide-grid">
-          ${renderClassGuideCard()}
-          ${renderSpeciesGuideCard()}
-          ${renderBackgroundGuideCard()}
-        </div>
-      </div>
-    `;
-  }
-
-  function renderWizardSteps(activeStep) {
+  function renderWizardProgress(activeStep) {
     const checklist = characterBuilderChecklist();
-    const activeIndex = builderSteps().findIndex((step) => step.id === activeStep);
+    const steps = builderSteps();
+    const activeIndex = steps.findIndex((step) => step.id === activeStep);
 
     return `
-      <nav class="sheet-wizard-steps" aria-label="Passaggi creazione personaggio">
-        ${builderSteps().map((step, index) => {
+      <nav class="sheet-wizard-progress" aria-label="Passaggi creazione personaggio">
+        ${steps.map((step, index) => {
           const related = checklist.filter((item) => step.checks.includes(item.label));
-          const complete = related.length > 0 && related.every((item) => item.complete);
-          const state = index === activeIndex ? 'active' : complete ? 'complete' : 'pending';
+          const done = related.length > 0 && related.every((item) => item.complete);
+          const state = index === activeIndex ? 'active' : done ? 'done' : 'pending';
           return `
-            <button class="sheet-wizard-step is-${state}" type="button" data-sheet-builder-step="${escapeAttr(step.id)}">
-              <span>${escapeHtml(String(index + 1))}</span>
-              <strong>${escapeHtml(step.label)}</strong>
-              <small>${escapeHtml(complete ? 'Pronto' : step.hint)}</small>
+            <button
+              class="wizard-step is-${state}"
+              type="button"
+              data-sheet-builder-step="${escapeAttr(step.id)}"
+              ${index === activeIndex ? 'aria-current="step"' : ''}
+            >
+              <span class="wizard-step-dot">${done && index !== activeIndex ? '✓' : index + 1}</span>
+              <span class="wizard-step-label">${escapeHtml(step.label)}</span>
             </button>
           `;
         }).join('')}
@@ -142,14 +132,58 @@ export function createCharacterSheetOverviewRenderer({
     `;
   }
 
+  function renderWizardPreview() {
+    const sheet = appState.characterSheet;
+    const checklist = characterBuilderChecklist();
+    const complete = checklist.filter((item) => item.complete).length;
+    const classEntry = characterClassEntry();
+    const className = classEntry ? classEntry.nome.replace(/^Classe:\s*/i, '') : '';
+
+    const stat = (label, value) => `
+      <div class="wizard-preview-stat">
+        <strong>${escapeHtml(String(value))}</strong>
+        <span>${escapeHtml(label)}</span>
+      </div>
+    `;
+    const choice = (label, value) => `
+      <div class="wizard-preview-row">
+        <span>${escapeHtml(label)}</span>
+        <strong class="${value ? '' : 'is-empty'}">${escapeHtml(value || 'Da scegliere')}</strong>
+      </div>
+    `;
+
+    return `
+      <div class="wizard-preview-card">
+        <span class="sheet-kicker">Anteprima</span>
+        <strong class="wizard-preview-name">${escapeHtml(sheet.name || 'Nuovo personaggio')}</strong>
+        <p class="wizard-preview-sub">${escapeHtml([className, `Livello ${characterLevel()}`].filter(Boolean).join(' · '))}</p>
+        <div class="wizard-preview-stats">
+          ${stat('CA', characterSheetDerived.characterEffectiveArmorClass())}
+          ${stat('PF', characterSheetDerived.characterSuggestedHitPoints())}
+          ${stat('Iniz', formatSigned(characterSheetDerived.characterInitiative()))}
+          ${stat('BC', formatSigned(characterProficiencyBonus()))}
+        </div>
+        <div class="wizard-preview-choices">
+          ${choice('Classe', className)}
+          ${choice('Specie', sheet.ancestry)}
+          ${choice('Background', sheet.background)}
+        </div>
+        <div class="wizard-preview-progress">
+          <small>${escapeHtml(`${complete}/${checklist.length} completato`)} · ${escapeHtml(nextGuidedStep().hint)}</small>
+        </div>
+      </div>
+    `;
+  }
+
   function renderStepActions(actions) {
     return `
       <div class="sheet-step-actions">
-        ${actions.map((action) => action.href ? `
-          <a class="button button--ghost" href="${escapeAttr(action.href)}">${escapeHtml(action.label)}</a>
-        ` : `
-          <button class="button button--ghost" type="button" data-sheet-builder-step="${escapeAttr(action.target)}">${escapeHtml(action.label)}</button>
-        `).join('')}
+        ${actions.map((action, index) => {
+          const cls = index === actions.length - 1 ? 'button button--primary' : 'button button--ghost';
+          return action.href
+            ? `<a class="${cls}" href="${escapeAttr(action.href)}">${escapeHtml(action.label)}</a>`
+            : `<button class="${cls}" type="button" data-sheet-builder-step="${escapeAttr(action.target)}">${escapeHtml(action.label)}</button>`;
+        }).join('')}
       </div>
     `;
   }

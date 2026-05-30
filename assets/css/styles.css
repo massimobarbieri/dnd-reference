@@ -2007,10 +2007,11 @@ body:has(.character-roster) .app-shell {
 .sheet-step-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: .4rem;
+  justify-content: flex-end;
+  gap: .5rem;
   border-top: 1px solid rgba(217,199,179,.56);
-  margin-top: .6rem;
-  padding-top: .55rem;
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
 }
 
 .sheet-step-actions .button {
@@ -6175,6 +6176,205 @@ code {
 .ability-step:disabled {
   opacity: .35;
   cursor: not-allowed;
+}
+
+/* Wizard lineare: progresso orizzontale, step singolo, rail di anteprima. */
+.sheet-wizard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, .4fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.sheet-wizard-main {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.sheet-wizard-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.sheet-wizard-head p {
+  margin: .15rem 0 0;
+  color: var(--muted);
+}
+
+.sheet-wizard-progress {
+  display: flex;
+  gap: .15rem;
+  overflow-x: auto;
+  padding-bottom: .2rem;
+}
+
+.wizard-step {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 4.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .32rem;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: .25rem .15rem;
+}
+
+.wizard-step::before {
+  content: "";
+  position: absolute;
+  top: 1.1rem;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--line);
+  z-index: 0;
+}
+
+.wizard-step:first-child::before {
+  display: none;
+}
+
+.wizard-step.is-done::before {
+  background: var(--accent);
+}
+
+.wizard-step-dot {
+  position: relative;
+  z-index: 1;
+  width: 1.85rem;
+  height: 1.85rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 2px solid var(--line);
+  color: var(--muted);
+  font-weight: 820;
+  font-size: .85rem;
+}
+
+.wizard-step.is-active .wizard-step-dot {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.wizard-step.is-done .wizard-step-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.wizard-step-label {
+  font-size: .7rem;
+  font-weight: 760;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.15;
+}
+
+.wizard-step.is-active .wizard-step-label {
+  color: var(--ink);
+}
+
+.sheet-wizard-preview {
+  position: sticky;
+  top: var(--space-3);
+}
+
+.wizard-preview-card {
+  display: grid;
+  gap: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-4);
+}
+
+.wizard-preview-name {
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  line-height: 1.1;
+  letter-spacing: -.01em;
+}
+
+.wizard-preview-sub {
+  margin: -.4rem 0 0;
+  color: var(--muted);
+}
+
+.wizard-preview-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .35rem;
+}
+
+.wizard-preview-stat {
+  display: grid;
+  gap: .05rem;
+  text-align: center;
+  padding: .4rem .2rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,.5);
+}
+
+.wizard-preview-stat strong {
+  font-size: 1.1rem;
+  color: var(--ink);
+}
+
+.wizard-preview-stat span {
+  font-size: .62rem;
+  font-weight: 760;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.wizard-preview-choices {
+  display: grid;
+  gap: 0;
+}
+
+.wizard-preview-row {
+  display: flex;
+  justify-content: space-between;
+  gap: .5rem;
+  padding: .35rem 0;
+  font-size: .86rem;
+  border-bottom: 1px solid rgba(17,24,39,.06);
+}
+
+.wizard-preview-row span {
+  color: var(--muted);
+}
+
+.wizard-preview-row strong.is-empty {
+  color: var(--muted);
+  font-weight: 600;
+  font-style: italic;
+}
+
+.wizard-preview-progress small {
+  color: var(--muted);
+  font-size: .8rem;
+}
+
+@media (max-width: 860px) {
+  .sheet-wizard {
+    grid-template-columns: 1fr;
+  }
+
+  .sheet-wizard-preview {
+    position: static;
+    order: -1;
+  }
 }
 
 /*

@@ -179,8 +179,9 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
 
   api.renderCharacterSheet('builder');
   assert.match(views['#detail-view'].innerHTML, /Percorso guidato/);
-  assert.match(views['#detail-view'].innerHTML, /sheet-builder-progress/);
-  assert.match(views['#detail-view'].innerHTML, /sheet-wizard-steps/);
+  assert.match(views['#detail-view'].innerHTML, /sheet-wizard-progress/); // stepper orizzontale
+  assert.match(views['#detail-view'].innerHTML, /sheet-wizard-preview/); // rail anteprima viva
+  assert.match(views['#detail-view'].innerHTML, /wizard-preview-name/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-builder-step="identity"/);
   assert.match(views['#detail-view'].innerHTML, /sheet-builder-step/);
   assert.doesNotMatch(views['#detail-view'].innerHTML, /Checklist creazione/);
