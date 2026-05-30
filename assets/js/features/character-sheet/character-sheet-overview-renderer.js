@@ -26,6 +26,8 @@ export function createCharacterSheetOverviewRenderer({
   nextLevelSummary,
   renderLevelAdvancementSummary,
   characterSheetDerived,
+  renderHpVital,
+  renderAcVital,
   characterSpellOptions,
   spellOptionLabel,
   characterSpellSlots,
@@ -881,11 +883,15 @@ export function createCharacterSheetOverviewRenderer({
           </div>
         </div>
 
+        <div class="sheet-vitals">
+          ${renderHpVital()}
+          ${renderAcVital()}
+        </div>
+
         <div class="sheet-stat-strip" aria-label="Statistiche principali">
-          ${renderSummaryStat('CA', characterSheetDerived.characterEffectiveArmorClass(), 'Difesa')}
-          ${renderSummaryStat('PF', `${Number(sheet.currentHp) || 0}/${Number(sheet.maxHp) || 0}`, 'Attuali / massimi')}
           ${renderSummaryStat('Temp', Number(sheet.tempHp) || 0, 'Punti ferita')}
           ${renderSummaryStat('Vel', characterSheetDerived.characterEffectiveSpeed(), 'metri')}
+          ${renderSummaryStat('Iniz', formatSigned(initiative), 'Iniziativa')}
           ${renderSummaryStat('BC', formatSigned(characterProficiencyBonus()), 'Competenza')}
           ${renderSummaryStat('Passiva', passivePerception, 'Percezione')}
         </div>
