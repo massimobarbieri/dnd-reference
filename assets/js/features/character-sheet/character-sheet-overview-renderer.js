@@ -1046,16 +1046,13 @@ export function createCharacterSheetOverviewRenderer({
 
     return `
       <div class="ability-card">
-        <label>
-          <span>${escapeHtml(label)}</span>
-          <input type="number" min="1" max="30" value="${escapeAttr(String(value))}" data-sheet-ability="${escapeAttr(key)}">
-        </label>
-        <div class="ability-stepper">
+        <span class="ability-name" title="${escapeAttr(label)}">${escapeHtml(short || label)}</span>
+        <div class="ability-value-row">
           <button type="button" class="ability-step" data-sheet-ability-delta="-1" data-sheet-ability-key="${escapeAttr(key)}" ${canDecrease ? '' : 'disabled'} aria-label="Riduci ${escapeAttr(label)}">−</button>
-          <strong>${escapeHtml(short)}</strong>
+          <input type="number" min="1" max="30" value="${escapeAttr(String(value))}" data-sheet-ability="${escapeAttr(key)}" aria-label="${escapeAttr(label)}">
           <button type="button" class="ability-step" data-sheet-ability-delta="1" data-sheet-ability-key="${escapeAttr(key)}" ${canIncrease ? '' : 'disabled'} aria-label="Aumenta ${escapeAttr(label)}">+</button>
         </div>
-        <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, modifier))}">${escapeHtml(formatSigned(modifier))}</button>
+        <button type="button" class="ability-mod" data-dice-roll="${escapeAttr(rollFormula(20, modifier))}">${escapeHtml(formatSigned(modifier))}</button>
       </div>
     `;
   }
@@ -1161,11 +1158,18 @@ export function createCharacterSheetOverviewRenderer({
           <strong>${escapeHtml(label)}</strong>
           <span>${escapeHtml([abilityShort, ...sources].join(' · '))}</span>
         </div>
-        <select data-sheet-skill="${escapeAttr(key)}" aria-label="Competenza ${escapeAttr(label)}">
-          <option value="0"${rank === 0 ? ' selected' : ''}>-</option>
-          <option value="1"${rank === 1 ? ' selected' : ''}>C</option>
-          <option value="2"${rank === 2 ? ' selected' : ''}>M</option>
-        </select>
+        <div class="rank-pills" role="group" aria-label="Competenza ${escapeAttr(label)}">
+          ${[['0', '–', 'Non competente'], ['1', 'C', 'Competente'], ['2', 'M', 'Maestria']].map(([value, text, title]) => `
+            <button
+              type="button"
+              class="rank-pill${rank === Number(value) ? ' is-active' : ''}"
+              data-sheet-skill="${escapeAttr(key)}"
+              data-sheet-skill-rank="${value}"
+              aria-pressed="${rank === Number(value)}"
+              title="${escapeAttr(title)}"
+            >${escapeHtml(text)}</button>
+          `).join('')}
+        </div>
         <button type="button" data-dice-roll="${escapeAttr(rollWithEffects(20, modifier, 'skillChecks'))}">${escapeHtml(formatSigned(modifier))}</button>
       </div>
     `;

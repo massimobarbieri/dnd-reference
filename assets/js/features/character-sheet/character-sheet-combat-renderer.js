@@ -442,12 +442,20 @@ export function createCharacterSheetCombatRenderer({
       (sheet.savingThrows[key] ? characterProficiencyBonus() : 0) +
       characterSheetDerived.characterActiveEffectModifier('savingThrows');
 
+    const proficient = Boolean(sheet.savingThrows[key]);
+
     return `
-      <label class="save-control">
-        <input type="checkbox" ${sheet.savingThrows[key] ? 'checked' : ''} data-sheet-save="${escapeAttr(key)}">
+      <div class="save-control">
         <span>${escapeHtml(label)}</span>
+        <button
+          type="button"
+          class="save-pill${proficient ? ' is-active' : ''}"
+          data-sheet-save-toggle="${escapeAttr(key)}"
+          aria-pressed="${proficient}"
+          title="Competenza nel tiro salvezza"
+        >C</button>
         <button type="button" data-dice-roll="${escapeAttr(rollWithEffects(20, modifier, 'savingThrows'))}">${escapeHtml(formatSigned(modifier))}</button>
-      </label>
+      </div>
     `;
   }
 

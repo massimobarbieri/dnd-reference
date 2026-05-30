@@ -2176,36 +2176,74 @@ body:has(.character-roster) .app-shell {
   font-weight: 780;
 }
 
+/*
+* Campi display-first: i valori leggono come testo (underline sottile),
+* non come caselle di un modulo. Lo stato editabile emerge al focus.
+*/
 .sheet-field input,
 .sheet-field select,
 .sheet-field textarea {
   width: 100%;
   min-width: 0;
-  border: 1px solid rgba(217,199,179,.86);
-  border-radius: 8px;
-  background: rgba(255,255,255,.66);
+  border: none;
+  border-bottom: 1px solid rgba(217,199,179,.85);
+  border-radius: 0;
+  background: transparent;
   color: var(--ink);
   font: inherit;
-  padding: .45rem .5rem;
-  transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+  font-weight: 640;
+  padding: .32rem .1rem;
+  transition: border-color .15s ease, background-color .15s ease;
+}
+
+.sheet-field select {
+  padding-right: 1.1rem;
+}
+
+.sheet-field input:hover,
+.sheet-field select:hover,
+.sheet-field textarea:hover {
+  border-bottom-color: rgba(138,63,35,.5);
 }
 
 .sheet-field input:focus,
 .sheet-field select:focus,
 .sheet-field textarea:focus,
 .ability-card input:focus,
-.skill-control select:focus,
 .sheet-resource-edit input:focus,
 .sheet-attack-edit input:focus,
 .sheet-attack-edit select:focus {
   outline: none;
-  border-color: rgba(138,63,35,.56);
-  background: #fffdf8;
-  box-shadow: 0 0 0 3px rgba(138,63,35,.12);
+  border-bottom-color: rgba(138,63,35,.85);
+  background: rgba(255,253,248,.7);
+  box-shadow: none;
+}
+
+/* Niente spinner nativi: i numerici sono valori, non controlli da modulo. */
+.sheet-field input[type="number"],
+.ability-card input[type="number"],
+.sheet-resource-edit input[type="number"],
+.sheet-attack-edit input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.sheet-field input[type="number"]::-webkit-inner-spin-button,
+.sheet-field input[type="number"]::-webkit-outer-spin-button,
+.ability-card input[type="number"]::-webkit-inner-spin-button,
+.ability-card input[type="number"]::-webkit-outer-spin-button,
+.sheet-resource-edit input[type="number"]::-webkit-inner-spin-button,
+.sheet-attack-edit input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .sheet-field textarea {
-  min-height: 12rem;
+  border: 1px solid rgba(217,199,179,.7);
+  border-radius: 8px;
+  background: rgba(255,255,255,.5);
+  padding: .5rem .6rem;
+  min-height: 8rem;
   resize: vertical;
   line-height: 1.35;
 }
@@ -2691,53 +2729,60 @@ body:has(.character-roster) .app-shell {
 }
 
 .ability-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: .35rem .5rem;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  gap: .3rem;
   border: 0;
   border-right: 1px solid rgba(17,24,39,.07);
   border-bottom: 1px solid rgba(17,24,39,.07);
   border-radius: 0;
   background: transparent;
-  padding: .62rem;
+  padding: .62rem .4rem;
+  text-align: center;
 }
 
-.ability-card label {
-  display: contents;
-}
-
-.ability-card span {
+.ability-name {
   color: #6b7280;
   font-size: .72rem;
   font-weight: 780;
-  grid-column: 1 / -1;
   letter-spacing: .06em;
   text-transform: uppercase;
 }
 
-.ability-card input {
-  width: 4.1rem;
+.ability-value-row {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+}
+
+.ability-value-row input {
+  width: 2.6rem;
   border: 0;
   border-radius: 0;
   background: transparent;
   color: #111827;
-  font-size: 1.55rem;
+  font-size: 1.5rem;
   font-weight: 820;
   line-height: 1;
   padding: 0;
-  text-align: left;
+  text-align: center;
 }
 
-.ability-card strong {
-  color: #6b7280;
-  font-size: .76rem;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+.ability-mod {
+  border: 1px solid rgba(163,32,47,.28);
+  border-radius: 999px;
+  background: #fff;
+  color: #a3202f;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 780;
+  min-height: 1.7rem;
+  min-width: 3rem;
+  padding: 0 .5rem;
 }
 
-.ability-card button,
-.save-control button {
+.save-control button[data-dice-roll] {
   border: 1px solid rgba(163,32,47,.28);
   border-radius: 999px;
   background: #fff;
@@ -2750,18 +2795,13 @@ body:has(.character-roster) .app-shell {
 
 .save-control {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: .35rem;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: .4rem;
   align-items: center;
-  border: 1px solid rgba(217,199,179,.58);
+  border: 1px solid rgba(217,199,179,.5);
   border-radius: 8px;
-  background: rgba(255,255,255,.45);
+  background: rgba(255,255,255,.4);
   padding: .38rem .45rem;
-}
-
-.save-control input {
-  width: 1rem;
-  height: 1rem;
 }
 
 .save-control span {
@@ -2769,9 +2809,59 @@ body:has(.character-roster) .app-shell {
   font-size: .9rem;
 }
 
-.save-control button {
+.save-control button[data-dice-roll] {
   min-width: 3rem;
   padding: 0 .45rem;
+}
+
+/* Pill di competenza (tiri salvezza): toggle compatto al posto della checkbox. */
+.save-pill {
+  width: 1.85rem;
+  height: 1.85rem;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(163,32,47,.3);
+  background: #fff;
+  color: #a3202f;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+
+.save-pill.is-active {
+  background: #7a1f1f;
+  border-color: #7a1f1f;
+  color: #fff;
+}
+
+/* Segmented pills per le competenze di abilita (- / C / M). */
+.rank-pills {
+  display: inline-flex;
+  border: 1px solid rgba(17,24,39,.14);
+  border-radius: 999px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.rank-pill {
+  min-width: 1.85rem;
+  padding: .2rem .1rem;
+  border: 0;
+  background: transparent;
+  color: #6b5b47;
+  font-weight: 800;
+  font-size: .82rem;
+  cursor: pointer;
+  transition: background-color .12s ease, color .12s ease;
+}
+
+.rank-pill + .rank-pill {
+  border-left: 1px solid rgba(17,24,39,.1);
+}
+
+.rank-pill.is-active {
+  background: #7a1f1f;
+  color: #fff;
 }
 
 .skill-grid {
@@ -2857,8 +2947,8 @@ body:has(.character-roster) .app-shell {
 
 .skill-control {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 3.2rem 3rem;
-  gap: .45rem;
+  grid-template-columns: minmax(0, 1fr) auto 2.8rem;
+  gap: .5rem;
   align-items: center;
   border: 0;
   border-right: 1px solid rgba(17,24,39,.07);

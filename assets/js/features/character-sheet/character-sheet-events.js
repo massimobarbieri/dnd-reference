@@ -116,17 +116,19 @@ export function createCharacterSheetEventsController({
       });
     });
 
-    views.detail.querySelectorAll('[data-sheet-save]').forEach((node) => {
-      node.addEventListener('change', (event) => {
-        appState.characterSheet.savingThrows[event.currentTarget.dataset.sheetSave] = event.currentTarget.checked;
+    views.detail.querySelectorAll('[data-sheet-save-toggle]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        const key = event.currentTarget.dataset.sheetSaveToggle;
+        appState.characterSheet.savingThrows[key] = !appState.characterSheet.savingThrows[key];
         saveCharacterSheet();
         renderCharacterSheet(appState.characterSheetTab);
       });
     });
 
-    views.detail.querySelectorAll('[data-sheet-skill]').forEach((node) => {
-      node.addEventListener('change', (event) => {
-        appState.characterSheet.skillProficiencies[event.currentTarget.dataset.sheetSkill] = Number(event.currentTarget.value) || 0;
+    views.detail.querySelectorAll('[data-sheet-skill-rank]').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        appState.characterSheet.skillProficiencies[event.currentTarget.dataset.sheetSkill] =
+          Number(event.currentTarget.dataset.sheetSkillRank) || 0;
         saveCharacterSheet();
         renderCharacterSheet(appState.characterSheetTab);
       });
