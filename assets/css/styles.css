@@ -1280,11 +1280,11 @@ body:has(.character-roster) .app-shell {
 
 .sheet-panel {
   min-width: 0;
-  border: 1px solid rgba(217,199,179,.62);
+  border: 1px solid rgba(217,199,179,.55);
   border-radius: 8px;
   background: rgba(255,250,242,.48);
-  box-shadow: 0 8px 20px rgba(36,22,12,.045);
-  padding: .9rem;
+  box-shadow: 0 3px 12px rgba(36,22,12,.035);
+  padding: .82rem;
 }
 
 .character-sheet .sheet-grid > .sheet-panel {
@@ -1613,17 +1613,18 @@ body:has(.character-roster) .app-shell {
 .sheet-stat-strip {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
-  gap: .5rem;
+  gap: .35rem;
 }
 
+/* Stat come tiles leggere: peso visivo sul valore, non sul bordo del box. */
 .sheet-summary-stat {
   display: grid;
   gap: .06rem;
   min-width: 0;
-  border: 1px solid rgba(17,24,39,.08);
-  border-radius: 8px;
-  background: #f9fafb;
-  padding: .68rem .72rem;
+  border: 0;
+  border-radius: 7px;
+  background: rgba(255,255,255,.38);
+  padding: .55rem .62rem;
 }
 
 .sheet-summary-stat span,
