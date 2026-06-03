@@ -49,6 +49,7 @@ assert.match(configSource, /classes: Classi/);
 assert.match(configSource, /classes: data\/srd\/5\.2\.1\/json\/srd_5_2_1_classes\.json/);
 assert.match(configSource, /species: Specie/);
 assert.match(configSource, /backgrounds: Background/);
-assert.match(indexSource, /app\.js\?v=20260530-ui8/);
+// Version-agnostic: il bump-version unifica i ?v=, qui basta che ci sia.
+assert.match(indexSource, /app\.js\?v=[0-9A-Za-z._-]+/);
 
 console.log('Sezione classi OK');

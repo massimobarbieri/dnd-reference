@@ -9,6 +9,7 @@
     "test:roll-tray": "node tests/roll-tray-markup.test.js",
     "test:monster-rolls": "node tests/monster-rolls-data.test.js",
     "test:accessibility": "node tests/roll-accessibility.test.js",
+    "bump": "node scripts/bump-version.js",
     "serve": "python3 -m http.server 8080"
   },
   "engines": {

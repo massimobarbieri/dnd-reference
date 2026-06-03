@@ -1,4 +1,4 @@
-import { normalizeEffectDice } from './character-sheet-normalizers.js?v=20260530-effects';
+import { normalizeEffectDice } from './character-sheet-normalizers.js?v=20260531-1';
 
 export function createCharacterSheetEventsController({
   appState,

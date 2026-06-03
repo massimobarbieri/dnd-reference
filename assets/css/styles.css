@@ -1416,34 +1416,6 @@ body:has(.character-roster) .app-shell {
   box-shadow: 0 8px 16px rgba(163,32,47,.18);
 }
 
-.sheet-builder-progress {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: .55rem;
-  border: 1px solid rgba(17,24,39,.08);
-  border-radius: 8px;
-  background: #f9fafb;
-  padding: .55rem .65rem;
-}
-
-.sheet-builder-progress strong {
-  display: inline-grid;
-  place-items: center;
-  width: 2.4rem;
-  height: 2.4rem;
-  border-radius: 999px;
-  background: #111827;
-  color: #fff;
-  font-size: .82rem;
-}
-
-.sheet-builder-progress span {
-  min-width: 0;
-  color: var(--muted);
-  font-size: .88rem;
-}
-
 .sheet-builder-step {
   display: grid;
   gap: .75rem;
@@ -1917,93 +1889,6 @@ body:has(.character-roster) .app-shell {
   color: #40734e;
 }
 
-.sheet-guided-builder {
-  display: grid;
-  gap: .65rem;
-}
-
-.sheet-guide-heading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: .55rem;
-}
-
-.sheet-guide-heading h3 {
-  margin-bottom: .15rem;
-}
-
-.sheet-guide-heading p {
-  margin: 0;
-  color: var(--muted);
-  font-size: .88rem;
-}
-
-.sheet-wizard-steps {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: .35rem;
-}
-
-.sheet-wizard-step {
-  display: grid;
-  gap: .14rem;
-  min-width: 0;
-  border: 1px solid rgba(138,63,35,.16);
-  border-radius: 8px;
-  background: rgba(255,255,255,.46);
-  color: inherit;
-  cursor: pointer;
-  font: inherit;
-  padding: .48rem;
-  text-align: left;
-  text-decoration: none;
-}
-
-.sheet-wizard-step span {
-  display: inline-grid;
-  place-items: center;
-  width: 1.35rem;
-  height: 1.35rem;
-  border-radius: 999px;
-  background: rgba(138,63,35,.12);
-  color: var(--accent);
-  font-size: .72rem;
-  font-weight: 820;
-}
-
-.sheet-wizard-step strong {
-  overflow: hidden;
-  color: var(--accent);
-  font-size: .82rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.sheet-wizard-step small {
-  overflow: hidden;
-  color: var(--muted);
-  font-size: .72rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.sheet-wizard-step.is-active {
-  border-color: rgba(138,63,35,.42);
-  background: rgba(252,248,240,.86);
-}
-
-.sheet-wizard-step.is-complete {
-  border-color: rgba(64,115,78,.26);
-  background: rgba(238,247,238,.56);
-}
-
-.sheet-wizard-step.is-complete span {
-  background: rgba(64,115,78,.14);
-  color: #40734e;
-}
-
 .sheet-step-actions {
   display: flex;
   flex-wrap: wrap;
@@ -2139,58 +2024,6 @@ body:has(.character-roster) .app-shell {
   font-size: .78rem;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.sheet-guide-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: .5rem;
-}
-
-.sheet-guide-card {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: .5rem;
-  min-width: 0;
-  border: 1px solid rgba(138,63,35,.18);
-  border-radius: 8px;
-  background: rgba(255,255,255,.5);
-  padding: .62rem;
-}
-
-.sheet-guide-card span {
-  display: block;
-  color: var(--muted);
-  font-size: .68rem;
-  font-weight: 820;
-  text-transform: uppercase;
-}
-
-.sheet-guide-card strong {
-  display: block;
-  color: var(--accent);
-  font-size: 1rem;
-}
-
-.sheet-guide-card p {
-  margin: .15rem 0 0;
-  color: var(--muted);
-  font-size: .84rem;
-  line-height: 1.3;
-}
-
-.sheet-guide-card ul {
-  display: grid;
-  gap: .22rem;
-  margin: 0;
-  padding-left: 1rem;
-  color: var(--muted);
-  font-size: .8rem;
-  line-height: 1.25;
-}
-
-.sheet-guide-card .button {
-  justify-self: start;
 }
 
 .sheet-form-grid,
@@ -3094,18 +2927,6 @@ body:has(.character-roster) .app-shell {
   color: var(--muted);
   font-size: .72rem;
   font-weight: 780;
-}
-
-.skill-control select {
-  min-width: 0;
-  border: 1px solid rgba(17,24,39,.12);
-  border-radius: 7px;
-  background: #f9fafb;
-  color: #a3202f;
-  font: inherit;
-  font-size: .82rem;
-  font-weight: 780;
-  padding: .25rem .3rem;
 }
 
 .skill-control button {
@@ -5278,30 +5099,6 @@ code {
     grid-template-columns: 1fr;
   }
 
-  .sheet-guide-heading {
-    align-items: stretch;
-  }
-
-  .sheet-guide-heading .button,
-  .sheet-guide-grid,
-  .sheet-guide-card .button {
-    width: 100%;
-  }
-
-  .sheet-wizard-steps {
-    grid-template-columns: 1fr;
-  }
-
-  .sheet-wizard-step {
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
-  }
-
-  .sheet-wizard-step small {
-    grid-column: 2;
-    white-space: normal;
-  }
-
   .sheet-step-actions,
   .sheet-step-actions .button {
     width: 100%;
@@ -5314,10 +5111,6 @@ code {
   .sheet-guide-next li small {
     grid-column: 1 / -1;
     white-space: normal;
-  }
-
-  .sheet-guide-grid {
-    grid-template-columns: 1fr;
   }
 
   .sheet-builder-issues > div {
@@ -6150,13 +5943,6 @@ code {
 }
 
 /* Stepper +/- per l'acquisto punti nelle caratteristiche. */
-.ability-stepper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: .5rem;
-}
-
 .ability-step {
   width: 1.9rem;
   height: 1.9rem;

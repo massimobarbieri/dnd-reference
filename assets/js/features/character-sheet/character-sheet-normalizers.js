@@ -3,7 +3,7 @@ import {
   SKILL_META,
   CHARACTER_SHEET_SCHEMA_VERSION,
   DEFAULT_CHARACTER_SHEET,
-} from './character-sheet-view.js?v=20260529-effects';
+} from './character-sheet-view.js?v=20260531-1';
 
 /*
 * Normalizza una scheda parziale mantenendo compatibilita con campi nuovi.

@@ -65,7 +65,6 @@ export function createCharacterSheetTableRenderer({
   function renderTableDashboard() {
     const sheet = appState.characterSheet;
     const initiative = characterSheetDerived.characterInitiative();
-    const armorClass = characterSheetDerived.characterEffectiveArmorClass();
     const speed = characterSheetDerived.characterEffectiveSpeed();
     const statusLine = tableStatusLine();
 

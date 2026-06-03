@@ -1,5 +1,5 @@
-import { createReferenceSectionRenderer } from './reference-section-renderer.js?v=20260520-guided';
-import { formatDisplayValue } from './display-values.js?v=20260520-guided';
+import { createReferenceSectionRenderer } from './reference-section-renderer.js?v=20260531-1';
+import { formatDisplayValue } from './display-values.js?v=20260531-1';
 
 export function createReferenceDetailRenderer({
   appState,

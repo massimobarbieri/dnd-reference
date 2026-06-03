@@ -1,4 +1,4 @@
-import { activeEffectModifier, activeEffectDice } from './character-sheet-normalizers.js?v=20260530-effects';
+import { activeEffectModifier, activeEffectDice } from './character-sheet-normalizers.js?v=20260531-1';
 
 export function createCharacterSheetDerivedModel({
   appState,
