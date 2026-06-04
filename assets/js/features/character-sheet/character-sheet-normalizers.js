@@ -3,7 +3,7 @@ import {
   SKILL_META,
   CHARACTER_SHEET_SCHEMA_VERSION,
   DEFAULT_CHARACTER_SHEET,
-} from './character-sheet-view.js?v=20260527-upstream-dev';
+} from './character-sheet-view.js?v=20260531-1';
 
 /*
 * Normalizza una scheda parziale mantenendo compatibilita con campi nuovi.
@@ -31,9 +31,11 @@ export function normalizeCharacterSheet(sheet) {
       skillProficiencies: normalizeSkillProficiencies(migrated.skillProficiencies),
       proficiencies: normalizeProficiencies(migrated.proficiencies),
       status: normalizeCharacterStatus(migrated.status),
+      activeEffects: normalizeActiveEffects(migrated.activeEffects),
       resources: normalizeLegacyResources(migrated.resources),
       attacks: normalizeLegacyAttacks(migrated.attacks),
       hitPointLog: normalizeHitPointLog(migrated.hitPointLog),
+      sessionLog: normalizeSessionLog(migrated.sessionLog),
       hitDiceUsed: normalizeHitDiceUsed(migrated.hitDiceUsed),
       combatState: normalizeCombatState(migrated.combatState),
       spellSlotsUsed: normalizeSpellSlotsUsed(migrated.spellSlotsUsed),
@@ -116,6 +118,14 @@ export function migrateCharacterSheet(value) {
     if (sheet.schemaVersion < 14) {
       sheet.combatState = normalizeCombatState(sheet.combatState);
       sheet.status = normalizeCharacterStatus(sheet.status);
+    }
+
+    if (sheet.schemaVersion < 15) {
+      sheet.sessionLog = normalizeSessionLog(sheet.sessionLog);
+    }
+
+    if (sheet.schemaVersion < 16) {
+      sheet.activeEffects = normalizeActiveEffects(sheet.activeEffects);
     }
 
     return sheet;
@@ -219,6 +229,83 @@ export function normalizeCharacterStatus(status) {
     };
   }
 
+export const ACTIVE_EFFECT_DURATIONS = ['turns', 'rounds', 'shortRest', 'longRest', 'concentration', 'scene', 'manual'];
+export const ACTIVE_EFFECT_TARGETS = ['', 'armorClass', 'speed', 'initiative', 'attack', 'damage', 'savingThrows', 'spellDc', 'skillChecks'];
+
+/*
+* Somma i modificatori degli effetti attivi per un bersaglio.
+* Fonte unica usata da modello derivato, selettori e renderer cosi che
+* CA, iniziativa, tiri e CD restino coerenti in tutte le schede.
+*/
+export function activeEffectModifier(effects, target) {
+    if (!Array.isArray(effects) || !target) return 0;
+
+    return effects.reduce((total, effect) => {
+      if (!effect || effect.modifierTarget !== target) return total;
+      return total + (Number(effect.modifierValue) || 0);
+    }, 0);
+  }
+
+/*
+* Concatena i dadi degli effetti attivi per un bersaglio di tipo tiro.
+* Es. due effetti "1d4" su savingThrows -> "1d4 + 1d4", pronto da
+* accodare alla formula del tiro principale.
+*/
+export function activeEffectDice(effects, target) {
+    if (!Array.isArray(effects) || !target) return '';
+
+    return effects
+      .filter((effect) => effect && effect.modifierTarget === target && effect.modifierDice)
+      .map((effect) => effect.modifierDice)
+      .join(' + ');
+  }
+
+/*
+* Sanifica una formula di dado da effetto (es. "1d4", "2d6 + 1").
+* Validazione leggera: la verifica completa avviene al momento del tiro.
+*/
+export function normalizeEffectDice(value) {
+    const text = String(value || '').trim().toLowerCase();
+    if (!text || text.length > 40) return '';
+    if (!/d\d/.test(text)) return '';
+    if (!/^[0-9dkhl+\-\s]+$/.test(text)) return '';
+
+    return text.replace(/\s+/g, ' ');
+  }
+
+export function normalizeActiveEffects(effects) {
+    if (!Array.isArray(effects)) return [];
+
+    const durations = new Set(ACTIVE_EFFECT_DURATIONS);
+    const targets = new Set(ACTIVE_EFFECT_TARGETS);
+
+    return effects
+      .map((effect, index) => {
+        if (!effect || typeof effect !== 'object') return null;
+        const name = effect.name ? String(effect.name).trim() : '';
+        if (!name) return null;
+
+        const duration = durations.has(effect.duration) ? effect.duration : 'manual';
+        const modifierTarget = targets.has(effect.modifierTarget) ? effect.modifierTarget : '';
+        const remaining = Math.min(999, Math.max(0, Number(effect.remaining) || 0));
+        const modifierValue = Math.min(99, Math.max(-99, Number(effect.modifierValue) || 0));
+
+        return {
+          id: effect.id ? String(effect.id) : `effect-${index + 1}`,
+          name,
+          source: effect.source ? String(effect.source) : '',
+          duration,
+          remaining,
+          modifierTarget,
+          modifierValue,
+          modifierDice: normalizeEffectDice(effect.modifierDice),
+          notes: effect.notes ? String(effect.notes) : '',
+        };
+      })
+      .filter(Boolean)
+      .slice(0, 30);
+  }
+
 export function normalizeCombatState(value) {
     const source = value && typeof value === 'object' ? value : {};
 
@@ -307,6 +394,27 @@ export function normalizeHitPointLog(value) {
       .slice(0, 25);
   }
 
+export function normalizeSessionLog(value) {
+    if (!Array.isArray(value)) return [];
+
+    return value
+      .map((entry, index) => {
+        if (!entry || typeof entry !== 'object') return null;
+        const label = entry.label ? String(entry.label).trim() : '';
+        if (!label) return null;
+
+        return {
+          id: entry.id ? String(entry.id) : `session-log-${index + 1}`,
+          type: entry.type ? String(entry.type) : 'manual',
+          label,
+          detail: entry.detail ? String(entry.detail) : '',
+          at: entry.at ? String(entry.at) : '',
+        };
+      })
+      .filter(Boolean)
+      .slice(0, 50);
+  }
+
 function normalizeHitPointSnapshot(value) {
     const source = value && typeof value === 'object' ? value : {};
     const snapshot = {
@@ -325,6 +433,10 @@ function normalizeHitPointSnapshot(value) {
 
     if (source.status && typeof source.status === 'object') {
       snapshot.status = normalizeHitPointStatusSnapshot(source.status);
+    }
+
+    if (Array.isArray(source.activeEffects)) {
+      snapshot.activeEffects = normalizeActiveEffects(source.activeEffects);
     }
 
     return snapshot;

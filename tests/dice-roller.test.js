@@ -3,6 +3,8 @@ const {
   analyzeRollContext,
   findDiceFormulas,
   parseDiceFormula,
+  parseRollExpression,
+  rollExpression,
   rollDice,
 } = require('../assets/js/dice-roller.js');
 
@@ -95,5 +97,41 @@ assert.equal(dropLowest.total, 13);
 const realRoll = rollDice(parseDiceFormula('1d20'));
 assert.equal(realRoll.rolls.length, 1);
 assert.ok(realRoll.total >= 1 && realRoll.total <= 20);
+
+// Formule composte (effetti che aggiungono un dado al tiro principale).
+const expr = parseRollExpression('1d20 + 5 + 1d4');
+assert.deepEqual(expr.terms, [
+  { kind: 'dice', sign: 1, count: 1, faces: 20, keepMode: null, keepCount: null },
+  { kind: 'flat', value: 5 },
+  { kind: 'dice', sign: 1, count: 1, faces: 4, keepMode: null, keepCount: null },
+]);
+assert.equal(expr.formula, '1d20 + 5 + 1d4');
+
+const blessed = rollExpression(expr, sequence([14, 3]));
+assert.deepEqual(blessed.rolls, [14, 3]);
+assert.equal(blessed.modifier, 5);
+assert.equal(blessed.total, 22); // 14 + 5 + 3
+assert.equal(blessed.faces, 20); // il singolo d20 resta riconoscibile per critico/fallimento
+assert.equal(blessed.kept, 14);
+
+// Gruppo singolo: deve restare identico al roller storico (delega a rollDice).
+const single = rollExpression(parseRollExpression('2d6 + 3'), sequence([2, 5]));
+assert.deepEqual(single.rolls, [2, 5]);
+assert.equal(single.total, 10);
+
+// Due gruppi di danno senza d20: nessun critico.
+const damage = rollExpression(parseRollExpression('2d6 + 1d4'), sequence([4, 1, 2]));
+assert.equal(damage.total, 7); // 4 + 1 + 2
+assert.equal(damage.faces, null);
+assert.equal(damage.kept, null);
+
+// Sottrazione di un dado (debuff).
+const penalty = rollExpression(parseRollExpression('1d20 - 1d4'), sequence([18, 3]));
+assert.equal(penalty.total, 15);
+
+// Formule non valide.
+assert.equal(parseRollExpression('1d20 1d4'), null); // manca l'operatore
+assert.equal(parseRollExpression('7'), null); // nessun dado
+assert.equal(parseRollExpression('abc'), null);
 
 console.log('Fixture dice roller OK');

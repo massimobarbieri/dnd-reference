@@ -61,6 +61,132 @@
   }
 
   /*
+   * Interpreta una formula composta come somma di termini con segno.
+   * Estende parseDiceFormula a piu gruppi di dadi, es. "1d20 + 5 + 1d4":
+   * serve agli effetti che aggiungono un dado al tiro principale.
+   * I formati a gruppo singolo restano gestiti da parseDiceFormula.
+   */
+  function parseRollExpression(formula) {
+    const text = String(formula || '').trim();
+    if (!text) return null;
+
+    const termPattern = /([+-])?\s*(\d*d\d+(?:(?:kh|kl|dl)1)?|\d+)\s*/y;
+    const terms = [];
+    let index = 0;
+    let totalDice = 0;
+
+    while (index < text.length) {
+      termPattern.lastIndex = index;
+      const match = termPattern.exec(text);
+      if (!match || match.index !== index) return null;
+
+      const sign = match[1] === '-' ? -1 : 1;
+      if (terms.length > 0 && !match[1]) return null;
+
+      const token = match[2];
+
+      if (/^\d+$/.test(token)) {
+        const value = Number(token);
+        if (Math.abs(value) > DICE_LIMITS.maxModifier) return null;
+        terms.push({ kind: 'flat', value: sign * value });
+      } else {
+        const dice = parseDiceFormula(token);
+        if (!dice) return null;
+        totalDice += dice.count;
+        if (totalDice > DICE_LIMITS.maxDice) return null;
+        terms.push({
+          kind: 'dice',
+          sign,
+          count: dice.count,
+          faces: dice.faces,
+          keepMode: dice.keepMode,
+          keepCount: dice.keepCount,
+        });
+      }
+
+      index = termPattern.lastIndex;
+    }
+
+    if (!terms.length) return null;
+    if (!terms.some((term) => term.kind === 'dice')) return null;
+
+    return { raw: text, terms, formula: formatRollExpression(terms) };
+  }
+
+  /*
+   * Esegue una formula composta sommando ogni termine.
+   * Con un solo gruppo di dadi positivo delega a rollDice per restare
+   * identici al comportamento storico; altrimenti somma i gruppi.
+   */
+  function rollExpression(parsed, randomInteger = randomInt) {
+    if (!parsed || !Array.isArray(parsed.terms)) return null;
+
+    const flatModifier = parsed.terms
+      .filter((term) => term.kind === 'flat')
+      .reduce((sum, term) => sum + term.value, 0);
+    const diceTerms = parsed.terms.filter((term) => term.kind === 'dice');
+
+    if (diceTerms.length === 1 && diceTerms[0].sign > 0) {
+      const term = diceTerms[0];
+      const legacy = rollDice({
+        raw: parsed.raw,
+        count: term.count,
+        faces: term.faces,
+        keepMode: term.keepMode,
+        keepCount: term.keepCount,
+        modifier: flatModifier,
+        formula: parsed.formula,
+      }, randomInteger);
+      return { ...legacy, formula: parsed.formula };
+    }
+
+    const allRolls = [];
+    const d20Values = [];
+    let diceTotal = 0;
+
+    diceTerms.forEach((term) => {
+      const rolls = Array.from({ length: term.count }, () => randomInteger(1, term.faces));
+      const kept = selectKeptRolls(rolls, term.keepMode, term.keepCount);
+      rolls.forEach((value) => allRolls.push(value));
+      if (term.faces === 20 && term.count === 1 && term.sign > 0 && !term.keepMode) {
+        d20Values.push(rolls[0]);
+      }
+      diceTotal += term.sign * kept.reduce((sum, value) => sum + value, 0);
+    });
+
+    const primaryD20 = d20Values.length === 1 ? d20Values[0] : null;
+
+    return {
+      formula: parsed.formula,
+      faces: primaryD20 !== null ? 20 : null,
+      rolls: allRolls,
+      keptRolls: allRolls,
+      kept: primaryD20,
+      keepMode: null,
+      keepCount: null,
+      modifier: flatModifier,
+      total: diceTotal + flatModifier,
+    };
+  }
+
+  /*
+   * Ricompone la stringa canonica di una formula composta.
+   */
+  function formatRollExpression(terms) {
+    return terms
+      .map((term, position) => {
+        const negative = term.kind === 'flat' ? term.value < 0 : term.sign < 0;
+        const body = term.kind === 'flat'
+          ? String(Math.abs(term.value))
+          : `${term.count}d${term.faces}${term.keepMode ? `${term.keepMode}${term.keepCount}` : ''}`;
+
+        if (position === 0) return negative ? `-${body}` : body;
+        return `${negative ? '-' : '+'} ${body}`;
+      })
+      .join(' ');
+  }
+
+  /*
    * Trova formule dado all'interno di un testo.
    */
   function findDiceFormulas(text) {
@@ -228,6 +354,9 @@
   return {
     DICE_LIMITS,
     parseDiceFormula,
+    parseRollExpression,
+    rollExpression,
+    formatRollExpression,
     findDiceFormulas,
     rollDice,
     analyzeRollContext,

@@ -2,13 +2,13 @@ import {
   normalizeArray,
   normalizeMagicItem,
   normalizeMonster,
-} from './normalizers.js?v=20260520-guided';
+} from './normalizers.js?v=20260531-1';
 
 import {
   fetchJson,
   fetchText,
   parseMonsterImages,
-} from './loaders.js?v=20260520-guided';
+} from './loaders.js?v=20260531-1';
 
 /*
  * Carica in parallelo tutte le sorgenti dati del reference.

@@ -17,6 +17,16 @@ export function createCharacterSheetCombatRenderer({
   characterSpellOptions,
   spellLevel,
   characterSheetDerived,
+  combatRound,
+  movementUsed,
+  combatState,
+  turnReadinessSummary,
+  hitDiceAvailableSummary,
+  formatMeters,
+  renderTurnSlot,
+  renderHitPointQuickControls,
+  renderHpVital,
+  renderAcVital,
 }) {
   function renderCharacterSheetCombat() {
     const sheet = appState.characterSheet;
@@ -28,6 +38,7 @@ export function createCharacterSheetCombatRenderer({
       <section class="sheet-grid">
         ${renderCombatSummary(initiative)}
         ${renderTurnEconomyPanel()}
+        ${renderSessionLog()}
 
         <div class="sheet-panel sheet-panel--control">
           <h3>Difesa e punti ferita</h3>
@@ -54,7 +65,7 @@ export function createCharacterSheetCombatRenderer({
         <div class="sheet-panel sheet-panel--control">
           <h3>Tiri rapidi</h3>
           <div class="quick-dice sheet-rolls">
-            <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, initiative))}">Iniziativa ${escapeHtml(formatSigned(initiative))}</button>
+            <button type="button" data-dice-roll="${escapeAttr(rollWithEffects(20, initiative, 'initiative'))}">Iniziativa ${escapeHtml(formatSigned(initiative))}</button>
             ${ABILITY_META.map(([key, label]) => {
               const modifier = abilityModifier(sheet.abilities[key]);
               return `<button type="button" data-dice-roll="${escapeAttr(rollFormula(20, modifier))}">${escapeHtml(label)} ${escapeHtml(formatSigned(modifier))}</button>`;
@@ -111,14 +122,16 @@ export function createCharacterSheetCombatRenderer({
             <p>${escapeHtml(activeStates.length ? activeStates.join(' · ') : 'Nessuno stato critico attivo.')}</p>
           </div>
           <div class="sheet-action-row">
-            <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, initiative))}">Iniziativa ${escapeHtml(formatSigned(initiative))}</button>
+            <button type="button" data-dice-roll="${escapeAttr(rollWithEffects(20, initiative, 'initiative'))}">Iniziativa ${escapeHtml(formatSigned(initiative))}</button>
           </div>
         </div>
+        <div class="sheet-vitals">
+          ${renderHpVital()}
+          ${renderAcVital()}
+        </div>
         <div class="sheet-stat-strip">
-          ${renderCombatStat('CA', Number(sheet.armorClass) || 10, 'Classe armatura')}
-          ${renderCombatStat('PF', `${Number(sheet.currentHp) || 0}/${Number(sheet.maxHp) || 0}`, 'Attuali / massimi')}
           ${renderCombatStat('Temp', Number(sheet.tempHp) || 0, 'Punti ferita')}
-          ${renderCombatStat('Vel', Number(sheet.speed) || 0, 'metri')}
+          ${renderCombatStat('Vel', characterSheetDerived.characterEffectiveSpeed(), effectStatHint('metri', 'speed'))}
           ${renderCombatStat('DV', hitDiceAvailableSummary(), sheet.hitDice || 'Dadi vita')}
           ${renderCombatStat('Turno', turnReadinessSummary(), `Round ${combatRound()}`)}
           ${renderCombatStat('Iniz.', formatSigned(initiative), 'Totale')}
@@ -129,7 +142,7 @@ export function createCharacterSheetCombatRenderer({
 
   function renderTurnEconomyPanel() {
     const state = combatState();
-    const speed = Math.max(0, Number(appState.characterSheet.speed) || 0);
+    const speed = characterSheetDerived.characterEffectiveSpeed();
     const usedMovement = movementUsed();
     const remainingMovement = Math.max(0, speed - usedMovement);
 
@@ -173,20 +186,6 @@ export function createCharacterSheetCombatRenderer({
     `;
   }
 
-  function renderTurnSlot(field, label, used) {
-    return `
-      <button
-        class="sheet-turn-slot ${used ? 'is-used' : ''}"
-        type="button"
-        data-sheet-combat-toggle="${escapeAttr(field)}"
-        aria-pressed="${used ? 'true' : 'false'}"
-      >
-        <span>${escapeHtml(label)}</span>
-        <strong>${escapeHtml(used ? 'Usata' : 'Pronta')}</strong>
-      </button>
-    `;
-  }
-
   function renderConcentrationConsole() {
     const sheet = appState.characterSheet;
     const status = sheet.status;
@@ -211,7 +210,7 @@ export function createCharacterSheetCombatRenderer({
           <input type="number" min="10" value="${escapeAttr(String(dc))}" data-sheet-concentration-number="concentrationDc">
         </label>
         <div class="sheet-concentration-actions">
-          <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, saveModifier))}">${escapeHtml(`TS COS ${formatSigned(saveModifier)}`)}</button>
+          <button type="button" data-dice-roll="${escapeAttr(rollWithEffects(20, saveModifier, 'savingThrows'))}">${escapeHtml(`TS COS ${formatSigned(saveModifier)}`)}</button>
           ${active
             ? '<button type="button" data-sheet-concentration-clear-dc>CD ok</button><button type="button" data-sheet-concentration-drop>Persa</button>'
             : '<button type="button" data-sheet-concentration-start>Avvia</button>'}
@@ -220,32 +219,6 @@ export function createCharacterSheetCombatRenderer({
     `;
   }
 
-  function renderHitPointQuickControls() {
-    const sheet = appState.characterSheet;
-    const current = Math.max(0, Number(sheet.currentHp) || 0);
-    const max = Math.max(0, Number(sheet.maxHp) || 0);
-    const temp = Math.max(0, Number(sheet.tempHp) || 0);
-    const percent = max ? Math.round((current / max) * 100) : 0;
-
-    return `
-      <div class="sheet-hp-console" aria-label="Punti ferita rapidi">
-        <div class="sheet-hp-meter">
-          <span>PF</span>
-          <strong>${escapeHtml(`${current}/${max}`)}</strong>
-          <small>${escapeHtml(temp ? `Temp ${temp}` : `${percent}%`)}</small>
-        </div>
-        <form class="sheet-hp-actions" data-sheet-hp-form>
-          <label>
-            <span>Valore</span>
-            <input type="number" name="amount" min="0" value="1" inputmode="numeric">
-          </label>
-          <button type="submit" data-sheet-hp-action="damage">Danno</button>
-          <button type="submit" data-sheet-hp-action="heal">Cura</button>
-          <button type="submit" data-sheet-hp-action="temp">Temp</button>
-        </form>
-      </div>
-    `;
-  }
 
   function renderHitDiceControls() {
     const sheet = appState.characterSheet;
@@ -283,6 +256,56 @@ export function createCharacterSheetCombatRenderer({
         </div>
       </div>
     `;
+  }
+
+  function renderSessionLog() {
+    const entries = Array.isArray(appState.characterSheet.sessionLog)
+      ? appState.characterSheet.sessionLog.slice(0, 8)
+      : [];
+
+    return `
+      <div class="sheet-panel sheet-panel--wide sheet-session-log-panel">
+        <div class="sheet-session-log-heading">
+          <div>
+            <h3>Registro sessione</h3>
+            <p>${escapeHtml(entries.length ? `${appState.characterSheet.sessionLog.length} eventi tracciati` : 'Eventi chiave di combattimento, risorse e inventario.')}</p>
+          </div>
+        </div>
+        ${entries.length ? `
+          <div class="sheet-session-log-list">
+            ${entries.map((entry) => renderSessionLogEntry(entry)).join('')}
+          </div>
+        ` : '<p class="sheet-empty">Nessun evento di sessione registrato.</p>'}
+      </div>
+    `;
+  }
+
+  function renderSessionLogEntry(entry) {
+    return `
+      <article class="sheet-session-log-entry is-${escapeAttr(entry.type || 'manual')}">
+        <span>${escapeHtml(sessionLogTypeLabel(entry.type))}</span>
+        <div>
+          <strong>${escapeHtml(entry.label || 'Evento')}</strong>
+          ${entry.detail ? `<p>${escapeHtml(entry.detail)}</p>` : ''}
+        </div>
+        ${entry.at ? `<time>${escapeHtml(formatHitPointLogTime(entry.at))}</time>` : ''}
+      </article>
+    `;
+  }
+
+  function sessionLogTypeLabel(type) {
+    return {
+      attack: 'Attacco',
+      equipment: 'Inventario',
+      hp: 'PF',
+      level: 'Livello',
+      resource: 'Risorsa',
+      rest: 'Riposo',
+      spell: 'Magia',
+      status: 'Stato',
+      turn: 'Turno',
+      undo: 'Undo',
+    }[type] || 'Evento';
   }
 
   function renderHitPointLog() {
@@ -370,36 +393,25 @@ export function createCharacterSheetCombatRenderer({
     `;
   }
 
-  function combatState() {
-    const source = appState.characterSheet.combatState || {};
-    return {
-      round: combatRound(),
-      actionUsed: Boolean(source.actionUsed),
-      bonusActionUsed: Boolean(source.bonusActionUsed),
-      reactionUsed: Boolean(source.reactionUsed),
-      movementUsed: movementUsed(),
-    };
+  function effectStatHint(baseLabel, target) {
+    const modifier = characterSheetDerived.characterActiveEffectModifier(target);
+    return modifier ? `${baseLabel} · effetti ${formatSigned(modifier)}` : baseLabel;
   }
 
-  function combatRound() {
-    return Math.min(999, Math.max(1, Number(appState.characterSheet.combatState?.round) || 1));
+  function damageWithEffects(damage) {
+    if (!damage) return damage;
+    const modifier = characterSheetDerived.characterActiveEffectModifier('damage');
+    const dice = characterSheetDerived.characterActiveEffectDice('damage');
+    return `${damage}${modifier ? ` ${formatSigned(modifier)}` : ''}${dice ? ` + ${dice}` : ''}`;
   }
 
-  function movementUsed() {
-    const speed = Math.max(0, Number(appState.characterSheet.speed) || 0);
-    const used = Math.max(0, Number(appState.characterSheet.combatState?.movementUsed) || 0);
-    return speed ? Math.min(speed, used) : used;
-  }
-
-  function turnReadinessSummary() {
-    const state = combatState();
-    const ready = [state.actionUsed, state.bonusActionUsed, state.reactionUsed].filter((used) => !used).length;
-    return `${ready}/3`;
-  }
-
-  function formatMeters(value) {
-    const number = Number(value) || 0;
-    return Number.isInteger(number) ? String(number) : String(number).replace('.', ',');
+  /*
+   * Formula di tiro che fonde i dadi da effetto sul bersaglio (es. Benedizione).
+   */
+  function rollWithEffects(faces, modifier, target) {
+    const base = rollFormula(faces, modifier);
+    const dice = characterSheetDerived.characterActiveEffectDice(target);
+    return dice ? `${base} + ${dice}` : base;
   }
 
   function concentrationDc() {
@@ -408,7 +420,8 @@ export function createCharacterSheetCombatRenderer({
 
   function concentrationSaveModifier() {
     return abilityModifier(appState.characterSheet.abilities.con) +
-      (appState.characterSheet.savingThrows.con ? characterProficiencyBonus() : 0);
+      (appState.characterSheet.savingThrows.con ? characterProficiencyBonus() : 0) +
+      characterSheetDerived.characterActiveEffectModifier('savingThrows');
   }
 
   function hitDiceMaximum() {
@@ -417,10 +430,6 @@ export function createCharacterSheetCombatRenderer({
 
   function hitDiceUsed() {
     return Math.min(hitDiceMaximum(), Math.max(0, Number(appState.characterSheet.hitDiceUsed) || 0));
-  }
-
-  function hitDiceAvailableSummary() {
-    return `${Math.max(0, hitDiceMaximum() - hitDiceUsed())}/${hitDiceMaximum()}`;
   }
 
   function hitDieFaces() {
@@ -433,14 +442,24 @@ export function createCharacterSheetCombatRenderer({
 
   function renderSavingThrowControl(key, label) {
     const sheet = appState.characterSheet;
-    const modifier = abilityModifier(sheet.abilities[key]) + (sheet.savingThrows[key] ? characterProficiencyBonus() : 0);
+    const modifier = abilityModifier(sheet.abilities[key]) +
+      (sheet.savingThrows[key] ? characterProficiencyBonus() : 0) +
+      characterSheetDerived.characterActiveEffectModifier('savingThrows');
+
+    const proficient = Boolean(sheet.savingThrows[key]);
 
     return `
-      <label class="save-control">
-        <input type="checkbox" ${sheet.savingThrows[key] ? 'checked' : ''} data-sheet-save="${escapeAttr(key)}">
+      <div class="save-control">
         <span>${escapeHtml(label)}</span>
-        <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, modifier))}">${escapeHtml(formatSigned(modifier))}</button>
-      </label>
+        <button
+          type="button"
+          class="save-pill${proficient ? ' is-active' : ''}"
+          data-sheet-save-toggle="${escapeAttr(key)}"
+          aria-pressed="${proficient}"
+          title="Competenza nel tiro salvezza"
+        >C</button>
+        <button type="button" data-dice-roll="${escapeAttr(rollWithEffects(20, modifier, 'savingThrows'))}">${escapeHtml(formatSigned(modifier))}</button>
+      </div>
     `;
   }
 
@@ -663,8 +682,8 @@ export function createCharacterSheetCombatRenderer({
           </label>
         </div>
         <div class="sheet-attack-actions">
-          <button type="button" data-dice-roll="${escapeAttr(rollFormula(20, attackBonus))}">Colpire ${escapeHtml(formatSigned(attackBonus))}</button>
-          ${damage ? `<button type="button" data-dice-roll="${escapeAttr(damage)}">Danni ${escapeHtml(damage)}</button>` : ''}
+          <button type="button" data-dice-roll="${escapeAttr(rollWithEffects(20, attackBonus, 'attack'))}">Colpire ${escapeHtml(formatSigned(attackBonus))}</button>
+          ${damage ? `<button type="button" data-dice-roll="${escapeAttr(damageWithEffects(damage))}">Danni ${escapeHtml(damageWithEffects(damage))}</button>` : ''}
           <button class="button button--ghost" type="button" data-sheet-remove-attack="${escapeAttr(attack.id)}">Rimuovi</button>
         </div>
       </article>
@@ -712,9 +731,9 @@ export function createCharacterSheetCombatRenderer({
       type: 'Azione',
       name: attack.name || 'Attacco',
       detail: [attack.damage ? `Danni ${attack.damage}` : null, attack.damageType].filter(Boolean).join(' · '),
-      roll: rollFormula(20, attackBonus),
+      roll: rollWithEffects(20, attackBonus, 'attack'),
       rollLabel: `Colpire ${formatSigned(attackBonus)}`,
-      damage: String(attack.damage || '').trim(),
+      damage: damageWithEffects(String(attack.damage || '').trim()),
     };
   }
 

@@ -1,3 +1,5 @@
+import { activeEffectModifier, activeEffectDice } from './character-sheet-normalizers.js?v=20260531-1';
+
 export function createCharacterSheetDerivedModel({
   appState,
   abilityModifier,
@@ -360,8 +362,26 @@ export function createCharacterSheetDerivedModel({
     return skillMeta.find(([skillKey]) => skillKey === key)?.[1] || key;
   }
 
+  function characterActiveEffectModifier(target) {
+    return activeEffectModifier(appState.characterSheet.activeEffects, target);
+  }
+
+  function characterActiveEffectDice(target) {
+    return activeEffectDice(appState.characterSheet.activeEffects, target);
+  }
+
   function characterInitiative() {
-    return abilityModifier(appState.characterSheet.abilities.dex) + (Number(appState.characterSheet.initiativeBonus) || 0);
+    return abilityModifier(appState.characterSheet.abilities.dex) +
+      (Number(appState.characterSheet.initiativeBonus) || 0) +
+      characterActiveEffectModifier('initiative');
+  }
+
+  function characterEffectiveArmorClass() {
+    return (Number(appState.characterSheet.armorClass) || 10) + characterActiveEffectModifier('armorClass');
+  }
+
+  function characterEffectiveSpeed() {
+    return Math.max(0, (Number(appState.characterSheet.speed) || 0) + characterActiveEffectModifier('speed'));
   }
 
   function characterSuggestedHitPoints() {
@@ -375,15 +395,125 @@ export function createCharacterSheetDerivedModel({
   }
 
   function characterSuggestedArmorClass() {
-    const equippedArmor = appState.characterSheet.equipmentItems.find((item) => item.equipped && item.armorClass);
-    const armorClass = armorClassFromEquipment(equippedArmor);
-    if (armorClass !== null) return armorClass;
+    return characterArmorLoadout().armorClass;
+  }
 
-    return 10 + abilityModifier(appState.characterSheet.abilities.dex);
+  function characterArmorLoadout() {
+    const equippedItems = appState.characterSheet.equipmentItems
+      .filter((item) => item.equipped && item.armorClass);
+    const armor = equippedItems.find((item) => equipmentArmorKind(item) === 'armor') || null;
+    const shield = equippedItems.find((item) => equipmentArmorKind(item) === 'shield') || null;
+    const baseArmorClass = armor ? armorClassFromText(armor.armorClass) : unarmoredArmorClass();
+    const shieldBonus = shield ? shieldBonusFromText(shield.armorClass) || 0 : 0;
+
+    return {
+      armor,
+      shield,
+      baseArmorClass,
+      shieldBonus,
+      armorClass: (baseArmorClass || unarmoredArmorClass()) + shieldBonus,
+    };
+  }
+
+  function characterCarryingLoad() {
+    const itemWeights = appState.characterSheet.equipmentItems.map((item) => equipmentItemWeight(item));
+    const itemWeight = itemWeights.reduce((total, entry) => total + entry.total, 0);
+    const unknownItems = itemWeights.filter((entry) => entry.unknown).length;
+    const coinWeight = characterCoinWeight();
+    const total = roundWeight(itemWeight + coinWeight);
+    const capacity = characterCarryingCapacity();
+    const pushDragLift = roundWeight(capacity * 2);
+    const percent = capacity ? Math.min(100, Math.round((total / capacity) * 100)) : 0;
+
+    return {
+      total,
+      itemWeight: roundWeight(itemWeight),
+      coinWeight,
+      capacity,
+      pushDragLift,
+      percent,
+      unknownItems,
+      state: total > capacity ? 'over' : total >= capacity * 0.75 ? 'warning' : 'ok',
+      size: characterCarryingSize(),
+    };
+  }
+
+  function characterCarryingCapacity() {
+    const strength = Math.max(0, Number(appState.characterSheet.abilities.str) || 0);
+    return roundWeight(strength * carryingMultiplier(characterCarryingSize()));
+  }
+
+  function characterCarryingSize() {
+    return String(characterSpeciesEntry()?.taglia || '').trim() || 'Media';
+  }
+
+  function carryingMultiplier(size) {
+    const text = normalizeSheetLabel(size);
+    if (text.includes('mastodontica')) return 60;
+    if (text.includes('enorme')) return 30;
+    if (text.includes('grande')) return 15;
+    if (text.includes('minuscola')) return 3.75;
+    return 7.5;
+  }
+
+  function equipmentItemWeight(item) {
+    const unitWeight = parseWeightKg(item?.weight);
+    const quantity = Math.max(1, Number(item?.quantity) || 1);
+    return {
+      total: unitWeight === null ? 0 : roundWeight(unitWeight * quantity),
+      unknown: Boolean(String(item?.weight || '').trim()) && unitWeight === null,
+    };
+  }
+
+  function characterCoinWeight() {
+    const coins = appState.characterSheet.coins || {};
+    const count = ['pp', 'mo', 'ma', 'mr']
+      .reduce((total, key) => total + Math.max(0, Number(coins[key]) || 0), 0);
+
+    return roundWeight(count * 0.01);
+  }
+
+  function parseWeightKg(value) {
+    const text = String(value || '').trim().toLowerCase();
+    if (!text || text === '-' || text === 'variabile') return null;
+
+    const match = text.match(/(\d+(?:[,.]\d+)?)/);
+    if (!match) return null;
+
+    const amount = Number(match[1].replace(',', '.'));
+    if (!Number.isFinite(amount)) return null;
+
+    if (/\b(g|gramm[oi])\b/.test(text)) return amount / 1000;
+    return amount;
+  }
+
+  function roundWeight(value) {
+    return Math.round((Number(value) || 0) * 100) / 100;
   }
 
   function armorClassFromEquipment(item) {
+    if (equipmentArmorKind(item) === 'shield') {
+      return characterBaseArmorClass() + (shieldBonusFromText(item?.armorClass) || 0);
+    }
+
     return armorClassFromText(item?.armorClass);
+  }
+
+  function equipmentArmorKind(item) {
+    if (!item?.armorClass) return '';
+    if (shieldBonusFromText(item.armorClass) !== null) return 'shield';
+    return armorClassFromText(item.armorClass) !== null ? 'armor' : '';
+  }
+
+  function characterBaseArmorClass() {
+    const equippedArmor = appState.characterSheet.equipmentItems
+      .find((item) => item.equipped && equipmentArmorKind(item) === 'armor');
+
+    return equippedArmor ? armorClassFromText(equippedArmor.armorClass) || unarmoredArmorClass() : unarmoredArmorClass();
+  }
+
+  function unarmoredArmorClass() {
+    return 10 + abilityModifier(appState.characterSheet.abilities.dex);
   }
 
   function classStartingEquipmentText() {
@@ -446,16 +576,15 @@ export function createCharacterSheetDerivedModel({
   }
 
   /*
-   * Interpreta le formule CA dei dati equipaggiamento SRD, ad esempio
-   * "11 + Des", "14 + Des (max 2)" o "+2" per uno scudo.
+   * Interpreta le formule CA delle armature; gli scudi "+2" vengono
+   * classificati a parte per poterli sommare a un'armatura indossata.
    */
   function armorClassFromText(value) {
     const text = String(value || '').trim();
     if (!text) return null;
 
     const dex = abilityModifier(appState.characterSheet.abilities.dex);
-    const shield = text.match(/^\+(\d+)/);
-    if (shield) return (Number(appState.characterSheet.armorClass) || 10) + Number(shield[1]);
+    if (shieldBonusFromText(text) !== null) return null;
 
     const base = Number(text.match(/\d+/)?.[0]);
     if (!Number.isFinite(base)) return null;
@@ -465,16 +594,27 @@ export function createCharacterSheetDerivedModel({
     return base + (maxMatch ? Math.min(dex, Number(maxMatch[1])) : dex);
   }
 
+  function shieldBonusFromText(value) {
+    const match = String(value || '').trim().match(/^\+(\d+)/);
+    return match ? Number(match[1]) : null;
+  }
+
   return {
     armorClassFromEquipment,
     backgroundStartingCoinsOption,
     backgroundStartingCoinsText,
     characterAbilityGuidance,
+    characterActiveEffectModifier,
+    characterActiveEffectDice,
+    characterArmorLoadout,
+    characterEffectiveArmorClass,
+    characterEffectiveSpeed,
     characterBackgroundEntry,
     characterBackgroundSkills,
     characterBuilderChecklist,
     characterBuilderChecklistForSheet,
     characterBuilderIssues,
+    characterCarryingLoad,
     characterInitiative,
     characterOriginFeat,
     characterSkillChoiceProgress,
@@ -484,6 +624,7 @@ export function createCharacterSheetDerivedModel({
     characterSuggestedHitPoints,
     classStartingEquipmentOptions,
     classStartingEquipmentText,
+    equipmentArmorKind,
     selectedClassTraits,
     skillSources,
     startingEquipmentAlreadyImported,

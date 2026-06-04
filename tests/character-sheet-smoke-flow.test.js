@@ -64,6 +64,7 @@ function normalizeText(value) {
       equipment: [
         { id: 'pugnale', nome: 'Pugnale', tipo: 'arma', categoria: 'Mischia semplice', danni: '1d4 perforanti' },
         { id: 'cuoio', nome: 'Armatura di cuoio', tipo: 'armatura', categoria: 'Armature leggere', classe_armatura: '11 + Des' },
+        { id: 'scudo', nome: 'Scudo', tipo: 'scudo', categoria: 'Scudo', classe_armatura: '+2' },
       ],
     },
     characterSheet: normalizeCharacterSheet({
@@ -106,9 +107,10 @@ function normalizeText(value) {
   appState.characterSheet.skillProficiencies.history = 1;
   actions.addEquipmentItemToCharacterSheet(appState.data.equipment[0]);
   actions.addEquipmentItemToCharacterSheet(appState.data.equipment[1]);
+  actions.addEquipmentItemToCharacterSheet(appState.data.equipment[2]);
   appState.characterSheet.equipmentItems = appState.characterSheet.equipmentItems.map((item) => ({
     ...item,
-    equipped: item.name === 'Armatura di cuoio',
+    equipped: item.name === 'Armatura di cuoio' || item.name === 'Scudo',
   }));
 
   assert.ok(saveCount > 0);
@@ -122,7 +124,8 @@ function normalizeText(value) {
   assert.equal(appState.characterSheet.skillProficiencies.religion, 1);
   assert.equal(derived.characterSkillChoiceState().complete, true);
   assert.equal(derived.characterSuggestedHitPoints(), 17);
-  assert.equal(derived.characterSuggestedArmorClass(), 13);
+  assert.equal(derived.characterSuggestedArmorClass(), 15);
+  assert.equal(derived.characterArmorLoadout().shieldBonus, 2);
   assert.ok(appState.characterSheet.attacks.some((attack) => attack.name === 'Pugnale'));
   assert.ok(appState.characterSheet.references.some((entry) => entry.section === 'classes' && entry.id === 'mago'));
   assert.ok(appState.characterSheet.references.some((entry) => entry.section === 'species' && entry.id === 'elfo'));

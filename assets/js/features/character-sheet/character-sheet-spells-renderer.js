@@ -1,3 +1,5 @@
+import { activeEffectModifier } from './character-sheet-normalizers.js?v=20260531-1';
+
 export function createCharacterSheetSpellsRenderer({
   appState,
   escapeAttr,
@@ -21,8 +23,10 @@ export function createCharacterSheetSpellsRenderer({
 
     if (!isCaster) return renderSpellEmptyState(hasClass);
 
-    const dc = 8 + characterProficiencyBonus() + abilityModifier(sheet.abilities[sheet.spellcastingAbility]);
-    const attack = characterProficiencyBonus() + abilityModifier(sheet.abilities[sheet.spellcastingAbility]);
+    const dc = 8 + characterProficiencyBonus() + abilityModifier(sheet.abilities[sheet.spellcastingAbility]) +
+      activeEffectModifier(sheet.activeEffects, 'spellDc');
+    const attack = characterProficiencyBonus() + abilityModifier(sheet.abilities[sheet.spellcastingAbility]) +
+      activeEffectModifier(sheet.activeEffects, 'attack');
     const prepared = preparedSpellList();
 
     return `

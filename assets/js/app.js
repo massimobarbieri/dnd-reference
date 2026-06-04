@@ -9,11 +9,11 @@
  * - Permette ricerca, filtri e preferiti.
  * - Salva i preferiti nel localStorage del browser.
  */
-import { loadConfig } from './data/loaders.js?v=20260527-upstream-dev';
+import { loadConfig } from './data/loaders.js?v=20260531-1';
 import {
   applyReferenceSources,
   loadReferenceSources,
-} from './data/reference-data.js?v=20260527-upstream-dev';
+} from './data/reference-data.js?v=20260531-1';
 import {
   escapeAttr,
   escapeHtml,
@@ -29,9 +29,9 @@ import {
 import {
   createReferenceViewController,
   renderReferenceSheetActions,
-} from './reference-view-controller.js?v=20260527-upstream-dev';
+} from './reference-view-controller.js?v=20260531-1';
 import { createInlineFormatter } from './inline-formatting.js';
-import { createReferenceDetailRenderer } from './reference-detail-renderer.js?v=20260527-upstream-dev';
+import { createReferenceDetailRenderer } from './reference-detail-renderer.js?v=20260531-1';
 
 import {
   normalizeCharacterSheet,
@@ -46,7 +46,7 @@ import {
   uniqueCharacterSheets,
   createCharacterSheetId,
   cloneJson,
-} from './features/character-sheet/character-sheet-normalizers.js?v=20260527-upstream-dev';
+} from './features/character-sheet/character-sheet-normalizers.js?v=20260531-1';
 
 import {
   readJsonStorage,
@@ -63,15 +63,15 @@ import {
   CHARACTER_SHEETS_STORAGE_KEY,
   ACTIVE_CHARACTER_SHEET_STORAGE_KEY,
   APP_STORAGE_PREFIX,
-} from './features/character-sheet/character-sheet-storage.js?v=20260527-upstream-dev';
+} from './features/character-sheet/character-sheet-storage.js?v=20260531-1';
 
-import { createCharacterSheetClassController } from './features/character-sheet/character-sheet-classes.js?v=20260527-upstream-dev';
-import { createCharacterSheetActionsController } from './features/character-sheet/character-sheet-actions.js?v=20260527-upstream-dev';
-import { createCharacterSheetEventsController } from './features/character-sheet/character-sheet-events.js?v=20260527-upstream-dev';
-import { createCharacterSheetRenderer } from './features/character-sheet/character-sheet-renderers.js?v=20260527-upstream-dev';
-import { createCharacterSheetSelectors } from './features/character-sheet/character-sheet-selectors.js?v=20260527-upstream-dev';
-import { createCharacterSheetDerivedModel } from './features/character-sheet/character-sheet-derived.js?v=20260527-upstream-dev';
-import { createCharacterSheetBackupWorkflow } from './features/character-sheet/character-sheet-backup-workflow.js?v=20260527-upstream-dev';
+import { createCharacterSheetClassController } from './features/character-sheet/character-sheet-classes.js?v=20260531-1';
+import { createCharacterSheetActionsController } from './features/character-sheet/character-sheet-actions.js?v=20260531-1';
+import { createCharacterSheetEventsController } from './features/character-sheet/character-sheet-events.js?v=20260531-1';
+import { createCharacterSheetRenderer } from './features/character-sheet/character-sheet-renderers.js?v=20260531-1';
+import { createCharacterSheetSelectors } from './features/character-sheet/character-sheet-selectors.js?v=20260531-1';
+import { createCharacterSheetDerivedModel } from './features/character-sheet/character-sheet-derived.js?v=20260531-1';
+import { createCharacterSheetBackupWorkflow } from './features/character-sheet/character-sheet-backup-workflow.js?v=20260531-1';
 
 import {
   CONDITION_ALIASES,
@@ -80,7 +80,7 @@ import {
   CHARACTER_SHEET_TABS,
   CHARACTER_SHEET_SCHEMA_VERSION,
   DEFAULT_CHARACTER_SHEET,
-} from './features/character-sheet/character-sheet-view.js?v=20260527-upstream-dev';
+} from './features/character-sheet/character-sheet-view.js?v=20260531-1';
 
 (() => {
   'use strict';
@@ -262,6 +262,8 @@ import {
     formatDiceFormula,
     isLikelyTableDie,
     parseDiceFormula,
+    parseRollExpression,
+    rollExpression,
     randomInt,
     rollDice,
   } = window.DndDiceRoller;
@@ -302,8 +304,11 @@ import {
   } = window.DndRollTray.createRollTrayController({
     appState,
     DICE_LIMITS,
-    parseDiceFormula,
-    rollDice,
+    // Il roll-tray esegue le formule della scheda, che possono includere dadi
+    // da effetto (es. 1d20 + 5 + 1d4): usa il parser composto. Il riconoscimento
+    // inline nel testo SRD resta invece a gruppo singolo.
+    parseDiceFormula: parseRollExpression,
+    rollDice: rollExpression,
     randomInt,
     escapeHtml,
     escapeAttr,

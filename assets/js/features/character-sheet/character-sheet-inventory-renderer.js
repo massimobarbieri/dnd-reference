@@ -96,10 +96,10 @@ export function createCharacterSheetInventoryRenderer({
 
   function renderInventorySummary() {
     const sheet = appState.characterSheet;
-    const coinEntries = Object.entries({ pp: 'PP', mo: 'MO', ma: 'MA', mr: 'MR' });
     const equipmentCount = sheet.equipmentItems.length;
     const magicCount = sheet.magicItems.length;
     const attunedCount = sheet.attunedMagicItems.length;
+    const carryingLoad = characterSheetDerived.characterCarryingLoad();
 
     return `
       <div class="sheet-panel sheet-panel--wide sheet-dashboard sheet-dashboard--inventory">
@@ -107,15 +107,38 @@ export function createCharacterSheetInventoryRenderer({
           <div>
             <span>Inventario</span>
             <strong>${escapeHtml(`${equipmentCount + magicCount} oggetti`)}</strong>
-            <p>${escapeHtml(attunedCount ? `${attunedCount}/3 oggetti in sintonia.` : 'Equipaggiamento e oggetti magici tracciati nella scheda.')}</p>
+            <p>${escapeHtml(inventorySummaryText(carryingLoad, attunedCount))}</p>
           </div>
         </div>
         <div class="sheet-stat-strip">
-          ${coinEntries.map(([key, label]) => renderInventoryStat(label, sheet.coins[key] ?? 0, 'Monete')).join('')}
           ${renderInventoryStat('Equip.', equipmentCount, 'Oggetti')}
           ${renderInventoryStat('Magici', magicCount, 'Oggetti')}
+          ${renderInventoryStat('Carico', formatWeight(carryingLoad.total), 'Trasportato')}
+          ${renderInventoryStat('Capacita', formatWeight(carryingLoad.capacity), carryingLoad.size)}
+          ${renderInventoryStat('Monete', formatWeight(carryingLoad.coinWeight), `${coinCount()} totali`)}
           ${renderInventoryStat('Sintonia', `${attunedCount}/3`, 'Limite')}
         </div>
+        ${renderCarryingMeter(carryingLoad)}
+      </div>
+    `;
+  }
+
+  function renderCarryingMeter(load) {
+    return `
+      <div
+        class="sheet-carrying-meter is-${escapeAttr(load.state)}"
+        role="meter"
+        aria-label="Carico trasportato"
+        aria-valuemin="0"
+        aria-valuemax="${escapeAttr(String(load.capacity))}"
+        aria-valuenow="${escapeAttr(String(Math.min(load.total, load.capacity)))}"
+      >
+        <div class="sheet-carrying-meter-heading">
+          <span>${escapeHtml(carryingStateLabel(load.state))}</span>
+          <strong>${escapeHtml(`${formatWeight(load.total)} / ${formatWeight(load.capacity)}`)}</strong>
+        </div>
+        <div class="sheet-carrying-bar"><span style="width: ${escapeAttr(String(load.percent))}%"></span></div>
+        <small>${escapeHtml(carryingDetail(load))}</small>
       </div>
     `;
   }
@@ -151,6 +174,8 @@ export function createCharacterSheetInventoryRenderer({
   }
 
   function renderEquipmentItem(item) {
+    const armorKind = characterSheetDerived.equipmentArmorKind(item);
+
     return `
       <article class="sheet-equipment-item">
         <div class="sheet-equipment-main">
@@ -160,7 +185,7 @@ export function createCharacterSheetInventoryRenderer({
             item.weight ? `peso ${item.weight}` : null,
             item.cost ? `costo ${item.cost}` : null,
             item.armorClass ? `CA ${item.armorClass}` : null,
-            item.equipped ? 'equipaggiato' : null,
+            item.equipped ? equippedLabel(armorKind) : null,
           ].filter(Boolean).join(' · '))}</span>
           ${item.source ? `<small>${escapeHtml(item.source)}</small>` : ''}
           ${item.notes ? `<p>${escapeHtml(item.notes)}</p>` : ''}
@@ -188,11 +213,35 @@ export function createCharacterSheetInventoryRenderer({
           </label>
         </div>
         <div class="sheet-equipment-actions">
-          ${item.armorClass ? `<button type="button" data-sheet-apply-armor="${escapeAttr(item.id)}">Imposta CA ${escapeHtml(item.armorClass)}</button>` : ''}
+          ${renderDefenseEquipmentAction(item, armorKind)}
           <button class="button button--ghost" type="button" data-sheet-remove-equipment="${escapeAttr(item.id)}">Rimuovi</button>
         </div>
       </article>
     `;
+  }
+
+  function renderDefenseEquipmentAction(item, armorKind) {
+    if (!item.armorClass || !armorKind) return '';
+
+    return `
+      <button type="button" data-sheet-apply-armor="${escapeAttr(item.id)}">
+        ${escapeHtml(defenseEquipmentActionLabel(item, armorKind))}
+      </button>
+    `;
+  }
+
+  function defenseEquipmentActionLabel(item, armorKind) {
+    if (armorKind === 'shield') {
+      return item.equipped ? `Togli scudo ${item.armorClass}` : `Equipaggia scudo ${item.armorClass}`;
+    }
+
+    return item.equipped ? `Togli armatura` : `Indossa CA ${item.armorClass}`;
+  }
+
+  function equippedLabel(armorKind) {
+    if (armorKind === 'shield') return 'scudo equipaggiato';
+    if (armorKind === 'armor') return 'indossata';
+    return 'equipaggiato';
   }
 
   function renderInventoryStat(label, value, hint) {
@@ -203,6 +252,49 @@ export function createCharacterSheetInventoryRenderer({
         <small>${escapeHtml(hint)}</small>
       </div>
     `;
+  }
+
+  function inventorySummaryText(load, attunedCount) {
+    const parts = [
+      `${formatWeight(load.total)} trasportati`,
+      `${load.percent}% capacita`,
+      attunedCount ? `${attunedCount}/3 sintonia` : '',
+      load.unknownItems ? `${load.unknownItems} pesi da verificare` : '',
+    ].filter(Boolean);
+
+    return parts.join(' · ');
+  }
+
+  function carryingStateLabel(state) {
+    return {
+      over: 'Oltre limite',
+      warning: 'Vicino al limite',
+      ok: 'Nel limite',
+    }[state] || 'Carico';
+  }
+
+  function carryingDetail(load) {
+    return [
+      `Oggetti ${formatWeight(load.itemWeight)}`,
+      `monete ${formatWeight(load.coinWeight)}`,
+      `trascinare/sollevare/spingere ${formatWeight(load.pushDragLift)}`,
+      load.unknownItems ? `${load.unknownItems} pesi non calcolati` : '',
+    ].filter(Boolean).join(' · ');
+  }
+
+  function coinCount() {
+    const coins = appState.characterSheet.coins || {};
+    return ['pp', 'mo', 'ma', 'mr']
+      .reduce((total, key) => total + Math.max(0, Number(coins[key]) || 0), 0);
+  }
+
+  function formatWeight(value) {
+    const number = Number(value) || 0;
+    const formatted = number.toLocaleString('it-IT', {
+      minimumFractionDigits: Number.isInteger(number) ? 0 : 1,
+      maximumFractionDigits: 2,
+    });
+    return `${formatted} kg`;
   }
 
   function renderCharacterSheetMagicItems() {

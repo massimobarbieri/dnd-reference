@@ -30,11 +30,19 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
       concentrationDc: 12,
       conditions: ['prone'],
     },
+    activeEffects: [
+      { id: 'effect-speed', name: 'Velocita', source: 'Incantesimo', duration: 'turns', remaining: 2, modifierTarget: 'armorClass', modifierValue: 2, notes: 'Azione extra limitata.' },
+      { id: 'effect-bless', name: 'Benedizione', source: 'Incantesimo', duration: 'concentration', remaining: 0, modifierTarget: 'savingThrows', modifierValue: 1, modifierDice: '1d4', notes: '1d4 ai TS.' },
+    ],
     spellcastingAbility: 'int',
     preparedSpells: ['magic-missile', 'fire-bolt'],
     magicItems: [{ id: 'wand', name: 'Bacchetta', summary: 'rara · richiede sintonia' }],
     references: [{ section: 'rules', id: 'cover', name: 'Copertura', summary: 'Combattimento' }],
-    equipmentItems: [{ id: 'eq-armor', name: 'Armatura di cuoio', quantity: 1, armorClass: '11 + Des', source: 'Armature' }],
+    equipmentItems: [
+      { id: 'eq-armor', name: 'Armatura di cuoio', quantity: 1, weight: '5 kg', armorClass: '11 + Des', source: 'Armature', equipped: true },
+      { id: 'eq-shield', name: 'Scudo', quantity: 1, weight: '3 kg', armorClass: '+2', source: 'Armature', equipped: true },
+    ],
+    coins: { pp: 0, mo: 25, ma: 25, mr: 0 },
     hitPointLog: [{
       id: 'hp-1',
       action: 'damage',
@@ -51,6 +59,19 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
       after: { currentHp: 20, tempHp: 0, hitDiceUsed: 0 },
       at: '2026-05-28T11:00:00.000Z',
       note: 'Recuperato 1 dado vita.',
+    }],
+    sessionLog: [{
+      id: 'session-spell',
+      type: 'spell',
+      label: 'Incantesimo lanciato',
+      detail: 'Dardo Incantato · Slot 1',
+      at: '2026-05-28T12:00:00.000Z',
+    }, {
+      id: 'session-resource',
+      type: 'resource',
+      label: 'Risorsa usata',
+      detail: 'Azione Impetuosa: 0/1 disponibili',
+      at: '2026-05-28T12:05:00.000Z',
     }],
   });
 
@@ -137,7 +158,7 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /<option value="elfo" selected>Elfo<\/option>/);
   assert.match(views['#detail-view'].innerHTML, /<option value="accolito" selected>Accolito<\/option>/);
   assert.match(views['#detail-view'].innerHTML, /Talento: Iniziato alla magia/);
-  assert.doesNotMatch(views['#detail-view'].innerHTML, /Percorso guidato/);
+  assert.match(views['#detail-view'].innerHTML, /sheet-guided-entry/); // link al wizard dall'header (non e il wizard stesso)
   assert.doesNotMatch(views['#detail-view'].innerHTML, /sheet-wizard-steps/);
   assert.doesNotMatch(views['#detail-view'].innerHTML, /Continua a caratteristiche/);
   assert.match(views['#detail-view'].innerHTML, /id="sheet-builder-skills"/);
@@ -158,18 +179,31 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
 
   api.renderCharacterSheet('builder');
   assert.match(views['#detail-view'].innerHTML, /Percorso guidato/);
-  assert.match(views['#detail-view'].innerHTML, /sheet-builder-progress/);
-  assert.match(views['#detail-view'].innerHTML, /sheet-wizard-steps/);
+  assert.match(views['#detail-view'].innerHTML, /sheet-wizard-progress/); // stepper orizzontale
+  assert.match(views['#detail-view'].innerHTML, /sheet-wizard-preview/); // rail anteprima viva
+  assert.match(views['#detail-view'].innerHTML, /wizard-preview-name/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-builder-step="identity"/);
   assert.match(views['#detail-view'].innerHTML, /sheet-builder-step/);
   assert.doesNotMatch(views['#detail-view'].innerHTML, /Checklist creazione/);
   assert.doesNotMatch(views['#detail-view'].innerHTML, />Creazione<\/a>/);
+
+  // Passo Identita: scelte a carte invece dei menu a tendina.
+  api.appState.characterSheetBuilderStep = 'identity';
+  api.renderCharacterSheet('builder');
+  assert.match(views['#detail-view'].innerHTML, /sheet-identity-picker/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-pick="classId"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-pick="ancestry"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-pick="background"/);
 
   api.appState.characterSheetBuilderStep = 'abilities';
   api.renderCharacterSheet('builder');
   assert.match(views['#detail-view'].innerHTML, /Serie standard/);
   assert.match(views['#detail-view'].innerHTML, /Acquisto punti/);
   assert.match(views['#detail-view'].innerHTML, /Generazione casuale/);
+  // Caratteristiche interattive: stepper +/- per l'acquisto punti.
+  assert.match(views['#detail-view'].innerHTML, /ability-step/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-ability-delta="1"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-ability-delta="-1"/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-builder-action="apply-standard-array"/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-builder-action="apply-point-buy-base"/);
   assert.match(views['#detail-view'].innerHTML, /data-dice-roll="4d6dl1"/);
@@ -184,10 +218,14 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /Usata/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-combat-movement-delta="3"/);
   assert.match(views['#detail-view'].innerHTML, /3\/9 m/);
+  assert.match(views['#detail-view'].innerHTML, /Registro sessione/);
+  assert.match(views['#detail-view'].innerHTML, /Incantesimo lanciato/);
+  assert.match(views['#detail-view'].innerHTML, /Dardo Incantato · Slot 1/);
+  assert.match(views['#detail-view'].innerHTML, /Risorsa usata/);
   assert.match(views['#detail-view'].innerHTML, /Benedizione/);
   assert.match(views['#detail-view'].innerHTML, /CD 12/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-concentration-drop/);
-  assert.match(views['#detail-view'].innerHTML, /data-dice-roll="1d20 \+ 4"/);
+  assert.match(views['#detail-view'].innerHTML, /data-dice-roll="1d20 \+ 4 \+ 1d4"/); // TS INT +4 fuso con Benedizione 1d4
   assert.match(views['#detail-view'].innerHTML, /data-sheet-hp-form/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-hp-action="damage"/);
   assert.match(views['#detail-view'].innerHTML, /Dadi vita/);
@@ -208,6 +246,53 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-add-attack/);
   assert.match(views['#detail-view'].innerHTML, /Spada lunga/);
   assert.match(views['#detail-view'].innerHTML, /Prono/);
+  // Gli effetti attivi si propagano alla tab Combattimento, non solo al Tavolo.
+  assert.match(views['#detail-view'].innerHTML, /sheet-vital--hp/); // PF ad anello
+  assert.match(views['#detail-view'].innerHTML, /aria-label="Classe armatura 12"/); // CA effettiva: base 10 + 2 dall'effetto
+  assert.match(views['#detail-view'].innerHTML, /TS COS \+5/); // TS concentrazione: +2 COS +2 comp +1 effetto savingThrows
+  // Il dado dell'effetto (Benedizione 1d4) si fonde nella formula del tiro salvezza.
+  assert.match(views['#detail-view'].innerHTML, /1d20 \+ 5 \+ 1d4/);
+
+  api.renderCharacterSheet('table');
+  assert.match(views['#detail-view'].innerHTML, /sheet-table-layout/);
+  assert.match(views['#detail-view'].innerHTML, /sheet-table-command/);
+  assert.match(views['#detail-view'].innerHTML, /sheet-table-panel--actions/);
+  assert.match(views['#detail-view'].innerHTML, /Tavolo/);
+  assert.match(views['#detail-view'].innerHTML, /sheet-dashboard--table/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-hp-form/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-concentration-drop/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-combat-new-turn/);
+  assert.match(views['#detail-view'].innerHTML, /Azioni del turno/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-table-use-action="Hide"/);
+  assert.match(views['#detail-view'].innerHTML, /Furtivita \+0/);
+  assert.match(views['#detail-view'].innerHTML, /Influence/);
+  assert.match(views['#detail-view'].innerHTML, /Search/);
+  assert.match(views['#detail-view'].innerHTML, /Study/);
+  assert.match(views['#detail-view'].innerHTML, /Opportunity Attack/);
+  assert.match(views['#detail-view'].innerHTML, /Opzioni pronte/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-table-use-action="Spada lunga"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-table-cast-spell="fire-bolt"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-table-cast-spell="magic-missile"/);
+  assert.match(views['#detail-view'].innerHTML, /Slot finiti/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-resource-id="res-1"/);
+  assert.match(views['#detail-view'].innerHTML, /Effetti attivi/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-add-effect/);
+  assert.match(views['#detail-view'].innerHTML, /Velocita/);
+  assert.match(views['#detail-view'].innerHTML, /2 turni/);
+  assert.match(views['#detail-view'].innerHTML, /CA \+2/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-effect-tick="effect-speed"/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-remove-effect="effect-bless"/);
+  assert.match(views['#detail-view'].innerHTML, /Tratti rapidi/);
+  assert.match(views['#detail-view'].innerHTML, /Classe L3/);
+  assert.match(views['#detail-view'].innerHTML, /Tradizione Arcana/);
+  assert.match(views['#detail-view'].innerHTML, /Talento origine/);
+  assert.match(views['#detail-view'].innerHTML, /Iniziato alla magia/);
+  assert.match(views['#detail-view'].innerHTML, /Scurovisione/);
+  assert.match(views['#detail-view'].innerHTML, /Bacchetta/);
+  assert.match(views['#detail-view'].innerHTML, /Copertura/);
+  assert.match(views['#detail-view'].innerHTML, /Stato critico/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-status-check-button="inspiration"/);
+  assert.match(views['#detail-view'].innerHTML, /Registro recente/);
 
   api.renderCharacterSheet('spells');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-add-spell/);
@@ -230,9 +315,18 @@ const { createAppTestContext, loadAppModule } = require('./helpers/app-module');
   assert.match(views['#detail-view'].innerHTML, /data-sheet-apply-starting-equipment="class-a"/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-apply-starting-equipment="background-coins"/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-coin="mo"/);
+  assert.match(views['#detail-view'].innerHTML, /role="meter"/);
+  assert.match(views['#detail-view'].innerHTML, /8,5 kg \/ 75 kg/);
+  assert.match(views['#detail-view'].innerHTML, /Oggetti 8 kg · monete 0,5 kg/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-add-equipment/);
   assert.match(views['#detail-view'].innerHTML, /Armatura di cuoio/);
+  assert.match(views['#detail-view'].innerHTML, /indossata/);
+  assert.match(views['#detail-view'].innerHTML, /Togli armatura/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-apply-armor="eq-armor"/);
+  assert.match(views['#detail-view'].innerHTML, /Scudo/);
+  assert.match(views['#detail-view'].innerHTML, /scudo equipaggiato/);
+  assert.match(views['#detail-view'].innerHTML, /Togli scudo \+2/);
+  assert.match(views['#detail-view'].innerHTML, /data-sheet-apply-armor="eq-shield"/);
   assert.match(views['#detail-view'].innerHTML, /Bacchetta/);
   assert.match(views['#detail-view'].innerHTML, /data-sheet-toggle-attunement="wand"/);
 
